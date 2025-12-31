@@ -27,6 +27,8 @@ Recommended: set `FG_FORWARDED_ALLOW_IPS` to the Docker network subnet (CIDR) so
 
 Note: the network exists after the stack is brought up at least once, and the name is usually `<compose-project>_default`.
 
+Bootstrap note: for the first bring-up (before you know the CIDR), you can temporarily set `FG_FORWARDED_ALLOW_IPS=*`, bring the stack up once, inspect the CIDR, then switch to `FG_FORWARDED_ALLOW_IPS=<CIDR>` and redeploy.
+
 Optional bundle/object storage:
 
 - `FG_BUNDLE_STORE=local|s3`
@@ -47,6 +49,12 @@ Optional bundle/object storage:
 
 - Health:
   - `docker compose ps` should show `web` as `healthy`.
+
+VPS smoke (on-host):
+
+- `docker compose -f compose.yaml -f compose.production.yaml config`
+- `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
+- `docker compose ps`
 
 ## 4) Live proof checks (external)
 
