@@ -54,3 +54,41 @@ jobs:
         shell: pwsh
         run: |
           .\.venv\Scripts\python -m pytest -q
+
+  docker:
+    name: docker build + compose config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker + Compose versions (ensure compose)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version
+          if docker compose version; then
+            exit 0
+          fi
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
+      - name: Pre-pull base image (best-effort)
+        shell: bash
+        run: |
+          # This may fail due to transient network or rate limits; the actual
+          # build step will still surface a real failure if the image can't be pulled.
+          docker pull python:3.11-slim || true
+
+      - name: Docker build
+        shell: bash
+        run: |
+          docker build -t fieldgrade:ci .
+
+      - name: Compose config + build
+        shell: bash
+        run: |
+          FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config
+          # Note: We intentionally do not run `docker compose build` here because it
+          # would rebuild the same Dockerfile context and add redundant CI work.

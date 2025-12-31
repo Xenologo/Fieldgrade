@@ -1,0 +1,3 @@
+# Intentionally empty.
+# This file ensures the `resources/` directory exists in git checkouts.
+# Large/local artifacts under `resources/` are ignored by `.gitignore`.
