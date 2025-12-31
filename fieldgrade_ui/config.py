@@ -152,6 +152,23 @@ def api_token() -> str:
     return env_str("FG_API_TOKEN", "FIELDGRADE_UI_API_TOKEN", default="").strip()
 
 
+def api_tokens() -> list[str]:
+    """Return configured API tokens.
+
+    Back-compat:
+        - If FG_API_TOKENS is unset/empty, falls back to FG_API_TOKEN.
+
+    New:
+        - FG_API_TOKENS: comma-separated list of tokens (whitespace trimmed).
+    """
+    raw = env_str("FG_API_TOKENS", default="").strip()
+    if raw:
+        toks = [t.strip() for t in raw.split(",")]
+        return [t for t in toks if t]
+    t = api_token()
+    return [t] if t else []
+
+
 def database_url() -> str:
     """Return configured DB URL.
 

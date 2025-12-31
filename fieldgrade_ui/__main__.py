@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 
-from .config import api_token, forwarded_allow_ips, proxy_headers_enabled, ui_host, ui_log_level, ui_port, ui_reload, ui_workers
+from .config import api_tokens, forwarded_allow_ips, proxy_headers_enabled, ui_host, ui_log_level, ui_port, ui_reload, ui_workers
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m fieldgrade_ui")
@@ -35,7 +35,7 @@ def main() -> None:
 
     # Security: refuse to bind to a non-loopback interface unless an API token is configured.
     # This prevents path-bearing endpoints from being reachable over the network without auth.
-    tok = api_token()
+    toks = api_tokens()
 
     def _is_loopback(h: str) -> bool:
         hs = (h or "").strip()
@@ -48,10 +48,10 @@ def main() -> None:
             # Hostname or bind-all; treat as non-loopback.
             return False
 
-    if not _is_loopback(host) and not tok:
+    if not _is_loopback(host) and not toks:
         raise RuntimeError(
-            f"Refusing to bind Fieldgrade UI to host={host!r} without FG_API_TOKEN. "
-            "Set FG_API_TOKEN (and supply it as X-API-Key) or bind to 127.0.0.1."
+            f"Refusing to bind Fieldgrade UI to host={host!r} without FG_API_TOKEN/FG_API_TOKENS. "
+            "Set FG_API_TOKEN or FG_API_TOKENS (and supply it as X-API-Key) or bind to 127.0.0.1."
         )
 
     try:
