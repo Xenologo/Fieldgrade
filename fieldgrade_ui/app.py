@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import json
 import os
 import re
@@ -22,7 +23,7 @@ import time
 # it's missing (common in minimal / offline installs) and degrade upload
 # endpoints gracefully.
 try:
-    import multipart  # noqa: F401
+    import python_multipart  # noqa: F401
     _MULTIPART_OK = True
 except Exception:
     _MULTIPART_OK = False
@@ -266,8 +267,37 @@ def _safe_json_loads(s: Optional[str]) -> Optional[Any]:
 
 safe_json_loads = _safe_json_loads
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    global _worker_stop_evt, _worker_thread, _watcher_stop_evt, _watcher_thread
 
-app = FastAPI(title="Fieldgrade UI", version="0.1")
+    if enable_embedded_worker():
+        _worker_stop_evt = threading.Event()
+        _worker_thread = threading.Thread(target=_bg_worker_loop, args=(_worker_stop_evt,), daemon=True)
+        _worker_thread.start()
+
+    # Optional: autonomic uploads watcher (drop files into uploads dir).
+    if env_bool("FG_WATCH_UPLOADS", default=False):
+        _watcher_stop_evt = threading.Event()
+        poll_s = env_float("FG_WATCH_POLL", default=2.0)
+        label = env_str("FG_WATCH_LABEL", default="watch")
+        _watcher_thread = threading.Thread(
+            target=watcher_loop,
+            args=(_path_uploads(), _watcher_stop_evt, poll_s, label),
+            daemon=True,
+        )
+        _watcher_thread.start()
+
+    try:
+        yield
+    finally:
+        if _worker_stop_evt is not None:
+            _worker_stop_evt.set()
+        if _watcher_stop_evt is not None:
+            _watcher_stop_evt.set()
+
+
+app = FastAPI(title="Fieldgrade UI", version="0.1", lifespan=lifespan)
 
 
 @app.get("/healthz")
@@ -469,32 +499,6 @@ _worker_thread: threading.Thread | None = None
 
 _watcher_stop_evt: threading.Event | None = None
 _watcher_thread: threading.Thread | None = None
-
-
-@app.on_event("startup")
-def _startup() -> None:
-    global _worker_stop_evt, _worker_thread
-    if enable_embedded_worker():
-        _worker_stop_evt = threading.Event()
-        _worker_thread = threading.Thread(target=_bg_worker_loop, args=(_worker_stop_evt,), daemon=True)
-        _worker_thread.start()
-
-    # Optional: autonomic uploads watcher (drop files into uploads dir).
-    if env_bool("FG_WATCH_UPLOADS", default=False):
-        global _watcher_stop_evt, _watcher_thread
-        _watcher_stop_evt = threading.Event()
-        poll_s = env_float("FG_WATCH_POLL", default=2.0)
-        label = env_str("FG_WATCH_LABEL", default="watch")
-        _watcher_thread = threading.Thread(target=watcher_loop, args=(_path_uploads(), _watcher_stop_evt, poll_s, label), daemon=True)
-        _watcher_thread.start()
-
-@app.on_event("shutdown")
-def _shutdown() -> None:
-    global _worker_stop_evt, _watcher_stop_evt
-    if _worker_stop_evt is not None:
-        _worker_stop_evt.set()
-    if _watcher_stop_evt is not None:
-        _watcher_stop_evt.set()
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

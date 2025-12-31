@@ -178,7 +178,7 @@ def build_context_pack(
     if include_attention and not att_edges and nodes and edges:
         emb = message_passing_embeddings(nodes, edges, feature_dim=32, hops=hops)
         # compute attention for all edges in the neighborhood
-        scores = compute_edge_attention(nodes, edges, emb, alpha=0.2)
+        scores = compute_edge_attention(nodes, edges, emb, context_node_id=root_id, alpha=0.2)
         # store + collect
         for e in edges:
             sc = float(scores.get(e.id, 0.0))
@@ -411,6 +411,15 @@ def _get_termite_llm_status(llm_raw: Dict[str, Any], base_dir: Path) -> Dict[str
     return json.loads(r.stdout)
 
 
+def _coerce_float(x: Any, default: float = 0.0) -> float:
+    if x is None:
+        return float(default)
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return float(default)
+
+
 def _llm_cfg_from_raw(raw: Dict[str, Any], base_dir: Path) -> LLMConfig:
     llm = raw.get("llm") or {}
     ctx = llm.get("context") or {}
@@ -447,7 +456,7 @@ def _llm_cfg_from_raw(raw: Dict[str, Any], base_dir: Path) -> LLMConfig:
         base_url=base_url,
         api_key_env=str(llm.get("api_key_env") or "OPENAI_API_KEY"),
         model=model,
-        temperature=float(llm.get("temperature") if llm.get("temperature") is not None else 0.0),
+        temperature=_coerce_float(llm.get("temperature"), default=0.0),
         timeout_s=int(llm.get("timeout_s") or 120),
         max_tokens=int(llm.get("max_tokens") or 1200),
         require_prompt_hash_echo=bool(llm.get("require_prompt_hash_echo", True)),
