@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            termite_fieldpack/requirements.txt
+            mite_ecology/requirements.txt
+            fieldgrade_ui/requirements.txt
+
+      - name: Bootstrap (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash scripts/bootstrap_dev.sh
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          ./.venv/bin/python -m pytest -q
+
+      - name: Bootstrap (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/bootstrap_dev.ps1
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python -m pytest -q
