@@ -70,6 +70,10 @@ If scheme/redirect behavior is correct (no `http://` confusion), proxy headers a
 - Backups: all state is in Docker named volumes (including the SQLite jobs DB).
 - Restarts: `compose.production.yaml` sets `restart: always`.
 
+Backup/restore guide:
+
+- See `docs/DEPLOY_BACKUP_RESTORE.md`.
+
 ## 6) Rollback
 
 - Revert to a known-good commit:

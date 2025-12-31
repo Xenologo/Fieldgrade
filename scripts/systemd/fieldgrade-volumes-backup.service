@@ -1,0 +1,26 @@
+[Unit]
+Description=Fieldgrade: backup Docker volumes (Compose project)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Adjust to where you have the repo checked out on the VPS
+WorkingDirectory=/opt/fieldgrade/fg_next
+
+# Optional: put overrides here (COMPOSE_PROJECT_NAME, BACKUP_DIR, etc.)
+# Example:
+#   COMPOSE_PROJECT_NAME=fg_next
+#   BACKUP_DIR=/var/backups/fieldgrade
+EnvironmentFile=-/etc/fieldgrade/backup.env
+
+# Recommended "cold" backup: stop stack, back up volumes, restart stack.
+ExecStart=/opt/fieldgrade/fg_next/scripts/vps_backup_volumes.sh \
+  --backup-dir ${BACKUP_DIR:-/var/backups/fieldgrade} \
+  --keep-days ${KEEP_DAYS:-14} \
+  --compose-files "compose.yaml compose.production.yaml" \
+  --stop-stack --restart-stack
+
+# Log output to journald
+StandardOutput=journal
+StandardError=journal
