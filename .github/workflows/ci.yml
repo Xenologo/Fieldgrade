@@ -6,6 +6,50 @@ on:
   pull_request:
 
 jobs:
+  hygiene:
+    name: hygiene (no tracked junk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fail if build/runtime junk is tracked
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad_paths_regex='(^|/)\.venv/|(^|/)venv/|(^|/)__pycache__/|(^|/)\.pytest_cache/|\.egg-info/'
+          if git ls-files | grep -E "$bad_paths_regex" -n; then
+            echo "ERROR: build/runtime junk appears in tracked paths (see above)." >&2
+            exit 1
+          fi
+
+  docker-prod-config:
+    name: docker compose config (prod overlay)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker + Compose versions (ensure compose)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version
+          if docker compose version; then
+            exit 0
+          fi
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
+      - name: Compose config (prod overlay)
+        shell: bash
+        run: |
+          FG_API_TOKEN=ci_dummy_token \
+          FIELDGRADE_DOMAIN=ci.example.invalid \
+          FG_FORWARDED_ALLOW_IPS=127.0.0.1 \
+          docker compose -f compose.yaml -f compose.production.yaml config
+
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -90,5 +134,6 @@ jobs:
         shell: bash
         run: |
           FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config
+          FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml -f compose.dev.yaml config
           # Note: We intentionally do not run `docker compose build` here because it
           # would rebuild the same Dockerfile context and add redundant CI work.

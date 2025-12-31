@@ -153,7 +153,28 @@ Or run everything in one command:
 ## Platform guides
 
 - Android (Termux): see `TERMUX.md`
-- Windows laptop: see `WINDOWS.md` (WSL2 recommended)
+- Windows laptop guide — see `WINDOWS.md` (WSL2 recommended)
+
+## Deployment (Docker Compose)
+
+This repo uses Docker Compose file stacking for dev vs production.
+
+- Local dev (exposes `http://127.0.0.1:8787` directly):
+   - `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
+
+- Single-host production (Caddy TLS termination; do not expose `8787` directly):
+   - `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
+   - See `docs/DEPLOY_PROD_SINGLEHOST.md` and `docs/DEPLOY_CHECKLIST.md`.
+
+For production proxy header trust, prefer trusting only the Docker network CIDR (instead of `*`):
+
+- Bring the stack up once so the network exists.
+- Get the subnet CIDR:
+   - `docker network inspect fg_next_default --format '{{(index .IPAM.Config 0).Subnet}}'`
+- Set:
+   - `FG_FORWARDED_ALLOW_IPS=<that CIDR>` (example: `172.18.0.0/16`)
+- If the network name differs, it’s usually `<project>_default`; discover via:
+   - `docker network ls | grep _default`
 
 
 

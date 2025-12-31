@@ -4,8 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile
     command: ["python", "-m", "fieldgrade_ui", "serve"]
-    ports:
-      - "8787:8787"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/healthz', timeout=2).read(); sys.exit(0)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
     environment:
       FG_HOST: "0.0.0.0"
       FG_PORT: "8787"
