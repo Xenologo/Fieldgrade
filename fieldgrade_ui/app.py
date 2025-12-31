@@ -260,6 +260,33 @@ safe_json_loads = _safe_json_loads
 
 app = FastAPI(title="Fieldgrade UI", version="0.1")
 
+
+@app.get("/healthz")
+def healthz() -> Dict[str, Any]:
+    return {"ok": True}
+
+
+@app.get("/readyz")
+def readyz() -> JSONResponse:
+    """Readiness probe.
+
+    Conservative: do not create or migrate DBs here; only confirm required state
+    exists on disk.
+    """
+    jobs_db = jobs_db_path()
+    mite_db = _path_mite_db()
+
+    missing: list[str] = []
+    if not jobs_db.exists():
+        missing.append(f"jobs_db:{jobs_db}")
+    if not mite_db.exists():
+        missing.append(f"mite_db:{mite_db}")
+
+    if missing:
+        return JSONResponse({"ok": False, "missing": missing}, status_code=503)
+
+    return JSONResponse({"ok": True}, status_code=200)
+
 API_TOKEN = api_token()
 
 if API_TOKEN:
@@ -478,7 +505,10 @@ def api_jobs_pipeline(payload: dict):
     payload: {upload_path: str, label?: str}
     """
     upload_path = _sandbox_path(str(payload.get("upload_path") or ""), roots=[UPLOADS_DIR], what="upload_path", must_exist=True, must_be_file=True)
-        return api_extra_roots()
+    label = str(payload.get("label", "run") or "run")
+    job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(upload_path), "label": label})
+    return {"ok": True, "job_id": job_id, "upload_path": str(upload_path), "label": label}
+
 if _MULTIPART_OK:
     @app.post("/api/pipeline/upload_run")
     async def api_pipeline_upload_run(file: UploadFile = File(...), label: str = "run"):
