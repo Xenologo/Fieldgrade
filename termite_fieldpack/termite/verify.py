@@ -223,7 +223,10 @@ def verify_bundle(zip_path: Path, *, policy: MEAPPolicy, allowlist: Dict[str, An
 
         # verify signature
         if require_sig:
-            sig = base64.b64decode(_read_zip_bytes(z, "attestation.sig").strip())
+            try:
+                sig = base64.b64decode(_read_zip_bytes(z, "attestation.sig").strip())
+            except Exception:
+                return VerifyResult(False, "bad_signature", toolchain_id=toolchain_id, bundle_map_hash=bundle_map_hash)
             base_dir = Path(allowlist.get("_base_dir") or ".").resolve()
             pub_rel = Path(allowed[toolchain_id]["pubkey_path"])
             pub_path = pub_rel if pub_rel.is_absolute() else (base_dir / pub_rel).resolve()
