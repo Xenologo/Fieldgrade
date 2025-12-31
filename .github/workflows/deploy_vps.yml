@@ -1,0 +1,98 @@
+name: deploy_vps
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (branch, tag, or SHA)"
+        required: true
+        default: "main"
+      readyz_url:
+        description: "External URL to /readyz (e.g. https://fieldgrade.example.com/readyz)"
+        required: true
+      compose_files:
+        description: "Compose files (space-separated), relative to deploy path"
+        required: true
+        default: "compose.yaml compose.production.yaml"
+      deploy_path:
+        description: "Absolute path to fg_next on the VPS"
+        required: true
+        default: "/opt/fieldgrade/fg_next"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout (for metadata only)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+
+      - name: Add known_hosts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          if [ -n "${{ secrets.VPS_SSH_KNOWN_HOSTS }}" ]; then
+            printf '%s\n' "${{ secrets.VPS_SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          else
+            echo "Missing secret VPS_SSH_KNOWN_HOSTS (recommended)." >&2
+            echo "Generate with: ssh-keyscan -H <host>" >&2
+            exit 1
+          fi
+
+      - name: Deploy via SSH
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          REF: ${{ inputs.ref }}
+          DEPLOY_PATH: ${{ inputs.deploy_path }}
+          COMPOSE_FILES: ${{ inputs.compose_files }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${VPS_PORT:-}" ]; then
+            VPS_PORT="22"
+          fi
+
+          compose_args=""
+          for f in ${COMPOSE_FILES}; do
+            compose_args="${compose_args} -f ${f}"
+          done
+
+          ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_HOST}" bash -lc "
+            set -euo pipefail
+            cd '${DEPLOY_PATH}'
+
+            git fetch --all --prune
+            git checkout '${REF}'
+            git pull --ff-only origin '${REF}' || true
+
+            docker compose ${compose_args} config >/dev/null
+            docker compose ${compose_args} up -d --build
+            docker compose ${compose_args} ps
+          "
+
+      - name: Verify /readyz
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ inputs.readyz_url }}"
+          curl -fsS "$url" | head -c 200
