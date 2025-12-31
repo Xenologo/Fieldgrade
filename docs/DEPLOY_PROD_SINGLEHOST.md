@@ -34,6 +34,12 @@ Behind Caddy (TLS termination), configure proxy header trust explicitly:
   - If your compose project name differs, the network will be `<project>_default`. To discover it:
     - `docker network ls | grep _default`
 
+Bootstrap note (CIDR chicken-and-egg):
+
+- First boot requires *some* `FG_FORWARDED_ALLOW_IPS` value. For the initial bring-up, you can temporarily set:
+  - `FG_FORWARDED_ALLOW_IPS=*`
+- Bring the stack up once, inspect the CIDR, then set `FG_FORWARDED_ALLOW_IPS=<CIDR>` and redeploy.
+
 Optional (future-facing knobs):
 
 - `DATABASE_URL`: today must be SQLite (e.g. `sqlite:////app/fieldgrade_ui/runtime/jobs.sqlite`). Postgres is a Phase B change.
