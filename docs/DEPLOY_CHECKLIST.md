@@ -75,3 +75,21 @@ If scheme/redirect behavior is correct (no `http://` confusion), proxy headers a
 - Revert to a known-good commit:
   - `git checkout <sha>`
   - `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
+
+## Optional: GitHub Actions deploy (workflow_dispatch)
+
+This repo includes a manual deploy workflow: `.github/workflows/deploy_vps.yml`.
+
+Required GitHub secrets:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_PRIVATE_KEY`
+- `VPS_SSH_KNOWN_HOSTS` (recommended; output of `ssh-keyscan -H <host>`)
+- `VPS_PORT` (optional; defaults to 22)
+
+Run it from the GitHub UI and provide:
+
+- `deploy_path` (path to `fg_next/` on the VPS)
+- `compose_files` (defaults to `compose.yaml compose.production.yaml`)
+- `readyz_url` (external URL to `/readyz`)
