@@ -62,25 +62,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Docker + Compose versions
-        shell: bash
-        run: |
-          docker version
-          docker compose version
-
-      - name: Pre-pull base image (retry)
+      - name: Docker + Compose versions (ensure compose)
         shell: bash
         run: |
           set -euo pipefail
-          for i in 1 2 3; do
-            echo "Attempt $i: docker pull python:3.11-slim"
-            if docker pull python:3.11-slim; then
-              exit 0
-            fi
-            sleep $((i * 5))
-          done
-          echo "Base image pull failed after retries" >&2
-          exit 1
+          docker version
+          if docker compose version; then
+            exit 0
+          fi
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
+      - name: Pre-pull base image (best-effort)
+        shell: bash
+        run: |
+          # This may fail due to transient network or rate limits; the actual
+          # build step will still surface a real failure if the image can't be pulled.
+          docker pull python:3.11-slim || true
 
       - name: Docker build
         shell: bash
@@ -89,9 +88,7 @@ jobs:
 
       - name: Compose config + build
         shell: bash
-        env:
-          FG_API_TOKEN: ci_dummy_token
         run: |
-          docker compose -f compose.yaml config
+          FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config
           # Note: We intentionally do not run `docker compose build` here because it
           # would rebuild the same Dockerfile context and add redundant CI work.
