@@ -103,20 +103,22 @@ def list_jobs(
     ensure_db(db_path)
     con = _connect(db_path)
     try:
-        where = []
-        args: list[Any] = []
-        if owner_token_hash is not None:
-            where.append("owner_token_hash=?")
-            args.append(owner_token_hash)
-        if status:
-            where.append("status=?")
-            args.append(status)
+        # Use fixed SQL strings (no string interpolation) to keep query
+        # construction obviously safe for scanners and reviewers.
+        if owner_token_hash is None and not status:
+            sql = "SELECT * FROM jobs ORDER BY id DESC LIMIT ?"
+            params = (limit,)
+        elif owner_token_hash is not None and not status:
+            sql = "SELECT * FROM jobs WHERE owner_token_hash=? ORDER BY id DESC LIMIT ?"
+            params = (owner_token_hash, limit)
+        elif owner_token_hash is None and status:
+            sql = "SELECT * FROM jobs WHERE status=? ORDER BY id DESC LIMIT ?"
+            params = (status, limit)
+        else:
+            sql = "SELECT * FROM jobs WHERE owner_token_hash=? AND status=? ORDER BY id DESC LIMIT ?"
+            params = (owner_token_hash, status, limit)
 
-        where_sql = (" WHERE " + " AND ".join(where)) if where else ""
-        rows = con.execute(
-            f"SELECT * FROM jobs{where_sql} ORDER BY id DESC LIMIT ?",
-            tuple(args + [limit]),
-        ).fetchall()
+        rows = con.execute(sql, params).fetchall()
         return [_row_to_job(r) for r in rows]
     finally:
         con.close()
