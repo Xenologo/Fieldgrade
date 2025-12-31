@@ -1,0 +1,31 @@
+services:
+  web:
+    restart: always
+    ports: []
+    environment:
+      # Behind TLS termination (Caddy), trust proxy headers.
+      FG_PROXY_HEADERS: "1"
+      FG_FORWARDED_ALLOW_IPS: "*"
+
+  worker:
+    restart: always
+
+  caddy:
+    image: caddy:2
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Set this to your public hostname (e.g. fieldgrade.example.com)
+      FIELDGRADE_DOMAIN: "${FIELDGRADE_DOMAIN:-localhost}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

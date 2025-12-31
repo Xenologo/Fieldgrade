@@ -26,7 +26,17 @@ try:
 except Exception:
     _MULTIPART_OK = False
 
-from .config import jobs_db_path, enable_embedded_worker
+from .config import (
+    api_extra_roots,
+    api_token,
+    cmd_timeout_s,
+    enable_embedded_worker,
+    env_bool,
+    env_float,
+    env_str,
+    jobs_db_path,
+    uploads_dir,
+)
 from .jobs import create_job, list_jobs as jobs_list, get_job as jobs_get, get_job_logs as jobs_logs, cancel_job as jobs_cancel, ensure_db as ensure_jobs_db
 from .worker import run_once as worker_run_once
 from .watcher import loop as watcher_loop
@@ -75,14 +85,7 @@ def _path_mite_db() -> Path:
 
 def _path_uploads() -> Path:
     """Return uploads directory (overrideable)."""
-    override = os.getenv("FG_UPLOADS_DIR") or os.getenv("FIELDGRADE_UPLOADS_DIR")
-    if override:
-        p = Path(override).expanduser()
-        try:
-            return p.resolve()
-        except Exception:
-            return p
-    return UPLOADS_DIR
+    return uploads_dir(UPLOADS_DIR)
 
 
 def _path_termite_artifacts() -> Path:
@@ -123,12 +126,7 @@ def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
     Timeout is controlled by FG_CMD_TIMEOUT_S (default 600). Set to 0/empty to disable.
     """
     timeout_s_raw = (os.environ.get("FG_CMD_TIMEOUT_S", "600") or "600").strip()
-    try:
-        timeout_s = float(timeout_s_raw)
-    except Exception:
-        timeout_s = 600.0
-    if timeout_s <= 0:
-        timeout_s = None
+    timeout_s = cmd_timeout_s()
 
     try:
         p = subprocess.run(
@@ -194,29 +192,7 @@ def _is_under_root(p: Path, root: Path) -> bool:
 
 
 def _extra_sandbox_roots() -> list[Path]:
-    raw = (os.environ.get("FG_API_EXTRA_ROOTS") or "").strip()
-    if not raw:
-        return []
-    out: list[Path] = []
-
-    def _split_env_path_list(s: str) -> list[str]:
-        """Split a list of paths from an environment variable.
-
-        Uses the platform separator (os.pathsep). For compatibility with older
-        configs, also accepts ':' on platforms where os.pathsep is not ':'
-        (e.g. Windows) *only* when it does not look like a drive-letter path list.
-        """
-        s = (s or "").strip()
-        if not s:
-            return []
-        parts = [p.strip() for p in s.split(os.pathsep) if p.strip()]
-        if os.pathsep != ":" and len(parts) == 1 and ":" in s and not re.search(r"[A-Za-z]:[\\/]", s):
-            parts = [p.strip() for p in s.split(":") if p.strip()]
-        return parts
-
-    for part in _split_env_path_list(raw):
-        out.append(_safe_resolve_path(Path(part)))
-    return out
+    return api_extra_roots()
 
 
 def _sandbox_path(raw: str, *, roots: list[Path], what: str, must_exist: bool = True, must_be_file: bool = False) -> Path:
@@ -284,7 +260,7 @@ safe_json_loads = _safe_json_loads
 
 app = FastAPI(title="Fieldgrade UI", version="0.1")
 
-API_TOKEN = (os.environ.get("FG_API_TOKEN", "") or "").strip()
+API_TOKEN = api_token()
 
 if API_TOKEN:
     @app.middleware("http")
@@ -308,19 +284,16 @@ def _bg_worker_loop(stop_evt: threading.Event) -> None:
     """Embedded background worker (only safe with FG_WORKERS=1)."""
     dbp = jobs_db_path()
     ensure_jobs_db(dbp)
+    poll_s = env_float("FG_WORKER_POLL", default=1.0)
     while not stop_evt.is_set():
-        worked = False
         try:
             worked = worker_run_once()
         except Exception as e:
-            # Avoid crashing the server on worker errors; keep a breadcrumb.
-            try:
-                # job_id unknown here, so just ignore
-                pass
-            finally:
-                pass
+            time.sleep(max(0.05, poll_s))
+            continue
+
         if not worked:
-            time.sleep(float(os.environ.get("FG_WORKER_POLL", "1.0")))
+            time.sleep(max(0.05, poll_s))
 
 _worker_stop_evt: threading.Event | None = None
 _worker_thread: threading.Thread | None = None
@@ -338,11 +311,11 @@ def _startup() -> None:
         _worker_thread.start()
 
     # Optional: autonomic uploads watcher (drop files into uploads dir).
-    if os.environ.get("FG_WATCH_UPLOADS", "0") == "1":
+    if env_bool("FG_WATCH_UPLOADS", default=False):
         global _watcher_stop_evt, _watcher_thread
         _watcher_stop_evt = threading.Event()
-        poll_s = float(os.environ.get("FG_WATCH_POLL", "2.0"))
-        label = os.environ.get("FG_WATCH_LABEL", "watch")
+        poll_s = env_float("FG_WATCH_POLL", default=2.0)
+        label = env_str("FG_WATCH_LABEL", default="watch")
         _watcher_thread = threading.Thread(target=watcher_loop, args=(_path_uploads(), _watcher_stop_evt, poll_s, label), daemon=True)
         _watcher_thread.start()
 
@@ -505,10 +478,7 @@ def api_jobs_pipeline(payload: dict):
     payload: {upload_path: str, label?: str}
     """
     upload_path = _sandbox_path(str(payload.get("upload_path") or ""), roots=[UPLOADS_DIR], what="upload_path", must_exist=True, must_be_file=True)
-    label = str(payload.get("label", "run"))
-    job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(upload_path), "label": label})
-    return {"ok": True, "job_id": job_id}
-
+        return api_extra_roots()
 if _MULTIPART_OK:
     @app.post("/api/pipeline/upload_run")
     async def api_pipeline_upload_run(file: UploadFile = File(...), label: str = "run"):

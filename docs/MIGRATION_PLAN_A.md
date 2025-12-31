@@ -1,5 +1,21 @@
 # Migration plan A — “Make it shippable” (preserve determinism + DSSE/CDX semantics)
 
+## Current status (as of 2025-12-31)
+
+The repo has progressed through the Phase A scope below. Multi-tenant SaaS features described in later phases (B–D) are not implemented yet.
+
+Evidence of Phase A work completed:
+
+- **A1 — Repo hygiene and reproducible setup.** Bootstrap + CI were added so `make install` and `make test` can run from a clean environment. CI runs Linux and Windows matrix builds and verifies tests pass.
+- **A2 — Containerization.** `compose.yaml` defines a two-service deployment (`web` FastAPI UI + `worker` job worker) with named volumes for termite and mite runtime/artifact directories. The Dockerfile builds a single Python image containing `termite_fieldpack`, `mite_ecology`, and `fieldgrade_ui`, exposing the API on port 8787.
+- **A3/A4 — Operational endpoints and CI kill-tests.** CI includes a dedicated Docker validation job (installs docker-compose plugin if needed and runs `docker compose config`). Regression tests assert bundle verification fails for corrupted/tampered DSSE and missing CycloneDX SBOMs, and that replay does not mutate bundle ZIP bytes. The DSSE attestation decoder fails when the signature cannot be base64-decoded.
+
+Gaps / remaining work:
+
+- **Phase B — Multi-tenant core.** No Postgres-backed org/project/membership/dataset/run model, migrations, RBAC, API keys, or audit logging; state is still local SQLite job queue + runtime directories. Tenant isolation is not implemented, so the Phase A4 “tenant isolation kill-test” remains not applicable.
+- **Phase C — Pipeline platformisation.** Artifacts remain on local filesystem, verification is still CLI-invoked (no “verify as a service” API), and there is no review queue UI or deterministic server-side “Run” abstraction.
+- **Phase D — Billing and entitlements.** No pricing, Stripe integration, usage metering, or subscription provisioning.
+
 This plan is explicitly constrained by:
 - **Do not break deterministic behavior** for sealing/verification/replay.
 - **Do not change DSSE envelope semantics** or CycloneDX verification expectations.
