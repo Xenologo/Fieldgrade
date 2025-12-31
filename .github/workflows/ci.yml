@@ -84,7 +84,7 @@ jobs:
       - name: Docker build
         shell: bash
         run: |
-          docker build --progress=plain -t fieldgrade:ci .
+          docker build -t fieldgrade:ci .
 
       - name: Compose config + build
         shell: bash
