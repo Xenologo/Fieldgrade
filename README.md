@@ -22,6 +22,11 @@ python -m pytest -q
 
 After bootstrapping, you can run the CLIs (`termite`, `mite-ecology`, `fieldgrade-ui`) or follow the fast-start flows below.
 
+### Warnings policy
+
+Pytest is configured to treat `DeprecationWarning` and `PendingDeprecationWarning` as errors (CI gate).
+If a new dependency or change introduces these warnings, fix or isolate it before merging.
+
 ## 1) `termite_fieldpack/` (Termux/field/offline)
 A fieldable toolchain that can:
 
