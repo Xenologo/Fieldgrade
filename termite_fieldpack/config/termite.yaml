@@ -1,0 +1,54 @@
+termite:
+  runtime_root: "./runtime"
+  cas_root: "./runtime/cas"
+  db_path: "./runtime/termite.sqlite"
+  bundles_out: "./artifacts/bundles_out"
+  policy_path: "./config/meap_v1.yaml"
+  allowlist_path: "./config/tool_allowlist.yaml"
+  offline_mode: true
+  network_policy: "deny_by_default"
+
+toolchain:
+  toolchain_id: "TERMITE_FIELD_WINDOWS_X64_V1"
+  signing:
+    enabled: true
+    algorithm: "ed25519"
+    private_key_path: "./runtime/keys/toolchain_ed25519.pem"
+    public_key_path: "./runtime/keys/toolchain_ed25519.pub"
+
+ingest:
+  max_bytes: 52428800
+  extract_text: true
+  chunking:
+    chunk_chars: 1400
+    overlap_chars: 200
+    min_chunk_chars: 200
+
+seal:
+  include_raw_blobs: true
+  include_extracted_blobs: true
+  include_provenance: true
+  include_sbom: true
+  include_kg_delta: true
+  deterministic_zip: true
+
+llm:
+  # Termite owns the local LLM runtime identity. You may either:
+  #  - run an OpenAI-compatible server yourself (provider: endpoint_only, launch.enabled: false)
+  #  - let Termite launch a server process (launch.enabled: true + launch.command)
+  provider: "endpoint_only"   # endpoint_only|llama_cpp_server|vllm
+  endpoint_base_url: "http://127.0.0.1:8000"
+  model: "qwen2.5-coder-0.5b-instruct"
+  offline_loopback_only: true
+  ping:
+    path: "/v1/models"        # many OpenAI-compatible servers expose this
+    timeout_s: 3
+  launch:
+    enabled: false
+    # Example llama.cpp server contract (you supply the binary + weights):
+    # command: ["./llama-server","-m","./models/qwen2.5-coder-0.5b-instruct.gguf","--host","127.0.0.1","--port","8000"]
+    command: []
+    cwd: "./runtime/llm"      # relative to runtime_root
+    env: {}
+    startup_timeout_s: 30
+    stop_timeout_s: 10

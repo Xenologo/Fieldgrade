@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.git/
+.gitignore
+*.zip
+termite_fieldpack/runtime/
+mite_ecology/runtime/
+fieldgrade_ui/runtime/
+termite_fieldpack/artifacts/
+mite_ecology/artifacts/

@@ -1,0 +1,31 @@
+meap_v1:
+  policy_id: "MEAP_V1_FIELD"
+  policy_version: 1
+  mode: "AUTO_MERGE"   # AUTO_MERGE | REVIEW_ONLY | QUARANTINE | KILL
+
+  thresholds:
+    max_bundle_mb: 250
+    max_files_in_bundle: 20000
+    require_signature: true
+    require_provenance_chain_intact: true
+    require_manifest_hashes: true
+    require_deterministic_bundle_hash: true
+    require_policy_hash_match: true
+    require_allowlist_hash_match: true
+
+    # Strict mandatory: supply-chain envelopes
+    require_dsse_attestations: true
+    require_cyclonedx_sbom: true
+
+  protected_paths:
+    - "runtime/keys/"
+    - "runtime/termite.sqlite"
+    - "runtime/cas/blobs/"
+    - "runtime/cas/extracts/"
+
+  accept:
+    allowed_artifact_types: ["code","dsl","onnx","weights","report","bundle","blob","provenance","sbom","kg_delta"]
+    deny_network_by_default: true
+
+  replay:
+    allow_reexecute_tools: false

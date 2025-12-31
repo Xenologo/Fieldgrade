@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mite_ecology.schemas.kg_delta.v1",
+  "title": "KG Delta Op (JSONL line)",
+  "type": "object",
+  "required": ["op"],
+  "properties": {
+    "op": {
+      "type": "string",
+      "enum": ["ADD_NODE","ADD_EDGE","REMOVE_NODE","REMOVE_EDGE"]
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "op": {"const": "ADD_NODE"},
+        "id": {"type": "string"},
+        "type": {"type": "string"},
+        "attrs": {"type": "object"}
+      },
+      "required": ["op","id"]
+    },
+    {
+      "properties": {
+        "op": {"const": "ADD_EDGE"},
+        "src": {"type": "string"},
+        "dst": {"type": "string"},
+        "type": {"type": "string"},
+        "attrs": {"type": "object"}
+      },
+      "required": ["op","src","dst"]
+    },
+    {
+      "properties": {
+        "op": {"const": "REMOVE_NODE"},
+        "id": {"type": "string"}
+      },
+      "required": ["op","id"]
+    },
+    {
+      "properties": {
+        "op": {"const": "REMOVE_EDGE"},
+        "edge_key": {"type": "string"}
+      },
+      "required": ["op","edge_key"]
+    }
+  ]
+}

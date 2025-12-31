@@ -1,0 +1,3 @@
+pytest>=8.0.0
+# Local single-page UI (optional)
+httpx>=0.25.0

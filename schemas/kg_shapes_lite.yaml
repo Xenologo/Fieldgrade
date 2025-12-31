@@ -1,0 +1,49 @@
+version: shacl_lite/1.0
+node_shapes:
+- id: Node::Base
+  target: ALL_NODES
+  required:
+  - path: id
+    type: string
+    min_len: 1
+  - path: type
+    type: string
+    min_len: 1
+  - path: attrs
+    type: object
+- id: Node::MemiteContract
+  target: NODE_TYPE
+  type: memite
+  severity: warn
+  required:
+  - path: attrs.kind
+    type: string
+    min_len: 1
+  - path: attrs.studspec
+    type: string
+    const: '1.0'
+    severity: warn
+  - path: attrs.tubespec
+    type: string
+    const: '1.0'
+    severity: warn
+edge_shapes:
+- id: Edge::Base
+  target: ALL_EDGES
+  required:
+  - path: src
+    type: string
+    min_len: 1
+  - path: dst
+    type: string
+    min_len: 1
+  - path: type
+    type: string
+    min_len: 1
+  - path: attrs
+    type: object
+rules:
+  referential_integrity:
+    edges_must_reference_existing_nodes: true
+  sanity:
+    no_self_edges: true

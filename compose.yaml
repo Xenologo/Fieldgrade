@@ -1,0 +1,44 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "fieldgrade_ui", "serve"]
+    ports:
+      - "8787:8787"
+    environment:
+      FG_HOST: "0.0.0.0"
+      FG_PORT: "8787"
+      FG_WORKERS: "1"
+      FG_ENABLE_WORKER: "0"
+      FG_API_TOKEN: "${FG_API_TOKEN:?set FG_API_TOKEN in .env}"
+      FG_MAX_UPLOAD_BYTES: "${FG_MAX_UPLOAD_BYTES:-0}"
+      FG_CMD_TIMEOUT_S: "${FG_CMD_TIMEOUT_S:-600}"
+    volumes:
+      - fg_termite_runtime:/app/termite_fieldpack/runtime
+      - fg_termite_artifacts:/app/termite_fieldpack/artifacts
+      - fg_mite_runtime:/app/mite_ecology/runtime
+      - fg_mite_artifacts:/app/mite_ecology/artifacts
+      - fg_ui_runtime:/app/fieldgrade_ui/runtime
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "fieldgrade_ui", "worker"]
+    environment:
+      FG_WORKER_POLL: "${FG_WORKER_POLL:-1.0}"
+      FG_CMD_TIMEOUT_S: "${FG_CMD_TIMEOUT_S:-600}"
+    volumes:
+      - fg_termite_runtime:/app/termite_fieldpack/runtime
+      - fg_termite_artifacts:/app/termite_fieldpack/artifacts
+      - fg_mite_runtime:/app/mite_ecology/runtime
+      - fg_mite_artifacts:/app/mite_ecology/artifacts
+      - fg_ui_runtime:/app/fieldgrade_ui/runtime
+
+volumes:
+  fg_termite_runtime: {}
+  fg_termite_artifacts: {}
+  fg_mite_runtime: {}
+  fg_mite_artifacts: {}
+  fg_ui_runtime: {}

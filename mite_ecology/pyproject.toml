@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mite-ecology"
+version = "0.9.1"
+description = "mite_ecology KG + deterministic GNN/GAT motif mining + memo-genetic extrusion pipeline."
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6.0",
+  "numpy>=1.24.0",
+  "requests>=2.31.0",
+  "jsonschema>=4.21.0",
+]
+
+[project.scripts]
+mite-ecology = "mite_ecology.cli:main"
+
+[tool.setuptools]
+# Avoid setuptools auto-discovering non-package top-level dirs (e.g., config/, sql/).
+packages = ["mite_ecology"]

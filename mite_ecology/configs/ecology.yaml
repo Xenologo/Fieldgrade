@@ -1,0 +1,74 @@
+mite_ecology:
+  runtime_root: "./runtime"
+  db_path: "./runtime/mite_ecology.sqlite"
+  imports_root: "./runtime/imports"
+  exports_root: "./artifacts/export"
+  policy_path: "../termite_fieldpack/config/meap_v1.yaml"
+  allowlist_path: "../termite_fieldpack/config/tool_allowlist.yaml"
+  schemas_dir: "../schemas"
+  max_bundle_ops: 200000
+
+embedding:
+  hops: 2
+  feature_dim: 32
+  normalize: true
+
+gat:
+  alpha: 0.2
+  top_edges: 32
+
+memoga:
+  population: 24
+  generations: 20
+  elite_k: 6
+  mutation_rate: 0.35
+  crossover_rate: 0.5
+  max_nodes_per_genome: 24
+  max_edges_per_genome: 40
+
+llm:
+  # How mite-ecology resolves the LLM endpoint
+  #   direct: use llm.base_url/model
+  #   termite: ask Termite for active endpoint identity (recommended)
+  endpoint_source: "termite"  # direct|termite
+  termite:
+    cmd: "../termite_fieldpack/bin/termite"
+    config_path: "../termite_fieldpack/config/termite.yaml"
+    # If true, mite-ecology refuses to call the LLM unless Termite reports running=true
+    require_running: true
+    # Optional faster path: read Termite runtime state directly instead of subprocess
+    # state_path: "../termite_fieldpack/runtime/llm/active_endpoint.json"
+  base_url: "http://127.0.0.1:8000"
+  api_key_env: "OPENAI_API_KEY"
+  model: "qwen2.5-coder-0.5b-instruct"
+  temperature: 0.0
+  timeout_s: 120
+  max_tokens: 1200
+  require_prompt_hash_echo: true
+  schemas_dir: "../schemas"
+  context:
+    hops: 2
+    max_nodes: 120
+    max_edges: 220
+    top_attention_edges: 48
+  prompts:
+    sync: |
+      You are generating strictly machine-validated artifacts for mite_ecology.
+      Return ONLY a single JSON object with keys:
+        response_kind: one of ["kg_delta.jsonl","motif_spec.json","neuroarch_dsl.json"]
+        prompt_hash: string (echo EXACTLY)
+        content: string for kg_delta.jsonl (JSONL), OR object for the .json kinds
+      Do not include markdown fences.
+      For kg_delta.jsonl, content must be a string with one JSON object per line, each matching the KG Delta Op schema.
+      For motif_spec.json, content must match the Motif Spec schema.
+      For neuroarch_dsl.json, content must match the NeuroArch DSL schema.
+    propose_motif: |
+      Produce a motif_spec.json for the given task context pack.
+      Output wrapper JSON with response_kind="motif_spec.json".
+    propose_delta: |
+      Produce a kg_delta.jsonl for the given scope/context pack.
+      Output wrapper JSON with response_kind="kg_delta.jsonl".
+
+accept:
+  max_new_nodes: 2000
+  max_new_edges: 10000

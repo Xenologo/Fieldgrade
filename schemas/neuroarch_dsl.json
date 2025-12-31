@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mite_ecology.schemas.neuroarch_dsl.v1",
+  "title": "NeuroArch DSL (minimal)",
+  "type": "object",
+  "required": ["neuroarch_dsl_version","dsl"],
+  "properties": {
+    "neuroarch_dsl_version": {"type": "string"},
+    "exported_utc": {"type": "string"},
+    "genome_id": {"type": "string"},
+    "context_node_id": {"type": "string"},
+    "fitness": {"type": ["number","null"]},
+    "eval": {"type": ["object","null"]},
+    "dsl": {
+      "type": "object",
+      "required": ["nodes","edges","params"],
+      "properties": {
+        "nodes": {"type":"array","items":{"type":"string"}},
+        "edges": {"type":"array","items":{"type":"integer"}},
+        "params": {"type":"object"}
+      }
+    }
+  }
+}

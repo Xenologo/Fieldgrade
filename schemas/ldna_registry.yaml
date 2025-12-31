@@ -1,0 +1,15 @@
+version: ldna_registry/1.0
+schemas:
+- uri: ldna://text+json/observations@1.0.0
+  description: Observation payloads (text + JSON)
+- uri: ldna://json/hypotheses@1.0.0
+  description: Hypothesis list and scores
+- uri: ldna://json/kg_delta@1.0.0
+  description: Knowledge graph delta operation stream
+- uri: ldna://json/motif_spec@1.0.0
+  description: Motif spec (GNN/GAT/etc) payload
+- uri: ldna://json/neuroarch_dsl@1.0.0
+  description: Neuroarch DSL fragment
+compat:
+  rule: major_version_compat
+  notes: Consumers must accept same major; producers may emit higher minor/patch.

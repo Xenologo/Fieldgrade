@@ -1,0 +1,3 @@
+-r mite_ecology/requirements.txt
+-r termite_fieldpack/requirements.txt
+-r fieldgrade_ui/requirements.txt

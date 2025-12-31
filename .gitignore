@@ -1,0 +1,137 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.pytest_cache/
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+!SEE.sublime-project
+!SEE.sublime-workspace
+SEE.sublime-project
+SEE.sublime-workspace
+
+# VSCode
+.vscode/
+
+# General
+.DS_Store
+
+# dotenv
+.env
+
+# Generated artifacts
+/knowledge_graph.json
+/mite_definition.json
+/provenance.log
+/build/
+
+# Fieldgrade generated runtime/state
+**/runtime/
+termite_fieldpack/artifacts/
+mite_ecology/artifacts/
+fieldgrade_ui/runtime/
+
+# Large derived prompt cache corpus (generated)
+resources/prompt_cache_prompts/
+
+# Local/derived resources (keep repo lean; avoid bundling third-party docs)
+resources/zips/
+resources/docs/
+*.pdf
+*.zip
+*.xlsx
+resources/*prompt_cache*.jsonl
+
+*.sqlite
+*.sqlite3
+*.db

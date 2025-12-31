@@ -1,0 +1,970 @@
+from __future__ import annotations
+
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+import threading
+import time
+
+# FastAPI requires the optional dependency "python-multipart" for endpoints
+# that accept UploadFile/File form-data. We allow the server to start even if
+# it's missing (common in minimal / offline installs) and degrade upload
+# endpoints gracefully.
+try:
+    import multipart  # noqa: F401
+    _MULTIPART_OK = True
+except Exception:
+    _MULTIPART_OK = False
+
+from .config import jobs_db_path, enable_embedded_worker
+from .jobs import create_job, list_jobs as jobs_list, get_job as jobs_get, get_job_logs as jobs_logs, cancel_job as jobs_cancel, ensure_db as ensure_jobs_db
+from .worker import run_once as worker_run_once
+from .watcher import loop as watcher_loop
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TERMITE_DIR = REPO_ROOT / "termite_fieldpack"
+ECOLOGY_DIR = REPO_ROOT / "mite_ecology"
+
+
+def _path_mite_db() -> Path:
+    """Return the resolved path to the mite_ecology SQLite DB.
+
+    Termux / zip extractions can end up in different places, and users may also
+    choose to keep the DB elsewhere. This helper makes DB discovery resilient.
+
+    Override knobs:
+      - FG_MITE_DB: explicit path to the sqlite DB file
+      - MITE_ECOLOGY_DB: alternate name (compatible with CLI)
+
+    Default layout:
+      - {repo}/mite_ecology/runtime/mite_ecology.sqlite
+    """
+
+    override = os.getenv("FG_MITE_DB") or os.getenv("MITE_ECOLOGY_DB")
+    if override:
+        p = Path(override).expanduser()
+        try:
+            return p.resolve()
+        except Exception:
+            return p
+
+    candidates = [
+        ECOLOGY_DIR / "runtime" / "mite_ecology.sqlite",
+        ECOLOGY_DIR / "runtime" / "mite_ecology.db",
+        ECOLOGY_DIR / "mite_ecology.sqlite",
+        REPO_ROOT / "mite_ecology.sqlite",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+
+    # Return the default even if it doesn't exist yet; callers can handle that.
+    return candidates[0]
+
+
+def _path_uploads() -> Path:
+    """Return uploads directory (overrideable)."""
+    override = os.getenv("FG_UPLOADS_DIR") or os.getenv("FIELDGRADE_UPLOADS_DIR")
+    if override:
+        p = Path(override).expanduser()
+        try:
+            return p.resolve()
+        except Exception:
+            return p
+    return UPLOADS_DIR
+
+
+def _path_termite_artifacts() -> Path:
+    """Return Termite artifacts dir (overrideable)."""
+    override = os.getenv("FG_TERMITE_ARTIFACTS_DIR") or os.getenv("FIELDGRADE_TERMITE_ARTIFACTS_DIR")
+    if override:
+        p = Path(override).expanduser()
+        try:
+            return p.resolve()
+        except Exception:
+            return p
+    return TERMITE_DIR / "artifacts"
+
+
+DEFAULT_POLICY = TERMITE_DIR / "config" / "meap_v1.yaml"
+DEFAULT_ALLOWLIST = TERMITE_DIR / "config" / "tool_allowlist.yaml"
+
+BUNDLES_DIR = TERMITE_DIR / "artifacts" / "bundles_out"
+EXPORTS_DIR = ECOLOGY_DIR / "artifacts" / "export"
+
+UPLOADS_DIR = TERMITE_DIR / "runtime" / "uploads"
+
+
+@dataclass
+class CmdResult:
+    ok: bool
+    cmd: List[str]
+    cwd: str
+    exit_code: int
+    stdout: str
+    stderr: str
+    parsed: Optional[Any] = None
+
+
+def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
+    """Run a subprocess with stdout/stderr capture and a configurable timeout.
+
+    Timeout is controlled by FG_CMD_TIMEOUT_S (default 600). Set to 0/empty to disable.
+    """
+    timeout_s_raw = (os.environ.get("FG_CMD_TIMEOUT_S", "600") or "600").strip()
+    try:
+        timeout_s = float(timeout_s_raw)
+    except Exception:
+        timeout_s = 600.0
+    if timeout_s <= 0:
+        timeout_s = None
+
+    try:
+        p = subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout_s,
+        )
+        stdout = p.stdout or ""
+        stderr = p.stderr or ""
+        code = int(p.returncode)
+    except subprocess.TimeoutExpired as e:
+        stdout = (e.stdout or "") if isinstance(e.stdout, str) else (e.stdout or b"").decode("utf-8", "replace")
+        stderr = (e.stderr or "") if isinstance(e.stderr, str) else (e.stderr or b"").decode("utf-8", "replace")
+        stderr = (stderr or "") + f"\n[timeout] command exceeded {timeout_s_raw}s"
+        code = 124
+
+    parsed: Optional[Any] = None
+    s = (stdout or "").strip()
+    if s:
+        try:
+            parsed = json.loads(s)
+        except Exception:
+            parsed = None
+
+    return CmdResult(
+        ok=(code == 0),
+        cmd=cmd,
+        cwd=str(cwd),
+        exit_code=code,
+        stdout=stdout,
+        stderr=stderr,
+        parsed=parsed,
+    )
+
+
+def _require_exists(p: Path, what: str) -> None:
+    if not p.exists():
+        raise HTTPException(status_code=404, detail=f"{what}_not_found: {p}")
+
+
+def _safe_resolve_path(p: Path) -> Path:
+    """Resolve a path without requiring it to exist."""
+    p = Path(p).expanduser()
+    try:
+        return p.resolve(strict=False)
+    except Exception:
+        try:
+            return p.resolve()
+        except Exception:
+            return p
+
+
+def _is_under_root(p: Path, root: Path) -> bool:
+    try:
+        p.relative_to(root)
+        return True
+    except Exception:
+        return False
+
+
+def _extra_sandbox_roots() -> list[Path]:
+    raw = (os.environ.get("FG_API_EXTRA_ROOTS") or "").strip()
+    if not raw:
+        return []
+    out: list[Path] = []
+
+    def _split_env_path_list(s: str) -> list[str]:
+        """Split a list of paths from an environment variable.
+
+        Uses the platform separator (os.pathsep). For compatibility with older
+        configs, also accepts ':' on platforms where os.pathsep is not ':'
+        (e.g. Windows) *only* when it does not look like a drive-letter path list.
+        """
+        s = (s or "").strip()
+        if not s:
+            return []
+        parts = [p.strip() for p in s.split(os.pathsep) if p.strip()]
+        if os.pathsep != ":" and len(parts) == 1 and ":" in s and not re.search(r"[A-Za-z]:[\\/]", s):
+            parts = [p.strip() for p in s.split(":") if p.strip()]
+        return parts
+
+    for part in _split_env_path_list(raw):
+        out.append(_safe_resolve_path(Path(part)))
+    return out
+
+
+def _sandbox_path(raw: str, *, roots: list[Path], what: str, must_exist: bool = True, must_be_file: bool = False) -> Path:
+    """Restrict user-supplied filesystem paths to a small set of allowed roots.
+
+    This prevents the API from being used as a general-purpose file oracle.
+    """
+    if not raw or not str(raw).strip():
+        raise HTTPException(status_code=400, detail=f"missing_{what}")
+    pth = _safe_resolve_path(Path(str(raw)))
+    allowed = [_safe_resolve_path(r) for r in roots] + _extra_sandbox_roots()
+    if not any(_is_under_root(pth, r) for r in allowed):
+        raise HTTPException(status_code=403, detail=f"path_not_allowed:{what}:{pth}")
+    if must_exist and not pth.exists():
+        raise HTTPException(status_code=404, detail=f"{what}_not_found:{pth}")
+    if must_be_file and pth.exists() and not pth.is_file():
+        raise HTTPException(status_code=400, detail=f"{what}_not_a_file:{pth}")
+    return pth
+
+
+def _connect_sqlite(db_path: Path) -> sqlite3.Connection:
+    con = sqlite3.connect(str(db_path))
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def _table_payload_col(con: sqlite3.Connection, table: str) -> Optional[str]:
+    """Return the JSON payload column name for a given table.
+
+    Supports schema drift across versions (e.g. `attrs_json` vs legacy `json`).
+    Returns None if no known payload column exists.
+    """
+    try:
+        rows = con.execute(f"PRAGMA table_info({table})").fetchall()
+        cols = []
+        for r in rows:
+            if isinstance(r, sqlite3.Row):
+                cols.append(r["name"])
+            else:
+                cols.append(r[1])
+    except Exception:
+        return None
+
+    for cand in ("attrs_json", "json", "payload_json"):
+        if cand in cols:
+            return cand
+    return None
+
+
+def _safe_json_loads(s: Optional[str]) -> Optional[Any]:
+    if s is None:
+        return None
+    if not isinstance(s, str):
+        return None
+    t = s.strip()
+    if not t:
+        return None
+    try:
+        return json.loads(t)
+    except Exception:
+        return None
+
+safe_json_loads = _safe_json_loads
+
+
+app = FastAPI(title="Fieldgrade UI", version="0.1")
+
+API_TOKEN = (os.environ.get("FG_API_TOKEN", "") or "").strip()
+
+if API_TOKEN:
+    @app.middleware("http")
+    async def _api_token_auth(request, call_next):
+        # Keep the UI shell accessible without auth; protect all API actions.
+        p = request.url.path or ""
+        if p == "/" or p.startswith("/static/"):
+            return await call_next(request)
+
+        token = (request.headers.get("x-api-key") or "").strip()
+        auth = (request.headers.get("authorization") or "").strip()
+        if not token and auth.lower().startswith("bearer "):
+            token = auth[7:].strip()
+
+        if token != API_TOKEN:
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+        return await call_next(request)
+
+def _bg_worker_loop(stop_evt: threading.Event) -> None:
+    """Embedded background worker (only safe with FG_WORKERS=1)."""
+    dbp = jobs_db_path()
+    ensure_jobs_db(dbp)
+    while not stop_evt.is_set():
+        worked = False
+        try:
+            worked = worker_run_once()
+        except Exception as e:
+            # Avoid crashing the server on worker errors; keep a breadcrumb.
+            try:
+                # job_id unknown here, so just ignore
+                pass
+            finally:
+                pass
+        if not worked:
+            time.sleep(float(os.environ.get("FG_WORKER_POLL", "1.0")))
+
+_worker_stop_evt: threading.Event | None = None
+_worker_thread: threading.Thread | None = None
+
+_watcher_stop_evt: threading.Event | None = None
+_watcher_thread: threading.Thread | None = None
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    global _worker_stop_evt, _worker_thread
+    if enable_embedded_worker():
+        _worker_stop_evt = threading.Event()
+        _worker_thread = threading.Thread(target=_bg_worker_loop, args=(_worker_stop_evt,), daemon=True)
+        _worker_thread.start()
+
+    # Optional: autonomic uploads watcher (drop files into uploads dir).
+    if os.environ.get("FG_WATCH_UPLOADS", "0") == "1":
+        global _watcher_stop_evt, _watcher_thread
+        _watcher_stop_evt = threading.Event()
+        poll_s = float(os.environ.get("FG_WATCH_POLL", "2.0"))
+        label = os.environ.get("FG_WATCH_LABEL", "watch")
+        _watcher_thread = threading.Thread(target=watcher_loop, args=(_path_uploads(), _watcher_stop_evt, poll_s, label), daemon=True)
+        _watcher_thread.start()
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    global _worker_stop_evt, _watcher_stop_evt
+    if _worker_stop_evt is not None:
+        _worker_stop_evt.set()
+    if _watcher_stop_evt is not None:
+        _watcher_stop_evt.set()
+
+static_dir = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+
+@app.get("/")
+def index() -> FileResponse:
+    return FileResponse(str(static_dir / "index.html"))
+
+
+@app.get("/api/state")
+def state() -> Dict[str, Any]:
+    return {
+        "repo_root": str(REPO_ROOT),
+        "termite_dir": str(TERMITE_DIR),
+        "ecology_dir": str(ECOLOGY_DIR),
+        "default_policy": str(DEFAULT_POLICY),
+        "default_allowlist": str(DEFAULT_ALLOWLIST),
+        "bundles_dir": str(BUNDLES_DIR),
+        "exports_dir": str(EXPORTS_DIR),
+        "uploads_dir": str(UPLOADS_DIR),
+        "python": sys.executable,
+    }
+
+
+if _MULTIPART_OK:
+    @app.post("/api/ingest/upload")
+    async def ingest_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Basic filename hygiene
+        filename = (file.filename or "upload.bin").replace("\\", "_").replace("/", "_")
+
+        # Avoid collisions
+        base = filename
+        candidate = UPLOADS_DIR / base
+        i = 1
+        while candidate.exists():
+            stem, ext = os.path.splitext(filename)
+            base = f"{stem}_{i}{ext}"
+            candidate = UPLOADS_DIR / base
+            i += 1
+
+        max_bytes = int(os.environ.get("FG_MAX_UPLOAD_BYTES", "0") or "0")
+        total = 0
+        with candidate.open("wb") as f:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if max_bytes and total > max_bytes:
+                    try:
+                        candidate.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    raise HTTPException(status_code=413, detail=f"upload_too_large: {total} > {max_bytes}")
+                f.write(chunk)
+
+        return {
+            "ok": True,
+            "saved_path": str(candidate),
+            "bytes": total,
+            "filename": filename,
+        }
+else:
+    @app.post("/api/ingest/upload")
+    async def ingest_upload_disabled() -> Dict[str, Any]:
+        raise HTTPException(
+            status_code=503,
+            detail="upload_endpoint_disabled: install 'python-multipart' to enable file uploads",
+        )
+
+
+@app.get("/api/metrics")
+def api_metrics():
+    """Lightweight operational metrics (JSON)."""
+    dbp = jobs_db_path()
+    ensure_jobs_db(dbp)
+
+    con = sqlite3.connect(str(dbp))
+    try:
+        rows = con.execute("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status").fetchall()
+        jobs_by_status = {r[0]: int(r[1]) for r in rows}
+    finally:
+        con.close()
+
+    def bytes_of(p: Path):
+        try:
+            if p.is_dir():
+                total = 0
+                for fp in p.rglob("*"):
+                    if fp.is_file():
+                        try:
+                            total += fp.stat().st_size
+                        except Exception:
+                            pass
+                return total
+            return p.stat().st_size
+        except Exception:
+            return None
+
+    mite_db = _path_mite_db()
+    termite_artifacts = _path_termite_artifacts()
+    uploads_dir = _path_uploads()
+
+    return {
+        "jobs_db": str(dbp),
+        "jobs_db_bytes": bytes_of(dbp),
+        "jobs_by_status": jobs_by_status,
+        "mite_db": str(mite_db),
+        "mite_db_bytes": bytes_of(mite_db),
+        "termite_artifacts_dir": str(termite_artifacts),
+        "termite_artifacts_bytes": bytes_of(termite_artifacts),
+        "uploads_dir": str(uploads_dir),
+        "uploads_bytes": bytes_of(uploads_dir) if uploads_dir.exists() else 0,
+    }
+
+
+@app.get("/api/jobs")
+def api_jobs(limit: int = 50, status: str | None = None):
+    dbp = jobs_db_path()
+    items = jobs_list(dbp, limit=limit, status=status)
+    return {"jobs": [j.__dict__ for j in items]}
+
+@app.get("/api/jobs/{job_id}")
+def api_job(job_id: int):
+    dbp = jobs_db_path()
+    j = jobs_get(dbp, job_id)
+    if not j:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return {"job": j.__dict__}
+
+@app.get("/api/jobs/{job_id}/logs")
+def api_job_logs(job_id: int, limit: int = 500):
+    dbp = jobs_db_path()
+    logs = jobs_logs(dbp, job_id, limit=limit)
+    return {"job_id": job_id, "logs": logs}
+
+@app.post("/api/jobs/{job_id}/cancel")
+def api_job_cancel(job_id: int):
+    dbp = jobs_db_path()
+    ok = jobs_cancel(dbp, job_id)
+    return {"ok": ok}
+
+@app.post("/api/jobs/pipeline")
+def api_jobs_pipeline(payload: dict):
+    """Enqueue a full termite→mite_ecology pipeline job.
+
+    payload: {upload_path: str, label?: str}
+    """
+    upload_path = _sandbox_path(str(payload.get("upload_path") or ""), roots=[UPLOADS_DIR], what="upload_path", must_exist=True, must_be_file=True)
+    label = str(payload.get("label", "run"))
+    job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(upload_path), "label": label})
+    return {"ok": True, "job_id": job_id}
+
+if _MULTIPART_OK:
+    @app.post("/api/pipeline/upload_run")
+    async def api_pipeline_upload_run(file: UploadFile = File(...), label: str = "run"):
+        """Upload a file and enqueue the pipeline as a background job."""
+        upload_dir = _path_uploads()
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        raw_name = (file.filename or "upload.bin")
+        safe_name = os.path.basename(raw_name).replace("\\", "_").replace("/", "_").replace("\x00", "")
+        if safe_name.strip() == "":
+            safe_name = "upload.bin"
+
+        dest = upload_dir / safe_name
+        if dest.exists():
+            stem = dest.stem
+            suffix = dest.suffix
+            i = 1
+            while True:
+                cand = upload_dir / f"{stem}_{i}{suffix}"
+                if not cand.exists():
+                    dest = cand
+                    break
+                i += 1
+
+        max_bytes = int(os.environ.get("FG_MAX_UPLOAD_BYTES", "0") or "0")
+        total = 0
+        with dest.open("wb") as f:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if max_bytes and total > max_bytes:
+                    try:
+                        dest.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    raise HTTPException(status_code=413, detail=f"upload_too_large: {total} > {max_bytes}")
+                f.write(chunk)
+
+        job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(dest), "label": label})
+        return {"ok": True, "job_id": job_id, "upload_path": str(dest), "bytes": total}
+else:
+    @app.post("/api/pipeline/upload_run")
+    async def api_pipeline_upload_run_disabled() -> Dict[str, Any]:
+        raise HTTPException(
+            status_code=503,
+            detail="upload_endpoint_disabled: install 'python-multipart' to enable file uploads",
+        )
+
+@app.post("/api/termite/ingest")
+def termite_ingest(body: Dict[str, Any]) -> Dict[str, Any]:
+    # Only allow ingesting files from the uploads directory (or extra sandbox roots).
+    path = _sandbox_path(str(body.get("path") or ""), roots=[UPLOADS_DIR], what="upload", must_exist=True, must_be_file=True)
+
+    cmd = [sys.executable, "-m", "termite.cli", "ingest", str(path)]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/seal")
+def termite_seal(body: Dict[str, Any]) -> Dict[str, Any]:
+    label = str(body.get("label", "demo") or "demo")
+    cmd = [sys.executable, "-m", "termite.cli", "seal", "--label", label]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.get("/api/bundles")
+def list_bundles() -> Dict[str, Any]:
+    BUNDLES_DIR.mkdir(parents=True, exist_ok=True)
+    items = sorted(BUNDLES_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return {
+        "ok": True,
+        "bundles": [str(p) for p in items],
+    }
+
+
+def _policy_allowlist_from_body(body: Dict[str, Any]) -> Tuple[Path, Path]:
+    policy = _sandbox_path(str(body.get("policy") or DEFAULT_POLICY), roots=[TERMITE_DIR], what="policy", must_exist=True, must_be_file=True)
+    allowlist = _sandbox_path(str(body.get("allowlist") or DEFAULT_ALLOWLIST), roots=[TERMITE_DIR], what="allowlist", must_exist=True, must_be_file=True)
+    return policy, allowlist
+
+
+@app.post("/api/termite/verify")
+def termite_verify(body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+    policy, allowlist = _policy_allowlist_from_body(body)
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "termite.cli",
+        "verify",
+        str(bundle),
+        "--policy",
+        str(policy),
+        "--allowlist",
+        str(allowlist),
+    ]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/replay")
+def termite_replay(body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+    policy, allowlist = _policy_allowlist_from_body(body)
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "termite.cli",
+        "replay",
+        str(bundle),
+        "--policy",
+        str(policy),
+        "--allowlist",
+        str(allowlist),
+    ]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/ecology/init")
+def ecology_init() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "init"]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.post("/api/ecology/import")
+def ecology_import(body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+    # Default import mode to AUTO_MERGE for the UI so repeat runs work without manual review.
+    mode = body.get("mode") or "AUTO_MERGE"
+
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "import-bundle", str(bundle), "--idempotent"]
+    if mode:
+        cmd += ["--mode", str(mode)]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+
+    if not res.ok:
+        stderr = (res.stderr or "")
+        if "sqlite3.IntegrityError" in stderr and "UNIQUE constraint failed: ingested_bundles.bundle_sha256" in stderr:
+            # Idempotent behavior: bundle already ingested.
+            res.ok = True
+            res.exit_code = 0
+            res.stderr = stderr + "\n[ui] Ignored duplicate bundle import (already ingested)."
+
+    return asdict(res)
+
+@app.get("/api/ecology/kg_validate")
+def ecology_kg_validate() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "kg-validate"]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.post("/api/ecology/review_list")
+def ecology_review_list(body: Dict[str, Any]) -> Dict[str, Any]:
+    status = body.get("status")
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "review-list", "--json"]
+    if status:
+        cmd += ["--status", str(status)]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.post("/api/ecology/review_approve")
+def ecology_review_approve(body: Dict[str, Any]) -> Dict[str, Any]:
+    sid = int(body.get("id", 0))
+    actor = str(body.get("actor") or "ui")
+    notes = body.get("notes")
+    if sid <= 0:
+        raise HTTPException(status_code=400, detail="missing id")
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "review-approve", str(sid), "--actor", actor]
+    if notes:
+        cmd += ["--notes", str(notes)]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.post("/api/ecology/review_reject")
+def ecology_review_reject(body: Dict[str, Any]) -> Dict[str, Any]:
+    sid = int(body.get("id", 0))
+    actor = str(body.get("actor") or "ui")
+    notes = body.get("notes")
+    if sid <= 0:
+        raise HTTPException(status_code=400, detail="missing id")
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "review-reject", str(sid), "--actor", actor]
+    if notes:
+        cmd += ["--notes", str(notes)]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/spec_validate")
+def termite_spec_validate(body: Dict[str, Any]) -> Dict[str, Any]:
+    kind = str(body.get("kind") or "")
+    file_path = _sandbox_path(str(body.get("file_path") or ""), roots=[UPLOADS_DIR], what="file_path", must_exist=True, must_be_file=True)
+    cmd = [sys.executable, "-m", "termite.cli", "validate-spec", kind, str(file_path)]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+
+
+@app.post("/api/ecology/full_pipeline")
+def ecology_full_pipeline(body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+
+    # If the ecology config defaults to review-only, a bundle can be staged (exit 0)
+    # and the KG remains empty, causing downstream GNN/GAT to fail. For the "full pipeline"
+    # UX we default to AUTO_MERGE unless the caller overrides it.
+    mode = str(body.get("mode") or "AUTO_MERGE")
+
+    steps: List[Dict[str, Any]] = []
+
+    def step(cmd: List[str]) -> None:
+        r = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+        steps.append(asdict(r))
+        if not r.ok:
+            # Make the pipeline idempotent for repeated clicks: importing the same bundle twice
+            # can hit a UNIQUE constraint (ingested_bundles.bundle_sha256). That is safe to ignore
+            # here since the DB already contains the import.
+            stderr = (r.stderr or "")
+            if (
+                cmd[:4] == [sys.executable, "-m", "mite_ecology.cli", "import-bundle"]
+                and "sqlite3.IntegrityError" in stderr
+                and "UNIQUE constraint failed: ingested_bundles.bundle_sha256" in stderr
+            ):
+                steps[-1]["ok"] = True
+                steps[-1]["exit_code"] = 0
+                steps[-1]["stderr"] = stderr + "\n[ui] Ignored duplicate bundle import (already ingested)."
+                return
+
+            raise HTTPException(status_code=400, detail={"failed_step": cmd, "result": asdict(r)})
+
+    step([sys.executable, "-m", "mite_ecology.cli", "init"])
+    step([sys.executable, "-m", "mite_ecology.cli", "import-bundle", str(bundle), "--idempotent", "--mode", mode])
+
+    # Fail fast with a clearer error if the import did not populate the KG.
+    db_path = ECOLOGY_DIR / "runtime" / "mite_ecology.sqlite"
+    try:
+        con = _connect_sqlite(db_path)
+        try:
+            row = con.execute("SELECT COUNT(*) AS n FROM nodes").fetchone()
+            n_nodes = int(row["n"] if row else 0)
+        finally:
+            con.close()
+    except Exception:
+        n_nodes = -1
+
+    if n_nodes == 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "import_produced_no_nodes",
+                "hint": "Bundle may have been staged for review; try /api/ecology/import with mode=AUTO_MERGE or approve via mite_ecology review-* commands.",
+                "mode": mode,
+            },
+        )
+    step([sys.executable, "-m", "mite_ecology.cli", "gnn"])
+    step([sys.executable, "-m", "mite_ecology.cli", "gat"])
+    step([sys.executable, "-m", "mite_ecology.cli", "motifs"])
+    step([sys.executable, "-m", "mite_ecology.cli", "ga"])
+    step([sys.executable, "-m", "mite_ecology.cli", "export"])
+
+    return {"ok": True, "steps": steps}
+
+
+@app.post("/api/ecology/replay_verify")
+def ecology_replay_verify() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "mite_ecology.cli", "replay-verify"]
+    res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
+    return asdict(res)
+
+
+@app.get("/api/exports")
+def list_exports() -> Dict[str, Any]:
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    items = sorted(EXPORTS_DIR.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return {
+        "ok": True,
+        "exports": [str(p) for p in items if p.is_file()],
+    }
+
+
+@app.get("/api/graph/nodes")
+def graph_nodes(filter: str = "", limit: int = 200) -> Dict[str, Any]:
+    """
+    Lightweight graph browser: returns a slice of nodes plus a suggested center node.
+
+    This endpoint is intentionally schema-tolerant: it supports both the current
+    `attrs_json` payload column and older `json` payload column variants.
+    """
+    db_path = _path_mite_db()
+    if not os.path.exists(db_path):
+        raise HTTPException(
+            404,
+            "mite_ecology DB not initialized. In the UI: Ecology → Init DB (or run `python -m mite_ecology init`).",
+        )
+
+    # Bound limits to keep the UI responsive on mobile devices.
+    try:
+        limit_i = int(limit)
+    except Exception:
+        limit_i = 200
+    limit_i = max(1, min(limit_i, 2000))
+
+    flt = (filter or "").strip()
+
+    con = _connect_sqlite(db_path)
+    try:
+        payload_col = _table_payload_col(con, "nodes")
+        if not payload_col:
+            payload_col = "attrs_json"  # best-effort default
+
+        if flt:
+            like = f"%{flt}%"
+            sql = f"""
+                SELECT id, type, {payload_col} AS payload_json
+                FROM nodes
+                WHERE id LIKE ? OR type LIKE ?
+                ORDER BY id
+                LIMIT ?
+            """
+            rows = con.execute(sql, (like, like, limit_i)).fetchall()
+        else:
+            sql = f"SELECT id, type, {payload_col} AS payload_json FROM nodes ORDER BY id LIMIT ?"
+            rows = con.execute(sql, (limit_i,)).fetchall()
+
+        nodes: List[Dict[str, Any]] = []
+        for r in rows:
+            attrs = safe_json_loads(r["payload_json"])
+            nodes.append({"id": r["id"], "type": r["type"], "attrs": attrs})
+
+        # Choose a "center" node: if filter yields results, use the first result;
+        # otherwise fall back to the first node in the DB.
+        center: Optional[Dict[str, Any]] = None
+        if nodes:
+            center = nodes[0]
+        else:
+            row = con.execute(
+                f"SELECT id, type, {payload_col} AS payload_json FROM nodes ORDER BY id LIMIT 1"
+            ).fetchone()
+            if row:
+                center = {
+                    "id": row["id"],
+                    "type": row["type"],
+                    "attrs": safe_json_loads(row["payload_json"]),
+                }
+
+        return {
+            "db_path": db_path,
+            "payload_col": payload_col,
+            "nodes": nodes,
+            "center": center,
+        }
+    finally:
+        con.close()
+
+@app.get("/api/graph/neighborhood")
+def graph_neighborhood(node_id: str, limit_edges: int = 2000) -> Dict[str, Any]:
+    """
+    Returns a 1-hop neighborhood subgraph for a node.
+
+    `limit_edges` caps the number of edge rows returned to keep the UI responsive.
+    """
+    db_path = _path_mite_db()
+    if not os.path.exists(db_path):
+        raise HTTPException(
+            404,
+            "mite_ecology DB not initialized. In the UI: Ecology → Init DB (or run `python -m mite_ecology init`).",
+        )
+
+    try:
+        limit_edges_i = int(limit_edges)
+    except Exception:
+        limit_edges_i = 2000
+    limit_edges_i = max(1, min(limit_edges_i, 20000))
+
+    con = _connect_sqlite(db_path)
+    try:
+        ncol = _table_payload_col(con, "nodes") or "attrs_json"
+        ecol = _table_payload_col(con, "edges") or "attrs_json"
+
+        center_row = con.execute(
+            f"SELECT id, type, {ncol} AS payload_json FROM nodes WHERE id = ?",
+            (node_id,),
+        ).fetchone()
+        if not center_row:
+            raise HTTPException(404, f"node not found: {node_id}")
+
+        center = {
+            "id": center_row["id"],
+            "type": center_row["type"],
+            "attrs": safe_json_loads(center_row["payload_json"]),
+        }
+
+        # Fetch incident edges (both directions). Keep the query simple and fast.
+        e_rows = con.execute(
+            f"""
+            SELECT id, src, dst, type, {ecol} AS payload_json
+            FROM edges
+            WHERE src = ? OR dst = ?
+            ORDER BY id
+            LIMIT ?
+            """,
+            (node_id, node_id, limit_edges_i),
+        ).fetchall()
+
+        neighbor_ids = set([node_id])
+        edges: List[Dict[str, Any]] = []
+        for e in e_rows:
+            neighbor_ids.add(e["src"])
+            neighbor_ids.add(e["dst"])
+            edges.append(
+                {
+                    "id": e["id"],
+                    "src": e["src"],
+                    "dst": e["dst"],
+                    "type": e["type"],
+                    "attrs": safe_json_loads(e["payload_json"]),
+                }
+            )
+
+        # Cap node count for mobile sanity; keep center always.
+        neighbor_list = list(neighbor_ids)
+        if len(neighbor_list) > 2500:
+            neighbor_list = [node_id] + [x for x in neighbor_list if x != node_id][:2499]
+
+        ph = ",".join(["?"] * len(neighbor_list))
+        n_rows = con.execute(
+            f"SELECT id, type, {ncol} AS payload_json FROM nodes WHERE id IN ({ph})",
+            tuple(neighbor_list),
+        ).fetchall()
+
+        nodes: List[Dict[str, Any]] = []
+        for r in n_rows:
+            nodes.append(
+                {
+                    "id": r["id"],
+                    "type": r["type"],
+                    "attrs": safe_json_loads(r["payload_json"]),
+                }
+            )
+
+        return {
+            "db_path": db_path,
+            "payload_col_nodes": ncol,
+            "payload_col_edges": ecol,
+            "center": center,
+            "nodes": nodes,
+            "edges": edges,
+        }
+    finally:
+        con.close()

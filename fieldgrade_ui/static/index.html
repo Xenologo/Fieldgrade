@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fieldgrade UI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbarRow">
+      <div class="topbarLeft">
+        <div class="title">Fieldgrade UI</div>
+        <div class="subtitle">Single-page control panel (Termite + mite_ecology)</div>
+      </div>
+
+      <div class="topbarRight">
+        <div class="authRow">
+          <label class="inlineLabel" for="apiToken">API token</label>
+          <input id="apiToken" type="password" placeholder="(optional)" autocomplete="off" />
+          <button type="button" id="btnSaveToken">Set</button>
+          <button type="button" id="btnClearToken">Clear</button>
+        </div>
+        <div id="authStatus" class="authStatus">(no token)</div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button type="button" class="tab active" data-panel="ingest">Ingest</button>
+    <button type="button" class="tab" data-panel="bundles">Bundles</button>
+    <button type="button" class="tab" data-panel="ecology">Ecology</button>
+    <button type="button" class="tab" data-panel="jobs">Jobs</button>
+    <button type="button" class="tab" data-panel="graph">Graph Explorer</button>
+    <button type="button" class="tab" data-panel="logs">Logs</button>
+  </nav>
+
+  <main class="panels">
+    <section class="panel active" id="panel-ingest">
+      <h2>Ingest</h2>
+
+      <div class="row">
+        <div class="col">
+          <label for="uploadFile">Upload a file from your machine</label>
+          <input id="uploadFile" type="file" title="Upload a file from your machine" />
+          <div class="actions">
+            <button type="button" id="btnUpload">Upload</button>
+          </div>
+          <div class="kv">
+            <div class="k">Saved upload</div>
+            <div class="v" id="savedUploadPath">(none)</div>
+          </div>
+        </div>
+
+        <div class="col">
+          <label for="btnIngest">Ingest → Termite</label>
+          <div class="actions">
+            <button type="button" id="btnIngest" disabled>Ingest</button>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="row">
+        <div class="col">
+          <label for="sealLabel">Bundle label</label>
+          <input id="sealLabel" type="text" value="demo" title="Bundle label" placeholder="demo" />
+          <div class="actions">
+            <button type="button" id="btnSeal">Seal Bundle</button>
+          </div>
+          <div class="kv">
+            <div class="k">Last bundle</div>
+            <div class="v" id="lastBundlePath">(none)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-bundles">
+      <h2>Bundles</h2>
+
+      <div class="row">
+        <div class="col">
+          <div class="actions">
+            <button type="button" id="btnRefreshBundles">Refresh</button>
+          </div>
+          <label for="bundleSelect">Bundles (termite_fieldpack/artifacts/bundles_out/)</label>
+          <select id="bundleSelect" size="10" title="Bundles"></select>
+          <div class="hint">Tip: click an item then Verify / Replay.</div>
+        </div>
+
+        <div class="col">
+          <label for="policyPath">Policy path</label>
+          <input id="policyPath" type="text" title="Policy path" placeholder="/path/to/policy" />
+          <label for="allowlistPath">Allowlist path</label>
+          <input id="allowlistPath" type="text" title="Allowlist path" placeholder="/path/to/allowlist" />
+          <div class="actions">
+            <button type="button" id="btnVerify" disabled>Verify</button>
+            <button type="button" id="btnReplay" disabled>Replay</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-ecology">
+      <h2>Ecology</h2>
+
+      <div class="row">
+        <div class="col">
+          <div class="actions">
+            <button type="button" id="btnEcologyInit">Init DB</button>
+          </div>
+          <div class="actions">
+            <button type="button" id="btnEcologyImport" disabled>Import Bundle</button>
+            <button type="button" id="btnEcologyFull" disabled>Run Full Pipeline</button>
+          </div>
+          <div class="actions">
+            <button type="button" id="btnReplayVerify">Replay Verify</button>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="actions">
+            <button type="button" id="btnRefreshExports">Refresh Exports</button>
+          </div>
+          <label for="exportsList">Exports (mite_ecology/artifacts/export/)</label>
+          <ul id="exportsList" class="list"></ul>
+          <div class="hint">Click an export path to copy.</div>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="grid2">
+        <div class="card">
+          <h3>KG Validation (SHACL-lite)</h3>
+          <div class="row">
+            <button type="button" id="kgValidateBtn">Validate KG</button>
+          </div>
+          <pre id="kgValidateOut" class="mono small pre"></pre>
+        </div>
+
+        <div class="card">
+          <h3>Staged Bundles (Review/Quarantine)</h3>
+          <div class="row">
+            <label for="stagedStatusSel">Status</label>
+            <select id="stagedStatusSel" title="Staged bundle status filter">
+              <option value="">All</option>
+              <option value="PENDING">PENDING</option>
+              <option value="QUARANTINED">QUARANTINED</option>
+              <option value="APPROVED">APPROVED</option>
+              <option value="REJECTED">REJECTED</option>
+            </select>
+            <button type="button" id="stagedRefreshBtn">Refresh</button>
+          </div>
+          <div id="stagedList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-jobs">
+      <h2>Jobs</h2>
+      <p class="hint">Run long pipelines as background jobs (ingest → seal → verify → import → auto-run → replay-verify). For reliability at volume: run the UI server and the worker as separate processes.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Upload &amp; enqueue pipeline</h3>
+          <div class="row">
+            <label for="jobLabel">Label</label>
+            <input id="jobLabel" type="text" value="run" title="Job label" placeholder="run" />
+          </div>
+          <div class="row">
+            <label for="jobFile">File</label>
+            <input id="jobFile" type="file" title="Job input file" />
+          </div>
+          <div class="row">
+            <button type="button" id="btnUploadRun" class="primary">Enqueue pipeline job</button>
+            <button type="button" id="btnRefreshJobs">Refresh</button>
+          </div>
+          <div id="jobEnqueueOut" class="mono small pre"></div>
+        </div>
+
+        <div class="card">
+          <h3>Selected job</h3>
+          <div id="jobDetail" class="mono small pre">No job selected.</div>
+          <div class="row">
+            <button type="button" id="btnCancelJob" class="danger" disabled>Cancel queued job</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Recent jobs</h3>
+        <div class="row">
+          <label for="jobsStatus">Status</label>
+          <select id="jobsStatus" title="Jobs status filter">
+            <option value="">(all)</option>
+            <option value="queued">queued</option>
+            <option value="running">running</option>
+            <option value="succeeded">succeeded</option>
+            <option value="failed">failed</option>
+            <option value="canceled">canceled</option>
+          </select>
+          <label for="jobsLimit">Limit</label>
+          <input id="jobsLimit" type="number" value="50" min="1" max="200" title="Maximum number of jobs to show" />
+        </div>
+        <div id="jobsTableWrap"></div>
+      </div>
+
+      <div class="card">
+        <h3>Logs</h3>
+        <div id="jobLogs" class="mono small pre"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-graph">
+      <h2>Graph Explorer</h2>
+
+      <div class="row">
+        <div class="col">
+          <label for="nodeFilter">Node filter</label>
+          <input id="nodeFilter" type="text" title="Node filter" placeholder="filter by id/type" />
+          <div class="actions">
+            <button type="button" id="btnLoadNodes">Load Nodes</button>
+          </div>
+          <label for="nodeSelect">Node list</label>
+          <select id="nodeSelect" size="12" title="Node list"></select>
+        </div>
+
+        <div class="col">
+          <label>Neighborhood graph</label>
+          <div class="graphWrap">
+            <div id="cy" class="cy"></div>
+            <div class="inspector">
+              <div class="inspectorTitle">Inspector</div>
+              <pre id="inspectorPre" class="inspectorPre">Select a node/edge to inspect.</pre>
+            </div>
+          </div>
+          <div class="hint">Select a node to view hop-1 neighborhood. Click nodes/edges to inspect.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-logs">
+      <h2>Logs</h2>
+      <pre id="logBox" class="log"></pre>
+    </section>
+  </main>
+
+  <script src="/static/vendor/cytoscape.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

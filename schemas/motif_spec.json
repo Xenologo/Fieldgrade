@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mite_ecology.schemas.motif_spec.v1",
+  "title": "Motif Spec (minimal)",
+  "type": "object",
+  "required": ["context","nodes","edges"],
+  "properties": {
+    "context": {"type":"string"},
+    "nodes": {"type":"array","items":{"type":"string"}},
+    "edges": {"type":"array","items":{"type":"integer"}}
+  }
+}

@@ -1,0 +1,24 @@
+# Cross-platform line endings
+# Keep shell + python scripts LF so WSL/Linux execution is clean.
+.gitattributes text eol=lf
+.gitignore text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+Makefile text eol=lf
+
+# Extensionless scripts in bin/
+termite_fieldpack/bin/* text eol=lf
+mite_ecology/bin/* text eol=lf
+
+# PowerShell scripts are typically CRLF
+*.ps1 text eol=crlf

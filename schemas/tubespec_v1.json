@@ -1,0 +1,66 @@
+{
+  "$id": "https://mite-ecology.local/schemas/tubespec_v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "assets": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "compat": {
+      "type": "object"
+    },
+    "deps": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "limits": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "runtime": {
+      "additionalProperties": true,
+      "properties": {
+        "accelerators": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "python": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "python"
+      ],
+      "type": "object"
+    },
+    "tubespec": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tubespec",
+    "runtime",
+    "deps"
+  ],
+  "title": "TubeSpec v1",
+  "type": "object"
+}

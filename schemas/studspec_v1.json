@@ -1,0 +1,124 @@
+{
+  "$defs": {
+    "ioPort": {
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "schema": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "schema"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://mite-ecology.local/schemas/studspec_v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "attestation": {
+      "type": "object"
+    },
+    "constraints": {
+      "additionalProperties": true,
+      "properties": {
+        "determinism": {
+          "enum": [
+            "strict",
+            "bounded",
+            "best_effort"
+          ],
+          "type": "string"
+        },
+        "max_latency_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_ram_mb": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "side_effects": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "determinism"
+      ],
+      "type": "object"
+    },
+    "deps": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "io": {
+      "additionalProperties": true,
+      "properties": {
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/ioPort"
+          },
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/ioPort"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "inputs",
+        "outputs"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "enum": [
+        "frontend",
+        "backend",
+        "db",
+        "filler",
+        "evaluator",
+        "tool",
+        "pipeline"
+      ],
+      "type": "string"
+    },
+    "memite_id": {
+      "minLength": 3,
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object"
+    },
+    "studspec": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "studspec",
+    "memite_id",
+    "kind",
+    "io",
+    "constraints"
+  ],
+  "title": "StudSpec v1",
+  "type": "object"
+}

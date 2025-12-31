@@ -1,0 +1,10 @@
+allowlist:
+  toolchain_ids:
+    - id: "TERMITE_FIELD_WINDOWS_X64_V1"
+      pubkey_path: "../runtime/keys/toolchain_ed25519.pub"
+
+
+tools:
+  python:
+    cmd: ["python"]
+    arg_regex: "^[\\w\\-\\./:=]+$"
