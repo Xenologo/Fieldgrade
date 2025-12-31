@@ -1,11 +1,11 @@
 services:
   web:
     restart: always
-    ports: []
     environment:
       # Behind TLS termination (Caddy), trust proxy headers.
       FG_PROXY_HEADERS: "1"
-      FG_FORWARDED_ALLOW_IPS: "*"
+      # Explicitly set this; avoid '*' unless you're certain only the proxy can reach the app.
+      FG_FORWARDED_ALLOW_IPS: "${FG_FORWARDED_ALLOW_IPS:?set FG_FORWARDED_ALLOW_IPS in .env}"
 
   worker:
     restart: always
@@ -18,7 +18,7 @@ services:
       - "443:443"
     environment:
       # Set this to your public hostname (e.g. fieldgrade.example.com)
-      FIELDGRADE_DOMAIN: "${FIELDGRADE_DOMAIN:-localhost}"
+      FIELDGRADE_DOMAIN: "${FIELDGRADE_DOMAIN:?set FIELDGRADE_DOMAIN in .env}"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
