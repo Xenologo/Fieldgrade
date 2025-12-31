@@ -54,3 +54,23 @@ jobs:
         shell: pwsh
         run: |
           .\.venv\Scripts\python -m pytest -q
+
+  docker:
+    name: docker build + compose config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        shell: bash
+        run: |
+          docker build -t fieldgrade:ci .
+
+      - name: Compose config + build
+        shell: bash
+        env:
+          FG_API_TOKEN: ci_dummy_token
+        run: |
+          docker compose -f compose.yaml config
+          docker compose -f compose.yaml build
