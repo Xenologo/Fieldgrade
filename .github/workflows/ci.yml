@@ -93,4 +93,5 @@ jobs:
           FG_API_TOKEN: ci_dummy_token
         run: |
           docker compose -f compose.yaml config
-          docker compose -f compose.yaml build --progress=plain
+          # Note: We intentionally do not run `docker compose build` here because it
+          # would rebuild the same Dockerfile context and add redundant CI work.
