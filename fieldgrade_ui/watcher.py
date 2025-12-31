@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 from typing import Dict, Optional
 
-from .config import jobs_db_path, repo_root
+from .config import jobs_db_path, watch_state_path
 from .jobs import create_job
 
-def _state_path() -> Path:
-    p = os.environ.get("FG_WATCH_STATE", "")
-    if p:
-        return Path(p)
-    return repo_root() / "fieldgrade_ui" / "runtime" / "upload_watch.json"
-
 def load_state() -> Dict[str, dict]:
-    sp = _state_path()
+    sp = watch_state_path()
     if sp.exists():
         try:
             return json.loads(sp.read_text())
@@ -25,7 +18,7 @@ def load_state() -> Dict[str, dict]:
     return {}
 
 def save_state(state: Dict[str, dict]) -> None:
-    sp = _state_path()
+    sp = watch_state_path()
     sp.parent.mkdir(parents=True, exist_ok=True)
     sp.write_text(json.dumps(state, indent=2))
 

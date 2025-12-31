@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
+from .storage import publish_bundle_if_configured
+
 def run_cmd(
     cmd: list[str],
     cwd: Optional[Path] = None,
@@ -62,6 +64,21 @@ def run_termite_to_ecology_pipeline(
     allowlist_path: Optional[Path] = None,
     log: Optional[Callable[[str], None]] = None,
 ) -> Dict[str, Any]:
+    runner = (os.environ.get("FG_PIPELINE_RUNNER") or "subprocess").strip().lower()
+    if runner in ("lib", "library", "inprocess"):
+        from .internal_pipeline import run_termite_to_ecology_pipeline_library
+
+        if log:
+            log("pipeline: using in-process library runner (FG_PIPELINE_RUNNER=library)")
+        return run_termite_to_ecology_pipeline_library(
+            repo_root,
+            upload_path=upload_path,
+            label=label,
+            policy_path=policy_path,
+            allowlist_path=allowlist_path,
+            log=log,
+        )
+
     # Paths
     fieldpack_dir = repo_root / "termite_fieldpack"
     ecology_dir = repo_root / "mite_ecology"
@@ -86,6 +103,23 @@ def run_termite_to_ecology_pipeline(
     if rc != 0:
         raise RuntimeError(f"termite seal failed rc={rc}: {err or out}")
     bundle_path = Path(out.strip())
+
+    bundle_store_info: Dict[str, Any] = {}
+    try:
+        stored = publish_bundle_if_configured(repo_root, bundle_path)
+        if stored is not None:
+            bundle_store_info = {
+                "bundle_store": (os.environ.get("FG_BUNDLE_STORE") or "").strip() or "s3",
+                "bundle_store_key": stored.key,
+                "bundle_sha256": stored.sha256,
+                "bundle_uri": stored.uri,
+            }
+            if log:
+                log(f"bundle published: {stored.uri} (sha256={stored.sha256})")
+    except Exception as e:
+        # Publishing is optional; keep pipeline semantics unchanged.
+        if log:
+            log(f"bundle publish skipped/failed: {type(e).__name__}: {e}")
 
     # 3) termite verify
     if policy_path is None:
@@ -130,4 +164,5 @@ def run_termite_to_ecology_pipeline(
         "bundle_path": str(bundle_path),
         "verify": verify_json,
         "replay_verify": replay_json,
+        **bundle_store_info,
     }

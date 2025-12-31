@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import argparse
-import os
 import ipaddress
+
+from .config import api_token, forwarded_allow_ips, proxy_headers_enabled, ui_host, ui_log_level, ui_port, ui_reload, ui_workers
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m fieldgrade_ui")
@@ -26,15 +27,15 @@ def main() -> None:
         return
 
     # default: serve
-    host = os.environ.get("FG_HOST") or os.environ.get("FIELDGRADE_UI_HOST", "127.0.0.1")
-    port = int(os.environ.get("FG_PORT") or os.environ.get("FIELDGRADE_UI_PORT", "8787"))
-    workers = int(os.environ.get("FG_WORKERS") or os.environ.get("FIELDGRADE_UI_WORKERS", "1"))
-    log_level = os.environ.get("FG_LOG_LEVEL", "info")
-    reload = os.environ.get("FG_RELOAD", "0") == "1"
+    host = ui_host()
+    port = ui_port()
+    workers = ui_workers()
+    log_level = ui_log_level()
+    reload = ui_reload()
 
     # Security: refuse to bind to a non-loopback interface unless an API token is configured.
     # This prevents path-bearing endpoints from being reachable over the network without auth.
-    tok = (os.environ.get("FG_API_TOKEN") or os.environ.get("FIELDGRADE_UI_API_TOKEN") or "").strip()
+    tok = api_token()
 
     def _is_loopback(h: str) -> bool:
         hs = (h or "").strip()
@@ -67,6 +68,8 @@ def main() -> None:
         workers=workers,
         reload=reload,
         log_level=log_level,
+        proxy_headers=proxy_headers_enabled(),
+        forwarded_allow_ips=forwarded_allow_ips(),
     )
 
 if __name__ == "__main__":
