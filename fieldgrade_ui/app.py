@@ -6,11 +6,12 @@ import re
 import sqlite3
 import subprocess
 import sys
+import hashlib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import threading
@@ -29,6 +30,7 @@ except Exception:
 from .config import (
     api_extra_roots,
     api_token,
+    api_tokens,
     cmd_timeout_s,
     enable_embedded_worker,
     env_bool,
@@ -45,6 +47,13 @@ from .watcher import loop as watcher_loop
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TERMITE_DIR = REPO_ROOT / "termite_fieldpack"
 ECOLOGY_DIR = REPO_ROOT / "mite_ecology"
+
+
+def _tenants_root() -> Path:
+    override = (os.environ.get("FG_TENANTS_ROOT") or "").strip()
+    if override:
+        return _safe_resolve_path(Path(override))
+    return REPO_ROOT / "fieldgrade_ui" / "runtime" / "tenants"
 
 
 def _path_mite_db() -> Path:
@@ -287,9 +296,135 @@ def readyz() -> JSONResponse:
 
     return JSONResponse({"ok": True}, status_code=200)
 
-API_TOKEN = api_token()
 
-if API_TOKEN:
+def _token_hash(token: str) -> str:
+    return hashlib.sha256((token or "").encode("utf-8", "replace")).hexdigest()
+
+
+API_TOKENS = set(api_tokens())
+
+
+def _multi_tenant_enabled() -> bool:
+    # Enable per-token scoping when multiple principals exist.
+    return len(API_TOKENS) > 1
+
+
+def _path_bundles_dir() -> Path:
+    # Allow overriding artifacts root for tests / alternate runtime layouts.
+    artifacts = _path_termite_artifacts()
+    return artifacts / "bundles_out"
+
+
+def _tenant_dir(request: Request) -> Optional[Path]:
+    owner = _owner_hash(request)
+    if not owner:
+        return None
+    return _tenants_root() / owner
+
+
+def _tenant_ecology_config_path(request: Request) -> Optional[Path]:
+    if not _multi_tenant_enabled():
+        return None
+    td = _tenant_dir(request)
+    if td is None:
+        return None
+
+    cfg_path = td / "ecology.yaml"
+    if cfg_path.exists():
+        return cfg_path
+
+    runtime_root = td / "runtime"
+    db_path = runtime_root / "mite_ecology.sqlite"
+    imports_root = td / "imports"
+    exports_root = td / "exports"
+    for p in (runtime_root, imports_root, exports_root):
+        p.mkdir(parents=True, exist_ok=True)
+
+    # Minimal config (yaml) for mite_ecology CLI.
+    cfg_text = "\n".join(
+        [
+            "mite_ecology:",
+            f"  runtime_root: {runtime_root.as_posix()}",
+            f"  db_path: {db_path.as_posix()}",
+            f"  imports_root: {imports_root.as_posix()}",
+            f"  exports_root: {exports_root.as_posix()}",
+            "",
+        ]
+    )
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg_path.write_text(cfg_text, encoding="utf-8")
+    return cfg_path
+
+
+def _tenant_mite_db_path(request: Request) -> Path:
+    if not _multi_tenant_enabled():
+        return _path_mite_db()
+    td = _tenant_dir(request)
+    if td is None:
+        return _path_mite_db()
+    return td / "runtime" / "mite_ecology.sqlite"
+
+
+def _tenant_exports_root(request: Request) -> Path:
+    if not _multi_tenant_enabled():
+        return EXPORTS_DIR
+    td = _tenant_dir(request)
+    if td is None:
+        return EXPORTS_DIR
+    return td / "exports"
+
+
+def _visible_bundle_paths_for_owner(request: Request) -> list[Path]:
+    """Return bundle paths visible to this principal.
+
+    In multi-tenant mode, the bundle list is derived from succeeded jobs owned
+    by this principal (e.g. pipeline runs or termite seal calls).
+    """
+    bundles_dir = _path_bundles_dir()
+    bundles_dir.mkdir(parents=True, exist_ok=True)
+    if not _multi_tenant_enabled():
+        items = sorted(bundles_dir.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+        return [p for p in items if p.is_file()]
+
+    owner = _owner_hash(request)
+    if not owner:
+        return []
+
+    dbp = jobs_db_path()
+    items = jobs_list(dbp, owner_token_hash=owner, limit=2000, status="succeeded")
+    seen: set[str] = set()
+    out: list[Path] = []
+    for j in items:
+        r = j.result or {}
+        if not isinstance(r, dict):
+            continue
+        bp = r.get("bundle_path")
+        if not bp:
+            continue
+        try:
+            p = _safe_resolve_path(Path(str(bp)))
+        except Exception:
+            continue
+        if not _is_under_root(p, bundles_dir):
+            continue
+        if not p.exists() or not p.is_file():
+            continue
+        sp = str(p)
+        if sp in seen:
+            continue
+        seen.add(sp)
+        out.append(p)
+    return out
+
+
+def _require_visible_bundle(request: Request, bundle_path: Path) -> None:
+    if not _multi_tenant_enabled():
+        return
+    allowed = {str(p) for p in _visible_bundle_paths_for_owner(request)}
+    if str(bundle_path) not in allowed:
+        raise HTTPException(status_code=404, detail="bundle_not_found")
+
+if API_TOKENS:
     @app.middleware("http")
     async def _api_token_auth(request, call_next):
         # Keep the UI shell accessible without auth; protect all API actions.
@@ -302,10 +437,17 @@ if API_TOKEN:
         if not token and auth.lower().startswith("bearer "):
             token = auth[7:].strip()
 
-        if token != API_TOKEN:
+        if token not in API_TOKENS:
             return JSONResponse({"error": "unauthorized"}, status_code=401)
 
+        request.state.api_token = token
+        request.state.owner_token_hash = _token_hash(token)
+
         return await call_next(request)
+
+
+def _owner_hash(request: Request) -> Optional[str]:
+    return getattr(request.state, "owner_token_hash", None)
 
 def _bg_worker_loop(stop_evt: threading.Event) -> None:
     """Embedded background worker (only safe with FG_WORKERS=1)."""
@@ -371,8 +513,10 @@ def state() -> Dict[str, Any]:
         "ecology_dir": str(ECOLOGY_DIR),
         "default_policy": str(DEFAULT_POLICY),
         "default_allowlist": str(DEFAULT_ALLOWLIST),
-        "bundles_dir": str(BUNDLES_DIR),
+        "bundles_dir": str(_path_bundles_dir()),
         "exports_dir": str(EXPORTS_DIR),
+        "tenants_root": str(_tenants_root()),
+        "multi_tenant": _multi_tenant_enabled(),
         "uploads_dir": str(UPLOADS_DIR),
         "python": sys.executable,
     }
@@ -428,14 +572,21 @@ else:
 
 
 @app.get("/api/metrics")
-def api_metrics():
+def api_metrics(request: Request):
     """Lightweight operational metrics (JSON)."""
     dbp = jobs_db_path()
     ensure_jobs_db(dbp)
 
     con = sqlite3.connect(str(dbp))
     try:
-        rows = con.execute("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status").fetchall()
+        owner = _owner_hash(request)
+        if owner is None:
+            rows = con.execute("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status").fetchall()
+        else:
+            rows = con.execute(
+                "SELECT status, COUNT(*) AS n FROM jobs WHERE owner_token_hash=? GROUP BY status",
+                (owner,),
+            ).fetchall()
         jobs_by_status = {r[0]: int(r[1]) for r in rows}
     finally:
         con.close()
@@ -473,45 +624,56 @@ def api_metrics():
 
 
 @app.get("/api/jobs")
-def api_jobs(limit: int = 50, status: str | None = None):
+def api_jobs(request: Request, limit: int = 50, status: str | None = None):
     dbp = jobs_db_path()
-    items = jobs_list(dbp, limit=limit, status=status)
+    items = jobs_list(dbp, owner_token_hash=_owner_hash(request), limit=limit, status=status)
     return {"jobs": [j.__dict__ for j in items]}
 
 @app.get("/api/jobs/{job_id}")
-def api_job(job_id: int):
+def api_job(request: Request, job_id: int):
     dbp = jobs_db_path()
-    j = jobs_get(dbp, job_id)
+    j = jobs_get(dbp, job_id, owner_token_hash=_owner_hash(request))
     if not j:
         return JSONResponse({"error": "not found"}, status_code=404)
     return {"job": j.__dict__}
 
 @app.get("/api/jobs/{job_id}/logs")
-def api_job_logs(job_id: int, limit: int = 500):
+def api_job_logs(request: Request, job_id: int, limit: int = 500):
     dbp = jobs_db_path()
-    logs = jobs_logs(dbp, job_id, limit=limit)
+    j = jobs_get(dbp, job_id, owner_token_hash=_owner_hash(request))
+    if not j:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    logs = jobs_logs(dbp, job_id, owner_token_hash=_owner_hash(request), limit=limit)
     return {"job_id": job_id, "logs": logs}
 
 @app.post("/api/jobs/{job_id}/cancel")
-def api_job_cancel(job_id: int):
+def api_job_cancel(request: Request, job_id: int):
     dbp = jobs_db_path()
-    ok = jobs_cancel(dbp, job_id)
+    j = jobs_get(dbp, job_id, owner_token_hash=_owner_hash(request))
+    if not j:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    ok = jobs_cancel(dbp, job_id, owner_token_hash=_owner_hash(request))
     return {"ok": ok}
 
 @app.post("/api/jobs/pipeline")
-def api_jobs_pipeline(payload: dict):
+def api_jobs_pipeline(request: Request, payload: dict):
     """Enqueue a full termite→mite_ecology pipeline job.
 
     payload: {upload_path: str, label?: str}
     """
     upload_path = _sandbox_path(str(payload.get("upload_path") or ""), roots=[UPLOADS_DIR], what="upload_path", must_exist=True, must_be_file=True)
     label = str(payload.get("label", "run") or "run")
-    job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(upload_path), "label": label})
+    job_id = create_job(
+        jobs_db_path(),
+        "pipeline",
+        {"upload_path": str(upload_path), "label": label},
+        owner_token_hash=_owner_hash(request) or "",
+    )
     return {"ok": True, "job_id": job_id, "upload_path": str(upload_path), "label": label}
 
 if _MULTIPART_OK:
     @app.post("/api/pipeline/upload_run")
-    async def api_pipeline_upload_run(file: UploadFile = File(...), label: str = "run"):
+    async def api_pipeline_upload_run(request: Request, file: UploadFile = File(...), label: str = "run"):
         """Upload a file and enqueue the pipeline as a background job."""
         upload_dir = _path_uploads()
         upload_dir.mkdir(parents=True, exist_ok=True)
@@ -549,7 +711,12 @@ if _MULTIPART_OK:
                     raise HTTPException(status_code=413, detail=f"upload_too_large: {total} > {max_bytes}")
                 f.write(chunk)
 
-        job_id = create_job(jobs_db_path(), "pipeline", {"upload_path": str(dest), "label": label})
+        job_id = create_job(
+            jobs_db_path(),
+            "pipeline",
+            {"upload_path": str(dest), "label": label},
+            owner_token_hash=_owner_hash(request) or "",
+        )
         return {"ok": True, "job_id": job_id, "upload_path": str(dest), "bytes": total}
 else:
     @app.post("/api/pipeline/upload_run")
@@ -570,17 +737,33 @@ def termite_ingest(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/termite/seal")
-def termite_seal(body: Dict[str, Any]) -> Dict[str, Any]:
+def termite_seal(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
     label = str(body.get("label", "demo") or "demo")
     cmd = [sys.executable, "-m", "termite.cli", "seal", "--label", label]
     res = _run_cmd(cmd, cwd=TERMITE_DIR)
+
+    # In multi-tenant mode, register created bundles so /api/bundles can be scoped.
+    if _multi_tenant_enabled() and res.ok:
+        try:
+            bp = Path((res.stdout or "").strip())
+            if bp:
+                job_id = create_job(
+                    jobs_db_path(),
+                    "termite_seal",
+                    {"label": label},
+                    owner_token_hash=_owner_hash(request) or "",
+                )
+                from .jobs import succeed_job
+
+                succeed_job(jobs_db_path(), job_id, {"bundle_path": str(bp)})
+        except Exception:
+            pass
     return asdict(res)
 
 
 @app.get("/api/bundles")
-def list_bundles() -> Dict[str, Any]:
-    BUNDLES_DIR.mkdir(parents=True, exist_ok=True)
-    items = sorted(BUNDLES_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+def list_bundles(request: Request) -> Dict[str, Any]:
+    items = _visible_bundle_paths_for_owner(request)
     return {
         "ok": True,
         "bundles": [str(p) for p in items],
@@ -594,8 +777,9 @@ def _policy_allowlist_from_body(body: Dict[str, Any]) -> Tuple[Path, Path]:
 
 
 @app.post("/api/termite/verify")
-def termite_verify(body: Dict[str, Any]) -> Dict[str, Any]:
-    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+def termite_verify(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[_path_bundles_dir()], what="bundle", must_exist=True, must_be_file=True)
+    _require_visible_bundle(request, bundle)
     policy, allowlist = _policy_allowlist_from_body(body)
 
     cmd = [
@@ -614,8 +798,9 @@ def termite_verify(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/termite/replay")
-def termite_replay(body: Dict[str, Any]) -> Dict[str, Any]:
-    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+def termite_replay(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[_path_bundles_dir()], what="bundle", must_exist=True, must_be_file=True)
+    _require_visible_bundle(request, bundle)
     policy, allowlist = _policy_allowlist_from_body(body)
 
     cmd = [
@@ -634,19 +819,26 @@ def termite_replay(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/ecology/init")
-def ecology_init() -> Dict[str, Any]:
+def ecology_init(request: Request) -> Dict[str, Any]:
     cmd = [sys.executable, "-m", "mite_ecology.cli", "init"]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
     return asdict(res)
 
 
 @app.post("/api/ecology/import")
-def ecology_import(body: Dict[str, Any]) -> Dict[str, Any]:
-    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+def ecology_import(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[_path_bundles_dir()], what="bundle", must_exist=True, must_be_file=True)
+    _require_visible_bundle(request, bundle)
     # Default import mode to AUTO_MERGE for the UI so repeat runs work without manual review.
     mode = body.get("mode") or "AUTO_MERGE"
 
     cmd = [sys.executable, "-m", "mite_ecology.cli", "import-bundle", str(bundle), "--idempotent"]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     if mode:
         cmd += ["--mode", str(mode)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
@@ -662,16 +854,22 @@ def ecology_import(body: Dict[str, Any]) -> Dict[str, Any]:
     return asdict(res)
 
 @app.get("/api/ecology/kg_validate")
-def ecology_kg_validate() -> Dict[str, Any]:
+def ecology_kg_validate(request: Request) -> Dict[str, Any]:
     cmd = [sys.executable, "-m", "mite_ecology.cli", "kg-validate"]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
     return asdict(res)
 
 
 @app.post("/api/ecology/review_list")
-def ecology_review_list(body: Dict[str, Any]) -> Dict[str, Any]:
+def ecology_review_list(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
     status = body.get("status")
     cmd = [sys.executable, "-m", "mite_ecology.cli", "review-list", "--json"]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     if status:
         cmd += ["--status", str(status)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
@@ -679,13 +877,16 @@ def ecology_review_list(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/ecology/review_approve")
-def ecology_review_approve(body: Dict[str, Any]) -> Dict[str, Any]:
+def ecology_review_approve(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
     sid = int(body.get("id", 0))
     actor = str(body.get("actor") or "ui")
     notes = body.get("notes")
     if sid <= 0:
         raise HTTPException(status_code=400, detail="missing id")
     cmd = [sys.executable, "-m", "mite_ecology.cli", "review-approve", str(sid), "--actor", actor]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     if notes:
         cmd += ["--notes", str(notes)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
@@ -693,13 +894,16 @@ def ecology_review_approve(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/ecology/review_reject")
-def ecology_review_reject(body: Dict[str, Any]) -> Dict[str, Any]:
+def ecology_review_reject(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
     sid = int(body.get("id", 0))
     actor = str(body.get("actor") or "ui")
     notes = body.get("notes")
     if sid <= 0:
         raise HTTPException(status_code=400, detail="missing id")
     cmd = [sys.executable, "-m", "mite_ecology.cli", "review-reject", str(sid), "--actor", actor]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     if notes:
         cmd += ["--notes", str(notes)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
@@ -718,8 +922,9 @@ def termite_spec_validate(body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/api/ecology/full_pipeline")
-def ecology_full_pipeline(body: Dict[str, Any]) -> Dict[str, Any]:
-    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[BUNDLES_DIR], what="bundle", must_exist=True, must_be_file=True)
+def ecology_full_pipeline(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    bundle = _sandbox_path(str(body.get("bundle_path", "") or ""), roots=[_path_bundles_dir()], what="bundle", must_exist=True, must_be_file=True)
+    _require_visible_bundle(request, bundle)
 
     # If the ecology config defaults to review-only, a bundle can be staged (exit 0)
     # and the KG remains empty, causing downstream GNN/GAT to fail. For the "full pipeline"
@@ -748,11 +953,14 @@ def ecology_full_pipeline(body: Dict[str, Any]) -> Dict[str, Any]:
 
             raise HTTPException(status_code=400, detail={"failed_step": cmd, "result": asdict(r)})
 
-    step([sys.executable, "-m", "mite_ecology.cli", "init"])
-    step([sys.executable, "-m", "mite_ecology.cli", "import-bundle", str(bundle), "--idempotent", "--mode", mode])
+    cfg = _tenant_ecology_config_path(request)
+    cfg_args: List[str] = ["--config", str(cfg)] if cfg is not None else []
+
+    step([sys.executable, "-m", "mite_ecology.cli", "init", *cfg_args])
+    step([sys.executable, "-m", "mite_ecology.cli", "import-bundle", str(bundle), "--idempotent", "--mode", mode, *cfg_args])
 
     # Fail fast with a clearer error if the import did not populate the KG.
-    db_path = ECOLOGY_DIR / "runtime" / "mite_ecology.sqlite"
+    db_path = _tenant_mite_db_path(request)
     try:
         con = _connect_sqlite(db_path)
         try:
@@ -772,26 +980,30 @@ def ecology_full_pipeline(body: Dict[str, Any]) -> Dict[str, Any]:
                 "mode": mode,
             },
         )
-    step([sys.executable, "-m", "mite_ecology.cli", "gnn"])
-    step([sys.executable, "-m", "mite_ecology.cli", "gat"])
-    step([sys.executable, "-m", "mite_ecology.cli", "motifs"])
-    step([sys.executable, "-m", "mite_ecology.cli", "ga"])
-    step([sys.executable, "-m", "mite_ecology.cli", "export"])
+    step([sys.executable, "-m", "mite_ecology.cli", "gnn", *cfg_args])
+    step([sys.executable, "-m", "mite_ecology.cli", "gat", *cfg_args])
+    step([sys.executable, "-m", "mite_ecology.cli", "motifs", *cfg_args])
+    step([sys.executable, "-m", "mite_ecology.cli", "ga", *cfg_args])
+    step([sys.executable, "-m", "mite_ecology.cli", "export", *cfg_args])
 
     return {"ok": True, "steps": steps}
 
 
 @app.post("/api/ecology/replay_verify")
-def ecology_replay_verify() -> Dict[str, Any]:
+def ecology_replay_verify(request: Request) -> Dict[str, Any]:
     cmd = [sys.executable, "-m", "mite_ecology.cli", "replay-verify"]
+    cfg = _tenant_ecology_config_path(request)
+    if cfg is not None:
+        cmd += ["--config", str(cfg)]
     res = _run_cmd(cmd, cwd=ECOLOGY_DIR)
     return asdict(res)
 
 
 @app.get("/api/exports")
-def list_exports() -> Dict[str, Any]:
-    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    items = sorted(EXPORTS_DIR.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
+def list_exports(request: Request) -> Dict[str, Any]:
+    root = _tenant_exports_root(request)
+    root.mkdir(parents=True, exist_ok=True)
+    items = sorted(root.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
     return {
         "ok": True,
         "exports": [str(p) for p in items if p.is_file()],
@@ -799,14 +1011,14 @@ def list_exports() -> Dict[str, Any]:
 
 
 @app.get("/api/graph/nodes")
-def graph_nodes(filter: str = "", limit: int = 200) -> Dict[str, Any]:
+def graph_nodes(request: Request, filter: str = "", limit: int = 200) -> Dict[str, Any]:
     """
     Lightweight graph browser: returns a slice of nodes plus a suggested center node.
 
     This endpoint is intentionally schema-tolerant: it supports both the current
     `attrs_json` payload column and older `json` payload column variants.
     """
-    db_path = _path_mite_db()
+    db_path = _tenant_mite_db_path(request)
     if not os.path.exists(db_path):
         raise HTTPException(
             404,
@@ -873,13 +1085,13 @@ def graph_nodes(filter: str = "", limit: int = 200) -> Dict[str, Any]:
         con.close()
 
 @app.get("/api/graph/neighborhood")
-def graph_neighborhood(node_id: str, limit_edges: int = 2000) -> Dict[str, Any]:
+def graph_neighborhood(request: Request, node_id: str, limit_edges: int = 2000) -> Dict[str, Any]:
     """
     Returns a 1-hop neighborhood subgraph for a node.
 
     `limit_edges` caps the number of edge rows returned to keep the UI responsive.
     """
-    db_path = _path_mite_db()
+    db_path = _tenant_mite_db_path(request)
     if not os.path.exists(db_path):
         raise HTTPException(
             404,

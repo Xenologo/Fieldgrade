@@ -14,6 +14,7 @@ class Job:
     id: int
     kind: str
     status: str
+    owner_token_hash: str
     params: Dict[str, Any]
     result: Optional[Dict[str, Any]]
     error: Optional[str]
@@ -35,6 +36,7 @@ def ensure_db(db_path: Path) -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 kind TEXT NOT NULL,
                 status TEXT NOT NULL,
+                owner_token_hash TEXT NOT NULL DEFAULT '',
                 params_json TEXT NOT NULL,
                 result_json TEXT,
                 error TEXT,
@@ -44,6 +46,12 @@ def ensure_db(db_path: Path) -> None:
             )
             """
         )
+
+        # Lightweight migration: older DBs won't have owner_token_hash.
+        cols = [r[1] for r in con.execute("PRAGMA table_info(jobs)").fetchall()]
+        if "owner_token_hash" not in cols:
+            con.execute("ALTER TABLE jobs ADD COLUMN owner_token_hash TEXT NOT NULL DEFAULT '';")
+
         con.execute(
             """
             CREATE TABLE IF NOT EXISTS job_logs (
@@ -57,6 +65,7 @@ def ensure_db(db_path: Path) -> None:
             """
         )
         con.execute("CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status, created_at);")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_jobs_owner_id ON jobs(owner_token_hash, id);")
         con.execute("CREATE INDEX IF NOT EXISTS idx_job_logs_job ON job_logs(job_id, ts);")
         con.commit()
     finally:
@@ -67,13 +76,13 @@ def _connect(db_path: Path) -> sqlite3.Connection:
     con.row_factory = sqlite3.Row
     return con
 
-def create_job(db_path: Path, kind: str, params: Dict[str, Any]) -> int:
+def create_job(db_path: Path, kind: str, params: Dict[str, Any], *, owner_token_hash: str = "") -> int:
     ensure_db(db_path)
     con = _connect(db_path)
     try:
         cur = con.execute(
-            "INSERT INTO jobs(kind, status, params_json, created_at) VALUES (?, 'queued', ?, ?)",
-            (kind, json.dumps(params, ensure_ascii=False), _now()),
+            "INSERT INTO jobs(kind, status, owner_token_hash, params_json, created_at) VALUES (?, 'queued', ?, ?, ?)",
+            (kind, owner_token_hash or "", json.dumps(params, ensure_ascii=False), _now()),
         )
         job_id = int(cur.lastrowid)
         con.execute(
@@ -84,41 +93,75 @@ def create_job(db_path: Path, kind: str, params: Dict[str, Any]) -> int:
     finally:
         con.close()
 
-def list_jobs(db_path: Path, limit: int = 50, status: Optional[str] = None) -> List[Job]:
+def list_jobs(
+    db_path: Path,
+    *,
+    owner_token_hash: Optional[str] = None,
+    limit: int = 50,
+    status: Optional[str] = None,
+) -> List[Job]:
     ensure_db(db_path)
     con = _connect(db_path)
     try:
-        if status:
-            rows = con.execute(
-                "SELECT * FROM jobs WHERE status=? ORDER BY id DESC LIMIT ?",
-                (status, limit),
-            ).fetchall()
+        # Use fixed SQL strings (no string interpolation) to keep query
+        # construction obviously safe for scanners and reviewers.
+        if owner_token_hash is None and not status:
+            sql = "SELECT * FROM jobs ORDER BY id DESC LIMIT ?"
+            params = (limit,)
+        elif owner_token_hash is not None and not status:
+            sql = "SELECT * FROM jobs WHERE owner_token_hash=? ORDER BY id DESC LIMIT ?"
+            params = (owner_token_hash, limit)
+        elif owner_token_hash is None and status:
+            sql = "SELECT * FROM jobs WHERE status=? ORDER BY id DESC LIMIT ?"
+            params = (status, limit)
         else:
-            rows = con.execute(
-                "SELECT * FROM jobs ORDER BY id DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
+            sql = "SELECT * FROM jobs WHERE owner_token_hash=? AND status=? ORDER BY id DESC LIMIT ?"
+            params = (owner_token_hash, status, limit)
+
+        rows = con.execute(sql, params).fetchall()
         return [_row_to_job(r) for r in rows]
     finally:
         con.close()
 
-def get_job(db_path: Path, job_id: int) -> Optional[Job]:
+def get_job(db_path: Path, job_id: int, *, owner_token_hash: Optional[str] = None) -> Optional[Job]:
     ensure_db(db_path)
     con = _connect(db_path)
     try:
-        r = con.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+        if owner_token_hash is None:
+            r = con.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+        else:
+            r = con.execute("SELECT * FROM jobs WHERE id=? AND owner_token_hash=?", (job_id, owner_token_hash)).fetchone()
         return _row_to_job(r) if r else None
     finally:
         con.close()
 
-def get_job_logs(db_path: Path, job_id: int, limit: int = 500) -> List[Dict[str, Any]]:
+def get_job_logs(
+    db_path: Path,
+    job_id: int,
+    *,
+    owner_token_hash: Optional[str] = None,
+    limit: int = 500,
+) -> List[Dict[str, Any]]:
     ensure_db(db_path)
     con = _connect(db_path)
     try:
-        rows = con.execute(
-            "SELECT ts, level, message FROM job_logs WHERE job_id=? ORDER BY id ASC LIMIT ?",
-            (job_id, limit),
-        ).fetchall()
+        if owner_token_hash is None:
+            rows = con.execute(
+                "SELECT ts, level, message FROM job_logs WHERE job_id=? ORDER BY id ASC LIMIT ?",
+                (job_id, limit),
+            ).fetchall()
+        else:
+            rows = con.execute(
+                """
+                SELECT l.ts, l.level, l.message
+                FROM job_logs l
+                JOIN jobs j ON j.id = l.job_id
+                WHERE l.job_id=? AND j.owner_token_hash=?
+                ORDER BY l.id ASC
+                LIMIT ?
+                """,
+                (job_id, owner_token_hash, limit),
+            ).fetchall()
         return [{"ts": float(r["ts"]), "level": str(r["level"]), "message": str(r["message"])} for r in rows]
     finally:
         con.close()
@@ -134,14 +177,20 @@ def append_log(db_path: Path, job_id: int, level: str, message: str) -> None:
     finally:
         con.close()
 
-def cancel_job(db_path: Path, job_id: int) -> bool:
+def cancel_job(db_path: Path, job_id: int, *, owner_token_hash: Optional[str] = None) -> bool:
     ensure_db(db_path)
     con = _connect(db_path)
     try:
-        cur = con.execute(
-            "UPDATE jobs SET status='canceled', finished_at=? WHERE id=? AND status IN ('queued')",
-            (_now(), job_id),
-        )
+        if owner_token_hash is None:
+            cur = con.execute(
+                "UPDATE jobs SET status='canceled', finished_at=? WHERE id=? AND status IN ('queued')",
+                (_now(), job_id),
+            )
+        else:
+            cur = con.execute(
+                "UPDATE jobs SET status='canceled', finished_at=? WHERE id=? AND owner_token_hash=? AND status IN ('queued')",
+                (_now(), job_id, owner_token_hash),
+            )
         ok = cur.rowcount > 0
         if ok:
             append_log(db_path, job_id, "warn", "canceled by user")
@@ -227,6 +276,7 @@ def _row_to_job(r: Any) -> Job:
         id=int(r["id"]),
         kind=str(r["kind"]),
         status=str(r["status"]),
+        owner_token_hash=str(r["owner_token_hash"] or ""),
         params=params,
         result=result,
         error=str(r["error"]) if r["error"] else None,
