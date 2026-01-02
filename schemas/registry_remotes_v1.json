@@ -1,0 +1,39 @@
+{
+  "$id": "https://mite-ecology.local/schemas/registry_remotes_v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "type": { "type": "string", "const": "registry_remotes/1.0" },
+    "version": { "type": "string", "minLength": 1 },
+    "remotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "remote_id": { "type": "string", "minLength": 1 },
+          "tuf_base": { "type": "string", "minLength": 1 },
+          "enabled": { "type": "boolean" },
+          "cache": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "ttl_seconds": { "type": "integer", "minimum": 0 },
+              "cache_dir": { "type": "string" }
+            }
+          },
+          "trust": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "tuf_root_pubkeys": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        },
+        "required": ["remote_id", "tuf_base"]
+      }
+    }
+  },
+  "required": ["type", "version", "remotes"]
+}
