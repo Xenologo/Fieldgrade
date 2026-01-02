@@ -20,6 +20,7 @@ from .export import export_best_genome
 from .llm_sync import llm_sync as _llm_sync, llm_propose_motif as _llm_propose_motif, llm_propose_delta as _llm_propose_delta
 from .hashutil import sha256_str, canonical_json
 from .kg_shacl_lite import load_shapes, validate_kg
+from .release import build_release
 
 
 def _default_context_node(kg: KnowledgeGraph) -> str:
@@ -306,6 +307,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_clutchscore)
 
 
+    s = sub.add_parser("release-build")
+    s.add_argument("--out", default="", help="Output directory for release artifacts (default: mite_ecology/artifacts/releases)")
+    s.add_argument("--components", default="", help="Override components registry YAML path")
+    s.add_argument("--variants", default="", help="Override variants registry YAML path")
+    s.add_argument("--remotes", default="", help="Override remotes registry YAML path")
+    s.set_defaults(func=cmd_release_build)
+
+
     return p
 
 
@@ -396,6 +405,26 @@ def cmd_clutchscore(args) -> int:
     cs = compute_clutchscore(a_stud, a_tube, b_stud, b_tube, host_caps=host)
     out = {"score_0_100": cs.score_0_100, "reasons": cs.reasons, "details": cs.details}
     print(json.dumps(out, indent=2, sort_keys=True))
+    return 0
+
+
+def cmd_release_build(args) -> int:
+    # Default layout keeps artifacts inside repo.
+    repo_root = Path(__file__).resolve().parents[2]
+    default_out = repo_root / "mite_ecology" / "artifacts" / "releases"
+    out_dir = Path(str(args.out or "").strip()) if str(args.out or "").strip() else default_out
+
+    comp = str(args.components or "").strip() or None
+    var = str(args.variants or "").strip() or None
+    rem = str(args.remotes or "").strip() or None
+
+    res = build_release(
+        out_dir=out_dir,
+        components_path=comp,
+        variants_path=var,
+        remotes_path=rem,
+    )
+    print(json.dumps({"ok": True, **res.__dict__}, indent=2, sort_keys=True))
     return 0
 
 

@@ -422,6 +422,24 @@ def _tenant_remotes_cache_root(request: Request) -> Path:
     return root
 
 
+def _tenant_releases_root(request: Request) -> Path:
+    """Return tenant-scoped root for release artifacts."""
+    if not _multi_tenant_enabled():
+        root = REPO_ROOT / "mite_ecology" / "artifacts" / "releases"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    td = _tenant_dir(request)
+    if td is None:
+        root = REPO_ROOT / "mite_ecology" / "artifacts" / "releases"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    root = td / "releases"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
 def _visible_bundle_paths_for_owner(request: Request) -> list[Path]:
     """Return bundle paths visible to this principal.
 
@@ -1123,6 +1141,55 @@ def remotes_sync(request: Request, remote_id: str = "") -> Dict[str, Any]:
         "ok": True,
         "results": [asdict(r) for r in results],
     }
+
+
+@app.get("/api/releases")
+def releases_list(request: Request) -> Dict[str, Any]:
+    root = _tenant_releases_root(request)
+    root.mkdir(parents=True, exist_ok=True)
+
+    items = sorted(root.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+    out = []
+    for p in items:
+        if not p.is_file():
+            continue
+        try:
+            st = p.stat()
+        except Exception:
+            continue
+        rid = p.stem
+        out.append(
+            {
+                "release_id": rid,
+                "zip_path": str(p),
+                "bytes": int(st.st_size),
+                "mtime": float(st.st_mtime),
+            }
+        )
+
+    return {"ok": True, "releases": out}
+
+
+@app.post("/api/releases/build")
+def releases_build(request: Request) -> Dict[str, Any]:
+    try:
+        from importlib import import_module
+
+        rel_mod = import_module("mite_ecology.release")
+        build_release = getattr(rel_mod, "build_release")
+        release_zip_sha256 = getattr(rel_mod, "release_zip_sha256")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"release_builder_unavailable: {e}")
+
+    out_dir = _tenant_releases_root(request)
+    try:
+        res = build_release(out_dir=out_dir)
+        # enrich with zip sha for easy pinning
+        out = {"ok": True, **res.__dict__}
+        out["zip_sha256"] = release_zip_sha256(res.zip_path)
+        return out
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"release_build_failed: {e}")
 
 
 @app.get("/api/graph/nodes")
