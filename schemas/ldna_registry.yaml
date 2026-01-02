@@ -10,6 +10,12 @@ schemas:
   description: Motif spec (GNN/GAT/etc) payload
 - uri: ldna://json/neuroarch_dsl@1.0.0
   description: Neuroarch DSL fragment
+- uri: ldna://yaml/registry_components@1.0.0
+  description: Registry catalog (components)
+- uri: ldna://yaml/registry_variants@1.0.0
+  description: Registry catalog (variants)
+- uri: ldna://yaml/registry_remotes@1.0.0
+  description: Registry remotes configuration
 compat:
   rule: major_version_compat
   notes: Consumers must accept same major; producers may emit higher minor/patch.
