@@ -1014,6 +1014,45 @@ def list_exports(request: Request) -> Dict[str, Any]:
     }
 
 
+@app.get("/api/registry/components")
+def registry_components(_: Request) -> Dict[str, Any]:
+    try:
+        from mite_ecology.registry import load_components_registry
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
+    try:
+        r = load_components_registry()
+        return {"ok": True, "canonical_sha256": r.canonical_sha256, "registry": r.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_load_failed: {e}")
+
+
+@app.get("/api/registry/variants")
+def registry_variants(_: Request) -> Dict[str, Any]:
+    try:
+        from mite_ecology.registry import load_variants_registry
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
+    try:
+        r = load_variants_registry()
+        return {"ok": True, "canonical_sha256": r.canonical_sha256, "registry": r.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_load_failed: {e}")
+
+
+@app.get("/api/registry/remotes")
+def registry_remotes(_: Request) -> Dict[str, Any]:
+    try:
+        from mite_ecology.registry import load_remotes_registry
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
+    try:
+        r = load_remotes_registry()
+        return {"ok": True, "canonical_sha256": r.canonical_sha256, "registry": r.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_load_failed: {e}")
+
+
 @app.get("/api/graph/nodes")
 def graph_nodes(request: Request, filter: str = "", limit: int = 200) -> Dict[str, Any]:
     """

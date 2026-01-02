@@ -10,8 +10,9 @@
   <header class="topbar">
     <div class="topbarRow">
       <div class="topbarLeft">
-        <div class="title">Fieldgrade UI</div>
-        <div class="subtitle">Single-page control panel (Termite + mite_ecology)</div>
+        <div class="title">Fieldgrade</div>
+        <div class="subtitle">Ops console (Termite + mite_ecology)</div>
+        <div id="stateBadges" class="badges" aria-label="Server state"></div>
       </div>
 
       <div class="topbarRight">
@@ -31,6 +32,7 @@
     <button type="button" class="tab" data-panel="bundles">Bundles</button>
     <button type="button" class="tab" data-panel="ecology">Ecology</button>
     <button type="button" class="tab" data-panel="jobs">Jobs</button>
+    <button type="button" class="tab" data-panel="catalog">Catalog</button>
     <button type="button" class="tab" data-panel="graph">Graph Explorer</button>
     <button type="button" class="tab" data-panel="logs">Logs</button>
   </nav>
@@ -214,6 +216,78 @@
       </div>
     </section>
 
+    <section class="panel" id="panel-catalog">
+      <h2>Catalog</h2>
+      <p class="hint">Browse local registry catalogs (components / variants / remotes). Deterministic canonical hash is shown for version pinning.</p>
+
+      <div class="row">
+        <div class="col">
+          <div class="actions">
+            <button type="button" id="btnCatalogRefresh">Refresh catalog</button>
+            <button type="button" id="btnCatalogRefreshExports">Refresh exports</button>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label for="catalogKind">Catalog</label>
+              <select id="catalogKind" title="Catalog kind">
+                <option value="components">Components</option>
+                <option value="variants">Variants</option>
+                <option value="remotes">Remotes</option>
+              </select>
+            </div>
+            <div class="col">
+              <label for="catalogComponentsKind">Component kind</label>
+              <select id="catalogComponentsKind" title="Filter components by kind"></select>
+            </div>
+            <div class="col">
+              <label for="catalogComponentsRole">Component role</label>
+              <select id="catalogComponentsRole" title="Filter components by role"></select>
+            </div>
+            <div class="col">
+              <label for="catalogComponentsRuntime">Component runtime</label>
+              <select id="catalogComponentsRuntime" title="Filter components by runtime"></select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label for="catalogVariantsTag">Variant tag</label>
+              <select id="catalogVariantsTag" title="Filter variants by tag"></select>
+            </div>
+            <div class="col">
+              <label for="catalogVariantsDevice">Device</label>
+              <select id="catalogVariantsDevice" title="Filter variants by device"></select>
+            </div>
+            <div class="col">
+              <label for="catalogVariantsPolicyMode">Policy mode</label>
+              <select id="catalogVariantsPolicyMode" title="Filter variants by policy mode"></select>
+            </div>
+          </div>
+
+          <div class="kv">
+            <div class="k">Catalog hash</div>
+            <div class="v" id="catalogHash">(not loaded)</div>
+          </div>
+
+          <div id="catalogTableWrap"></div>
+
+          <hr />
+
+          <h3>Promote export → Variant Template</h3>
+          <p class="hint">Generates a PR-friendly YAML snippet you can paste into <span class="mono">mite_ecology/registry/variants_v1.yaml</span>.</p>
+          <ul id="catalogExportsList" class="list"></ul>
+        </div>
+
+        <div class="col">
+          <div class="inspector">
+            <div class="inspectorTitle">Inspector</div>
+            <pre id="catalogInspectorPre" class="inspectorPre">Select a row to inspect.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel" id="panel-graph">
       <h2>Graph Explorer</h2>
 
@@ -249,6 +323,6 @@
   </main>
 
   <script src="/static/vendor/cytoscape.min.js"></script>
-  <script src="/static/app.js"></script>
+  <script type="module" src="/static/app.js"></script>
 </body>
 </html>
