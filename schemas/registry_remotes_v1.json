@@ -23,15 +23,25 @@
               "cache_dir": { "type": "string" }
             }
           },
+          "targets": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "components": { "type": "string", "minLength": 1 },
+              "variants": { "type": "string", "minLength": 1 },
+              "remotes": { "type": "string", "minLength": 1 }
+            }
+          },
           "trust": {
             "type": "object",
             "additionalProperties": true,
             "properties": {
-              "tuf_root_pubkeys": { "type": "array", "items": { "type": "object" } }
-            }
+              "root_path": { "type": "string", "minLength": 1 }
+            },
+            "required": ["root_path"]
           }
         },
-        "required": ["remote_id", "tuf_base"]
+        "required": ["remote_id", "tuf_base", "trust"]
       }
     }
   },

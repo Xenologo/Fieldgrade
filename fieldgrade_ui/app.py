@@ -404,6 +404,24 @@ def _tenant_exports_root(request: Request) -> Path:
     return td / "exports"
 
 
+def _tenant_remotes_cache_root(request: Request) -> Path:
+    """Return tenant-scoped cache root for verified remote catalogs."""
+    if not _multi_tenant_enabled():
+        root = REPO_ROOT / "fieldgrade_ui" / "runtime" / "remotes_cache"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    td = _tenant_dir(request)
+    if td is None:
+        root = REPO_ROOT / "fieldgrade_ui" / "runtime" / "remotes_cache"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    root = td / "remotes_cache"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
 def _visible_bundle_paths_for_owner(request: Request) -> list[Path]:
     """Return bundle paths visible to this principal.
 
@@ -1049,6 +1067,62 @@ def registry_variants(_: Request) -> Dict[str, Any]:
 @app.get("/api/registry/remotes")
 def registry_remotes(_: Request) -> Dict[str, Any]:
     return _load_registry_or_500("load_remotes_registry")
+
+
+@app.get("/api/remotes/status")
+def remotes_status(request: Request) -> Dict[str, Any]:
+    try:
+        from importlib import import_module
+
+        sync_mod = import_module("mite_ecology.remote_sync")
+        load_status = getattr(sync_mod, "load_status")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"remote_sync_unavailable: {e}")
+
+    rr = _load_registry_or_500("load_remotes_registry")["registry"]
+    remotes = rr.get("remotes") if isinstance(rr, dict) else []
+    cache_root = _tenant_remotes_cache_root(request)
+
+    out = []
+    if isinstance(remotes, list):
+        for r in remotes:
+            if not isinstance(r, dict):
+                continue
+            rid = str(r.get("remote_id") or "")
+            out.append(
+                {
+                    "remote_id": rid,
+                    "enabled": (r.get("enabled") is not False),
+                    "tuf_base": r.get("tuf_base"),
+                    "status": load_status(cache_root, rid),
+                }
+            )
+
+    return {"ok": True, "remotes": out}
+
+
+@app.post("/api/remotes/sync")
+def remotes_sync(request: Request, remote_id: str = "") -> Dict[str, Any]:
+    try:
+        from importlib import import_module
+
+        sync_mod = import_module("mite_ecology.remote_sync")
+        sync_all_remotes = getattr(sync_mod, "sync_all_remotes")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"remote_sync_unavailable: {e}")
+
+    rr = _load_registry_or_500("load_remotes_registry")["registry"]
+    remotes = rr.get("remotes") if isinstance(rr, dict) else []
+    if not isinstance(remotes, list):
+        remotes = []
+
+    cache_root = _tenant_remotes_cache_root(request)
+    results = sync_all_remotes(remotes, cache_root=cache_root, only_remote_id=(remote_id or "").strip() or None)
+
+    return {
+        "ok": True,
+        "results": [asdict(r) for r in results],
+    }
 
 
 @app.get("/api/graph/nodes")
