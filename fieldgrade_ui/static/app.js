@@ -1,3 +1,15 @@
+import { getApiToken, setApiToken } from './js/state.js';
+import {
+  apiFetch,
+  apiUploadRun,
+  apiJobs,
+  apiJob,
+  apiJobLogs,
+  apiCancelJob,
+} from './js/api.js';
+import { toast } from './js/components/toast.js';
+import { initCatalogView } from './js/views/catalog.js';
+
 function fmtTs(ts) {
   if (!ts) return "";
   const d = new Date(ts * 1000);
@@ -10,75 +22,10 @@ function esc(s) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
 }
-
-
-
-const FG_API_TOKEN_STORAGE_KEY = 'fieldgrade_ui_api_token_v1';
-
-function getApiToken() {
-  try { return (localStorage.getItem(FG_API_TOKEN_STORAGE_KEY) || '').trim(); } catch { return ''; }
-}
-
-function setApiToken(tok) {
-  const t = (tok || '').toString().trim();
-  try {
-    if (t) localStorage.setItem(FG_API_TOKEN_STORAGE_KEY, t);
-    else localStorage.removeItem(FG_API_TOKEN_STORAGE_KEY);
-  } catch {
-    // ignore
-  }
-}
-
 function setAuthStatus(msg) {
   const el = document.getElementById('authStatus');
   if (!el) return;
   el.textContent = msg || '(no token)';
-}
-
-function _applyTokenHeader(options) {
-  const tok = getApiToken();
-  const opts = options ? { ...options } : {};
-  const headers = new Headers(opts.headers || {});
-  if (tok) headers.set('X-API-Key', tok);
-  opts.headers = headers;
-  return opts;
-}
-
-async function apiFetch(path, options) {
-  return await fetch(path, _applyTokenHeader(options));
-}
-async function apiUploadRun(label, file) {
-  const fd = new FormData();
-  fd.append("label", label);
-  fd.append("file", file);
-  const r = await apiFetch("/api/pipeline/upload_run?label=" + encodeURIComponent(label), {
-    method: "POST",
-    body: fd,
-  });
-  if (!r.ok) {
-    const t = await r.text();
-    throw new Error("upload_run failed: " + t);
-  }
-  return await r.json();
-}
-
-async function apiJobs(limit, status) {
-  const qs = new URLSearchParams();
-  qs.set("limit", String(limit ?? 50));
-  if (status) qs.set("status", status);
-  return await apiJson("/api/jobs?" + qs.toString());
-}
-
-async function apiJob(jobId) {
-  return await apiJson("/api/jobs/" + jobId);
-}
-
-async function apiJobLogs(jobId, limit = 500) {
-  return await apiJson("/api/jobs/" + jobId + "/logs?limit=" + limit);
-}
-
-async function apiCancelJob(jobId) {
-  return await apiJson("/api/jobs/" + jobId + "/cancel", { method: "POST" });
 }
 
 function $(id) {
@@ -102,6 +49,26 @@ function logCmdResult(res) {
   }
 }
 
+function renderStateBadges(st) {
+  const host = document.getElementById('stateBadges');
+  if (!host) return;
+  host.innerHTML = '';
+  if (!st) return;
+
+  const items = [
+    { label: st.multi_tenant ? 'multi-tenant' : 'single-tenant', tone: st.multi_tenant ? 'warn' : 'ok' },
+    { label: 'uploads', tone: st.uploads_dir ? 'ok' : 'warn' },
+    { label: 'bundles', tone: st.bundles_dir ? 'ok' : 'warn' },
+  ];
+
+  for (const it of items) {
+    const b = document.createElement('span');
+    b.className = `badge badge-${it.tone}`;
+    b.textContent = it.label;
+    host.appendChild(b);
+  }
+}
+
 async function apiJson(path, options) {
   const res = await apiFetch(path, options);
   const text = await res.text();
@@ -114,10 +81,13 @@ async function apiJson(path, options) {
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
       setAuthStatus('auth required (401/403). Set API token and retry.');
+      toast('Auth required (401/403).', { kind: 'error' });
     }
-
     const detail = data && data.detail ? JSON.stringify(data.detail) : text;
-    throw new Error(`${res.status} ${res.statusText}: ${detail}`);
+    const err = new Error(`${res.status} ${res.statusText}: ${detail}`);
+    err.status = res.status;
+    err.detail = detail;
+    throw err;
   }
   return data;
 }
@@ -370,6 +340,7 @@ function wireAuthUI() {
       setApiToken(input ? input.value : '');
       render();
       logLine('API token set (stored locally in this browser).');
+      toast('Token stored locally in this browser.', { kind: 'info', timeoutMs: 2000 });
     };
   }
 
@@ -379,6 +350,7 @@ function wireAuthUI() {
       if (input) input.value = '';
       render();
       logLine('API token cleared.');
+      toast('Token cleared.', { kind: 'info', timeoutMs: 2000 });
     };
   }
 
@@ -387,6 +359,9 @@ function wireAuthUI() {
 async function init() {
   wireTabs();
   wireAuthUI();
+
+  // Catalog
+  initCatalogView({ toast });
 
   // Jobs
   let selectedJobId = null;
@@ -469,10 +444,12 @@ async function init() {
     st = await apiJson('/api/state');
     $("policyPath").value = st.default_policy;
     $("allowlistPath").value = st.default_allowlist;
+    renderStateBadges(st);
   } catch (e) {
     // Likely auth (401/403) or server not reachable; keep UI usable and let the user set a token.
     logLine('State fetch failed: ' + e.message);
     setAuthStatus('auth may be required — set API token and retry an action');
+    renderStateBadges(null);
   }
 
   // Ingest

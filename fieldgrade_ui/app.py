@@ -1014,6 +1014,43 @@ def list_exports(request: Request) -> Dict[str, Any]:
     }
 
 
+def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
+    """Load a local registry via mite_ecology.registry with consistent error shaping."""
+    try:
+        from importlib import import_module
+
+        registry_mod = import_module("mite_ecology.registry")
+        loader = getattr(registry_mod, loader_name)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
+
+    try:
+        r = loader()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"registry_load_failed: {e}")
+
+    return {
+        "ok": True,
+        "canonical_sha256": r.canonical_sha256,
+        "registry": r.data,
+    }
+
+
+@app.get("/api/registry/components")
+def registry_components(_: Request) -> Dict[str, Any]:
+    return _load_registry_or_500("load_components_registry")
+
+
+@app.get("/api/registry/variants")
+def registry_variants(_: Request) -> Dict[str, Any]:
+    return _load_registry_or_500("load_variants_registry")
+
+
+@app.get("/api/registry/remotes")
+def registry_remotes(_: Request) -> Dict[str, Any]:
+    return _load_registry_or_500("load_remotes_registry")
+
+
 @app.get("/api/graph/nodes")
 def graph_nodes(request: Request, filter: str = "", limit: int = 200) -> Dict[str, Any]:
     """
