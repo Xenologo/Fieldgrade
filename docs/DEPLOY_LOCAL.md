@@ -51,6 +51,12 @@ Open:
 In the UI header, paste your `FG_API_TOKEN` into **API token** and click **Set**.
 (Static `/` loads without auth; API calls require the token.)
 
+## API notes
+
+The current KG query surface exposed over HTTP is intentionally lightweight:
+- `GET /api/graph/nodes`
+- `GET /api/graph/neighborhood`
+
 ## 3) Persistent data locations
 
 Compose mounts named volumes into these in-container paths:

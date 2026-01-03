@@ -2,6 +2,25 @@
 
 This monorepo provides:
 
+## Fieldgrade UI: API quick reference
+
+**Registry catalogs (current naming)**
+
+- The versioned JSON Schemas live under `schemas/`:
+   - `registry_components_v1.json`, `registry_variants_v1.json`, `registry_remotes_v1.json`
+- The UI/API refers to these as **registries** (not `component_catalog_v1`).
+- HTTP endpoints (return the registry payload + a deterministic `canonical_sha256`):
+   - `GET /api/registry/components`
+   - `GET /api/registry/variants`
+   - `GET /api/registry/remotes`
+
+**Knowledge graph query surface (current)**
+
+- Today, the supported HTTP query surface is the lightweight `/api/graph/*` endpoints:
+   - `GET /api/graph/nodes?filter=<substring>&limit=<n>`
+   - `GET /api/graph/neighborhood?node_id=<id>&limit_edges=<n>`
+- There is intentionally no general-purpose `/api/kg/*` surface yet.
+
 ## Canonical dev setup (recommended)
 
 Use the bootstrap scripts to get to a known-good environment (runtime + dev deps + editable installs).
