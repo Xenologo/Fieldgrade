@@ -8,6 +8,7 @@ import sqlite3
 import subprocess
 import sys
 import hashlib
+import yaml
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -1124,6 +1125,54 @@ def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
     }
 
 
+def _sha256_file_hex(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _ldna_registry_pin_report() -> Dict[str, Any]:
+    ldna_path = REPO_ROOT / "schemas" / "ldna_registry.yaml"
+    try:
+        raw = yaml.safe_load(ldna_path.read_text(encoding="utf-8")) or {}
+    except Exception as e:
+        return {"ok": False, "path": str(ldna_path), "error": f"load_failed: {e}", "schemas": []}
+
+    schemas = raw.get("schemas") if isinstance(raw, dict) else None
+    if not isinstance(schemas, list):
+        return {"ok": False, "path": str(ldna_path), "error": "invalid_format", "schemas": []}
+
+    out = []
+    ok = True
+    for s in schemas:
+        if not isinstance(s, dict):
+            continue
+        uri = s.get("uri")
+        rel = s.get("path")
+        expected = s.get("sha256")
+        entry: Dict[str, Any] = {"uri": uri}
+        if isinstance(rel, str) and rel:
+            p = (REPO_ROOT / rel).resolve()
+            entry["path"] = str(p)
+            if p.exists() and p.is_file() and isinstance(expected, str) and expected:
+                actual = _sha256_file_hex(p)
+                entry["sha256_expected"] = expected.lower()
+                entry["sha256_actual"] = actual.lower()
+                entry["ok"] = (entry["sha256_expected"] == entry["sha256_actual"])
+                if entry["ok"] is not True:
+                    ok = False
+            elif isinstance(expected, str) and expected:
+                entry["sha256_expected"] = expected.lower()
+                entry["ok"] = False
+                entry["error"] = "missing_file_or_unreadable"
+                ok = False
+        out.append(entry)
+
+    return {"ok": ok, "path": str(ldna_path), "schemas": out}
+
+
 @app.get("/api/registry/components")
 def registry_components(_: Request) -> Dict[str, Any]:
     return _load_registry_or_500("load_components_registry")
@@ -1137,6 +1186,34 @@ def registry_variants(_: Request) -> Dict[str, Any]:
 @app.get("/api/registry/remotes")
 def registry_remotes(_: Request) -> Dict[str, Any]:
     return _load_registry_or_500("load_remotes_registry")
+
+
+@app.get("/api/registry/health")
+def registry_health(_: Request) -> Dict[str, Any]:
+    regs: Dict[str, Any] = {}
+    overall_ok = True
+    for name, loader in (
+        ("components", "load_components_registry"),
+        ("variants", "load_variants_registry"),
+        ("remotes", "load_remotes_registry"),
+    ):
+        try:
+            payload = _load_registry_or_500(loader)
+            regs[name] = {"ok": True, "canonical_sha256": payload.get("canonical_sha256")}
+        except HTTPException as e:
+            overall_ok = False
+            regs[name] = {"ok": False, "error": e.detail}
+
+    ldna = _ldna_registry_pin_report()
+    if ldna.get("ok") is not True:
+        overall_ok = False
+
+    return {
+        "ok": overall_ok,
+        "openapi": {"version": app.openapi().get("openapi")},
+        "registries": regs,
+        "ldna_registry": ldna,
+    }
 
 
 @app.get("/api/remotes/status")
