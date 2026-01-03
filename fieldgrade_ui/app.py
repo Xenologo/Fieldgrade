@@ -1050,12 +1050,40 @@ def list_exports(request: Request) -> Dict[str, Any]:
     }
 
 
+def _import_mite_ecology_module(name: str):
+    """Import mite_ecology modules in both installed and workspace layouts.
+
+    In this repo layout, the top-level folder `mite_ecology/` contains both:
+      - a Python package at `mite_ecology/mite_ecology/*.py`
+      - data at `mite_ecology/registry/*.yaml`
+
+    When running from the workspace without installing the package, Python can
+    treat `mite_ecology/` as a namespace package and resolve `mite_ecology.registry`
+    to the data folder, not the code module.
+    """
+    from importlib import import_module
+
+    errors = []
+    for mod_name in (f"mite_ecology.{name}", f"mite_ecology.mite_ecology.{name}"):
+        try:
+            return import_module(mod_name)
+        except Exception as e:
+            errors.append(f"{mod_name}: {e}")
+
+    raise ImportError("; ".join(errors) or f"unable to import mite_ecology.{name}")
+
+
 def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
     """Load a local registry via mite_ecology.registry with consistent error shaping."""
     try:
         from importlib import import_module
 
+        # Prefer the normal installed-module path, but fall back to the
+        # workspace layout if `mite_ecology.registry` resolves to the YAML
+        # directory (namespace package) rather than the code module.
         registry_mod = import_module("mite_ecology.registry")
+        if not hasattr(registry_mod, loader_name):
+            registry_mod = import_module("mite_ecology.mite_ecology.registry")
         loader = getattr(registry_mod, loader_name)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
@@ -1090,9 +1118,7 @@ def registry_remotes(_: Request) -> Dict[str, Any]:
 @app.get("/api/remotes/status")
 def remotes_status(request: Request) -> Dict[str, Any]:
     try:
-        from importlib import import_module
-
-        sync_mod = import_module("mite_ecology.remote_sync")
+        sync_mod = _import_mite_ecology_module("remote_sync")
         load_status = getattr(sync_mod, "load_status")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"remote_sync_unavailable: {e}")
@@ -1122,9 +1148,7 @@ def remotes_status(request: Request) -> Dict[str, Any]:
 @app.post("/api/remotes/sync")
 def remotes_sync(request: Request, remote_id: str = "") -> Dict[str, Any]:
     try:
-        from importlib import import_module
-
-        sync_mod = import_module("mite_ecology.remote_sync")
+        sync_mod = _import_mite_ecology_module("remote_sync")
         sync_all_remotes = getattr(sync_mod, "sync_all_remotes")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"remote_sync_unavailable: {e}")
@@ -1173,9 +1197,7 @@ def releases_list(request: Request) -> Dict[str, Any]:
 @app.post("/api/releases/build")
 def releases_build(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
     try:
-        from importlib import import_module
-
-        rel_mod = import_module("mite_ecology.release")
+        rel_mod = _import_mite_ecology_module("release")
         build_release = getattr(rel_mod, "build_release")
         release_zip_sha256 = getattr(rel_mod, "release_zip_sha256")
     except Exception as e:
@@ -1230,9 +1252,7 @@ def releases_build(request: Request, body: Dict[str, Any] = Body(default_factory
 @app.post("/api/releases/verify")
 def releases_verify(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
     try:
-        from importlib import import_module
-
-        rel_mod = import_module("mite_ecology.release")
+        rel_mod = _import_mite_ecology_module("release")
         verify_release_zip = getattr(rel_mod, "verify_release_zip")
         release_zip_sha256 = getattr(rel_mod, "release_zip_sha256")
     except Exception as e:
