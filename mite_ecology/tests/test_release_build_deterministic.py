@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 from mite_ecology.release import build_release, release_zip_sha256
 
@@ -63,6 +64,10 @@ def test_release_build_is_deterministic(tmp_path: Path) -> None:
         variants_path=vars_,
         remotes_path=rems,
     )
+
+    # Ensure wall-clock time does not affect the artifact.
+    time.sleep(1.1)
+
     r2 = build_release(
         out_dir=out2,
         components_path=comps,
