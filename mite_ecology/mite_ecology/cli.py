@@ -20,7 +20,7 @@ from .export import export_best_genome
 from .llm_sync import llm_sync as _llm_sync, llm_propose_motif as _llm_propose_motif, llm_propose_delta as _llm_propose_delta
 from .hashutil import sha256_str, canonical_json
 from .kg_shacl_lite import load_shapes, validate_kg
-from .release import build_release
+from .release import build_release, verify_release_zip
 
 
 def _default_context_node(kg: KnowledgeGraph) -> str:
@@ -202,6 +202,35 @@ def cmd_llm_propose_delta(args) -> int:
     return 0
 
 
+def cmd_release_build(args) -> int:
+    out_dir = (args.out or "").strip()
+    out_path = Path(out_dir) if out_dir else (Path(__file__).resolve().parents[1] / "artifacts" / "releases")
+
+    res = build_release(
+        out_dir=out_path,
+        components_path=args.components or None,
+        variants_path=args.variants or None,
+        remotes_path=args.remotes or None,
+        include_cyclonedx=bool(getattr(args, "include_cyclonedx", False)),
+        include_dsse=bool(getattr(args, "include_dsse", False)),
+        signing_public_key_path=(args.signing_pub or None),
+        signing_private_key_path=(args.signing_priv or None),
+    )
+    print(json.dumps(res.__dict__, indent=2, sort_keys=True))
+    return 0
+
+
+def cmd_release_verify(args) -> int:
+    rep = verify_release_zip(
+        zip_path=args.zip,
+        signing_public_key_path=(args.signing_pub or None),
+        require_dsse=bool(getattr(args, "require_dsse", False)),
+        require_cyclonedx=bool(getattr(args, "require_cyclonedx", False)),
+    )
+    print(json.dumps(rep, indent=2, sort_keys=True))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="mite-ecology", description="mite_ecology CLI (strict deterministic mode)")
     p.add_argument("--config", default=str(default_config_path()))
@@ -260,6 +289,24 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("ga")
     s.add_argument("--context", default=None)
     s.set_defaults(func=cmd_ga)
+
+    s = sub.add_parser("release-build")
+    s.add_argument("--components", default="", help="Override components registry path")
+    s.add_argument("--variants", default="", help="Override variants registry path")
+    s.add_argument("--remotes", default="", help="Override remotes registry path")
+    s.add_argument("--out", default="", help="Output directory for release artifacts (default: mite_ecology/artifacts/releases)")
+    s.add_argument("--include-cyclonedx", action="store_true", help="Include deterministic CycloneDX BOM for the release")
+    s.add_argument("--include-dsse", action="store_true", help="Include DSSE attestations (requires --signing-priv/--signing-pub)")
+    s.add_argument("--signing-priv", default="", help="Path to Ed25519 private key PEM (required for --include-dsse)")
+    s.add_argument("--signing-pub", default="", help="Path to Ed25519 public key PEM (required for --include-dsse)")
+    s.set_defaults(func=cmd_release_build)
+
+    s = sub.add_parser("release-verify")
+    s.add_argument("zip", help="Path to a release zip")
+    s.add_argument("--signing-pub", default="", help="Path to Ed25519 public key PEM (required if zip contains DSSE)")
+    s.add_argument("--require-dsse", action="store_true", help="Fail if DSSE attestation is missing")
+    s.add_argument("--require-cyclonedx", action="store_true", help="Fail if CycloneDX BOM is missing")
+    s.set_defaults(func=cmd_release_verify)
 
     s = sub.add_parser("export")
     s.add_argument("--context", default=None)
