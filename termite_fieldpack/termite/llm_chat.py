@@ -10,6 +10,7 @@ import requests
 from .cas import CAS
 from .provenance import canonical_json, hash_str, utc_now_iso
 from .config import TermiteConfig
+from .llm_runtime import resolve_active_endpoint
 
 def _hash_chain(prev_hash: Optional[str], payload: str) -> str:
     return hash_str((prev_hash or "") + "|" + payload)
@@ -30,8 +31,22 @@ def chat(
     Strictly audited when store=True.
     """
     llm = (cfg.raw.get('llm') or {})
-    base_url = str(llm.get('endpoint_base_url') or llm.get('base_url') or 'http://127.0.0.1:8000').rstrip("/")
-    model = str(llm.get('model') or 'qwen2.5-coder-0.5b-instruct')
+
+    # Prefer the active runtime endpoint if Termite started a local server and it is ready.
+    active = None
+    try:
+        active = resolve_active_endpoint(cfg)
+    except Exception:
+        active = None
+
+    if active and str(active.get('base_url') or '').strip():
+        base_url = str(active.get('base_url')).rstrip("/")
+        model = str(active.get('model') or '').strip() or str(llm.get('model') or '')
+        endpoint_id = str(active.get('endpoint_id') or '')
+    else:
+        base_url = str(llm.get('endpoint_base_url') or llm.get('base_url') or 'http://127.0.0.1:8000').rstrip("/")
+        model = str(llm.get('model') or 'qwen2.5-coder-0.5b-instruct')
+        endpoint_id = ''
     temp = float(float(llm.get('temperature', 0.0)) if temperature is None else temperature)
     mtok = int(int(llm.get('max_tokens', 512)) if max_tokens is None else max_tokens)
 
@@ -58,7 +73,7 @@ def chat(
         content = json.dumps(data, sort_keys=True)
 
     if not store:
-        return {"endpoint_base_url": base_url, "model": model, "temperature": temp, "response": data, "content": content}
+        return {"endpoint_base_url": base_url, "model": model, "endpoint_id": endpoint_id, "temperature": temp, "response": data, "content": content}
 
     # store request/response in CAS aux + db
     cas = CAS(cfg.cas_root); cas.init()
@@ -76,6 +91,7 @@ def chat(
         "ts_utc": ts,
         "endpoint_base_url": base_url,
         "model": model,
+        "endpoint_id": endpoint_id or None,
         "temperature": temp,
         "prompt_hash": prompt_hash,
         "request_aux_sha256": req_sha,
@@ -95,6 +111,7 @@ def chat(
     prov.emit(con, "LLM_CHAT", {
         "endpoint_base_url": base_url,
         "model": model,
+        "endpoint_id": endpoint_id or None,
         "temperature": temp,
         "prompt_hash": prompt_hash,
         "request_aux_sha256": req_sha,
@@ -102,4 +119,4 @@ def chat(
         "call_hash": call_hash,
     })
     con.commit()
-    return {"endpoint_base_url": base_url, "model": model, "temperature": temp, "prompt_hash": prompt_hash, "call_hash": call_hash, "content": content, "response": data}
+    return {"endpoint_base_url": base_url, "model": model, "endpoint_id": endpoint_id, "temperature": temp, "prompt_hash": prompt_hash, "call_hash": call_hash, "content": content, "response": data}

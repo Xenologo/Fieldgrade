@@ -32,6 +32,7 @@
     <button type="button" class="tab" data-panel="bundles">Bundles</button>
     <button type="button" class="tab" data-panel="ecology">Ecology</button>
     <button type="button" class="tab" data-panel="jobs">Jobs</button>
+    <button type="button" class="tab" data-panel="llm">LLM</button>
     <button type="button" class="tab" data-panel="catalog">Catalog</button>
     <button type="button" class="tab" data-panel="graph">Graph Explorer</button>
     <button type="button" class="tab" data-panel="logs">Logs</button>
@@ -213,6 +214,36 @@
       <div class="card">
         <h3>Logs</h3>
         <div id="jobLogs" class="mono small pre"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-llm">
+      <h2>LLM</h2>
+      <p class="hint">Laptop-mode local OpenAI-compatible server control (Termite-owned runtime).</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Controls</h3>
+          <div class="row">
+            <button type="button" id="btnLLMStart">Start</button>
+            <button type="button" id="btnLLMStop" class="danger">Stop</button>
+            <button type="button" id="btnLLMPing">Ping</button>
+            <button type="button" id="btnLLMRefresh">Refresh</button>
+          </div>
+          <div class="kv">
+            <div class="k">Status</div>
+            <div class="v mono" id="llmSummary">(unknown)</div>
+          </div>
+          <div class="kv">
+            <div class="k">Last error</div>
+            <div class="v mono" id="llmLastError">(none)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Raw status</h3>
+          <pre id="llmStatusPre" class="mono small pre"></pre>
+        </div>
       </div>
     </section>
 

@@ -45,8 +45,47 @@ llm:
     timeout_s: 3
   launch:
     enabled: false
-    # Example llama.cpp server contract (you supply the binary + weights):
-    # command: ["./llama-server","-m","./models/qwen2.5-coder-0.5b-instruct.gguf","--host","127.0.0.1","--port","8000"]
+    # ----------------------------------------------------------------------
+    # LAPTOP MODE (examples)
+    #
+    # Termite can start a local OpenAI-compatible server and persist the active
+    # endpoint identity under runtime/llm/active_endpoint.json.
+    #
+    # Provider: llama_cpp_server
+    #   OpenAI-compatible endpoint via llama.cpp "llama-server".
+    #   You supply the binary and weights (operator-managed download).
+    #
+    # provider: "llama_cpp_server"
+    # host: "127.0.0.1"
+    # port: 8789
+    # model: "qwen2.5-coder-0.5b-instruct"
+    # model_path: "./models/qwen2.5-coder-0.5b-instruct.gguf"
+    # launch:
+    #   enabled: true
+    #   command: ["llama-server","-m","./models/qwen2.5-coder-0.5b-instruct.gguf","--host","127.0.0.1","--port","8789"]
+    #
+    # Provider: vllm
+    #   OpenAI-compatible endpoint via vLLM API server.
+    #   You supply the model (local path or HF id) and have vLLM installed.
+    #
+    # provider: "vllm"
+    # host: "127.0.0.1"
+    # port: 8789
+    # model: "qwen2.5-coder-0.5b-instruct"
+    # model_path: "./models/qwen2.5-coder-0.5b-instruct"   # optional
+    # launch:
+    #   enabled: true
+    #   command:
+    #     - "python"
+    #     - "-m"
+    #     - "vllm.entrypoints.openai.api_server"
+    #     - "--host"
+    #     - "127.0.0.1"
+    #     - "--port"
+    #     - "8789"
+    #     - "--model"
+    #     - "./models/qwen2.5-coder-0.5b-instruct"
+    # ----------------------------------------------------------------------
     command: []
     cwd: "./runtime/llm"      # relative to runtime_root
     env: {}

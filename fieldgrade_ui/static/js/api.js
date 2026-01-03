@@ -13,7 +13,7 @@ export async function apiFetch(path, options) {
   return await fetch(path, _applyTokenHeader(options));
 }
 
-export async function apiJson(path, options) {
+export async function apiJson(path, options, hooks) {
   const res = await apiFetch(path, options);
   const text = await res.text();
   let data;
@@ -23,6 +23,13 @@ export async function apiJson(path, options) {
     data = { ok: false, raw: text };
   }
   if (!res.ok) {
+    if ((res.status === 401 || res.status === 403) && hooks && typeof hooks.onAuthError === 'function') {
+      try {
+        hooks.onAuthError({ res, data, text });
+      } catch {
+        // best-effort hook
+      }
+    }
     const detail = data && data.detail ? JSON.stringify(data.detail) : text;
     const err = new Error(`${res.status} ${res.statusText}: ${detail}`);
     err.status = res.status;
