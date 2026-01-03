@@ -236,6 +236,13 @@ def _spawn_process(cfg: TermiteConfig, argv: List[str], *, cwd: Path, env: Dict[
     logf = _log_path(cfg)
     logf.parent.mkdir(parents=True, exist_ok=True)
 
+    # Basic hardening: argv must be an explicit list of non-empty strings.
+    # This function never uses shell=True.
+    if not isinstance(argv, list) or not argv or not all(isinstance(x, str) for x in argv):
+        raise RuntimeError("llm.launch.command resolved to invalid argv")
+    if any((not a) or ("\x00" in a) for a in argv):
+        raise RuntimeError("llm.launch.command contains empty/NUL argv entries")
+
     # Ensure repo-local Python modules can be imported even when the child
     # process runs with cwd under runtime_root (common in laptop mode and CI).
     try:
@@ -266,6 +273,10 @@ def _spawn_process(cfg: TermiteConfig, argv: List[str], *, cwd: Path, env: Dict[
     # Stream stdout/stderr to a single log file.
     out = logf.open("ab")
     popen_kwargs["stdout"] = out
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
+    # Termite intentionally launches a local OpenAI-compatible server. The argv
+    # comes from operator-controlled config (or a fixed template), and we
+    # explicitly avoid shell=True.
     p = subprocess.Popen(argv, **popen_kwargs)
     return p
 
