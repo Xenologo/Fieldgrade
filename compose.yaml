@@ -30,9 +30,17 @@ services:
       context: .
       dockerfile: Dockerfile
     command: ["python", "-m", "fieldgrade_ui", "worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, os, sys, time; p='/app/fieldgrade_ui/runtime/worker_heartbeat.json'; max_age=float(os.environ.get('FG_WORKER_HEARTBEAT_MAX_AGE_S','30'));\n\ntry:\n  hb=json.load(open(p,'r',encoding='utf-8'))\n  ts=float(hb.get('ts',0))\n  age=time.time()-ts\n  sys.exit(0 if age <= max_age else 1)\nexcept Exception:\n  sys.exit(1)\n"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
     environment:
       FG_WORKER_POLL: "${FG_WORKER_POLL:-1.0}"
       FG_CMD_TIMEOUT_S: "${FG_CMD_TIMEOUT_S:-600}"
+      FG_WORKER_HEARTBEAT_INTERVAL_S: "${FG_WORKER_HEARTBEAT_INTERVAL_S:-5}"
+      FG_WORKER_HEARTBEAT_MAX_AGE_S: "${FG_WORKER_HEARTBEAT_MAX_AGE_S:-30}"
     volumes:
       - fg_termite_runtime:/app/termite_fieldpack/runtime
       - fg_termite_artifacts:/app/termite_fieldpack/artifacts

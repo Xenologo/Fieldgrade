@@ -1,6 +1,6 @@
 import { getApiToken, setApiToken } from './js/state.js';
 import {
-  apiFetch,
+  apiJson as apiJsonBase,
   apiUploadRun,
   apiJobs,
   apiJob,
@@ -69,27 +69,15 @@ function renderStateBadges(st) {
   }
 }
 
+const _apiHooks = {
+  onAuthError: () => {
+    setAuthStatus('auth required (401/403). Set API token and retry.');
+    toast('Auth required (401/403).', { kind: 'error' });
+  },
+};
+
 async function apiJson(path, options) {
-  const res = await apiFetch(path, options);
-  const text = await res.text();
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { ok: false, raw: text };
-  }
-  if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      setAuthStatus('auth required (401/403). Set API token and retry.');
-      toast('Auth required (401/403).', { kind: 'error' });
-    }
-    const detail = data && data.detail ? JSON.stringify(data.detail) : text;
-    const err = new Error(`${res.status} ${res.statusText}: ${detail}`);
-    err.status = res.status;
-    err.detail = detail;
-    throw err;
-  }
-  return data;
+  return await apiJsonBase(path, options, _apiHooks);
 }
 
 function setEnabled(el, enabled) {
@@ -319,6 +307,106 @@ function wireTabs() {
 }
 
 
+function _activePanelId() {
+  const active = document.querySelector('.panel.active');
+  return active ? active.id : '';
+}
+
+
+function _parseCmdStdoutJson(res) {
+  try {
+    const s = (res && res.stdout ? String(res.stdout) : '').trim();
+    if (!s) return null;
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
+
+async function loadLLMStatus(silent=false) {
+  const pre = $('llmStatusPre');
+  const summary = $('llmSummary');
+  const errEl = $('llmLastError');
+  if (!pre || !summary || !errEl) return;
+
+  try {
+    const res = await apiJson('/api/termite/llm/status');
+    const obj = _parseCmdStdoutJson(res);
+    if (!obj) {
+      pre.textContent = (res.stdout || '') + (res.stderr ? ('\n' + res.stderr) : '');
+      summary.textContent = '(unparseable status)';
+      errEl.textContent = '(unknown)';
+      return;
+    }
+    pre.textContent = JSON.stringify(obj, null, 2);
+    const running = !!obj.running;
+    const provider = obj.provider || '';
+    const model = obj.model || '';
+    const baseUrl = obj.base_url || '';
+    const endpointId = obj.endpoint_id || '';
+    summary.textContent = `${running ? 'running' : 'stopped'}  provider=${provider}  model=${model}  base_url=${baseUrl}  endpoint_id=${endpointId}`;
+    errEl.textContent = obj.last_error || '(none)';
+  } catch (e) {
+    if (!silent) {
+      pre.textContent = String(e);
+      summary.textContent = '(error)';
+      errEl.textContent = e && e.message ? e.message : String(e);
+      logLine('LLM status error: ' + (e && e.message ? e.message : String(e)));
+    }
+  }
+}
+
+
+function wireLLMUI() {
+  const btnStart = $('btnLLMStart');
+  const btnStop = $('btnLLMStop');
+  const btnPing = $('btnLLMPing');
+  const btnRefresh = $('btnLLMRefresh');
+
+  if (btnStart) {
+    btnStart.onclick = async () => {
+      await withDisabled(btnStart, async () => {
+        logLine('LLM start');
+        const res = await apiJson('/api/termite/llm/start', { method: 'POST' });
+        logCmdResult(res);
+        await loadLLMStatus(true);
+      });
+    };
+  }
+
+  if (btnStop) {
+    btnStop.onclick = async () => {
+      await withDisabled(btnStop, async () => {
+        logLine('LLM stop');
+        const res = await apiJson('/api/termite/llm/stop', { method: 'POST' });
+        logCmdResult(res);
+        await loadLLMStatus(true);
+      });
+    };
+  }
+
+  if (btnPing) {
+    btnPing.onclick = async () => {
+      await withDisabled(btnPing, async () => {
+        logLine('LLM ping');
+        const res = await apiJson('/api/termite/llm/ping', { method: 'POST' });
+        logCmdResult(res);
+        await loadLLMStatus(true);
+      });
+    };
+  }
+
+  if (btnRefresh) {
+    btnRefresh.onclick = async () => {
+      await withDisabled(btnRefresh, async () => {
+        await loadLLMStatus();
+      });
+    };
+  }
+}
+
+
 
 function wireAuthUI() {
   const input = $('apiToken');
@@ -359,6 +447,7 @@ function wireAuthUI() {
 async function init() {
   wireTabs();
   wireAuthUI();
+  wireLLMUI();
 
   // Catalog
   initCatalogView({ toast });
@@ -431,10 +520,18 @@ async function init() {
 
   // Light polling (kept cheap; the backend stores logs in sqlite)
   setInterval(async () => {
-    const active = document.querySelector('.panel.active');
-    const isJobs = active && active.id === 'panel-jobs';
+    const pid = _activePanelId();
+    const isJobs = pid === 'panel-jobs';
     if (isJobs || selectedJobId) {
       await refreshJobsUI(true);
+    }
+  }, 2000);
+
+  // LLM polling only when the panel is visible.
+  setInterval(async () => {
+    const pid = _activePanelId();
+    if (pid === 'panel-llm') {
+      await loadLLMStatus(true);
     }
   }, 2000);
 

@@ -4,38 +4,38 @@ catalog_id: "ldna://yaml/registry_variants@1.0.0"
 generated_at: 0
 
 variants:
-	- variant_id: "mitevar://neuroarch_export@0.1.0"
-		title: "NeuroArch Export (deterministic)"
-		description: "Motif→GA derived NeuroArch DSL export + runnable skeleton."
-		lineage_tag: "neuroarch_export"
-		tags: ["neuroarch", "motif", "ga", "deterministic"]
-		device: "cpu"
-		policy_mode: "meap_v1"
-		verification:
-			meap_profile: "meap_v1"
-			tool_allowlist_ref: "ldna://policy/tool_allowlist@1.0.0"
+  - variant_id: "mitevar://neuroarch_export@0.1.0"
+    title: "NeuroArch Export (deterministic)"
+    description: "Motif→GA derived NeuroArch DSL export + runnable skeleton."
+    lineage_tag: "neuroarch_export"
+    tags: ["neuroarch", "motif", "ga", "deterministic"]
+    device: "cpu"
+    policy_mode: "meap_v1"
+    verification:
+      meap_profile: "meap_v1"
+      tool_allowlist_ref: "ldna://policy/tool_allowlist@1.0.0"
 
-		studspec:
-			type: "studspec_v1"
-			name: "MITE_NeuroArch_Exporter"
-			version: "0.1.0"
-			components:
-				- { name: "fieldgrade_ui", kind: "frontend", role: "bundle_uploader" }
-				- { name: "termite", kind: "backend", role: "ingest+seal+verify" }
-				- { name: "mite-ecology", kind: "backend", role: "import+gnn+gat+ga+export" }
+    studspec:
+      type: "studspec_v1"
+      name: "MITE_NeuroArch_Exporter"
+      version: "0.1.0"
+      components:
+        - { name: "fieldgrade_ui", kind: "frontend", role: "bundle_uploader" }
+        - { name: "termite", kind: "backend", role: "ingest+seal+verify" }
+        - { name: "mite-ecology", kind: "backend", role: "import+gnn+gat+ga+export" }
 
-		tubespec:
-			type: "tubespec_v1"
-			name: "MITE_NeuroArch_Exporter_Runtime"
-			version: "0.1.0"
-			runtime:
-				entrypoint: "python -m mite_ecology.cli auto-run --cycles 3"
-				device: "cpu"
+    tubespec:
+      type: "tubespec_v1"
+      name: "MITE_NeuroArch_Exporter_Runtime"
+      version: "0.1.0"
+      runtime:
+        entrypoint: "python -m mite_ecology.cli auto-run --cycles 3"
+        device: "cpu"
 
-		outputs:
-			- kind: "neuroarch_dsl"
-				schema_uri: "ldna://json/neuroarch_dsl@1.0.0"
-			- kind: "motif_spec"
-				schema_uri: "ldna://json/motif_spec@1.0.0"
+    outputs:
+      - kind: "neuroarch_dsl"
+        schema_uri: "ldna://json/neuroarch_dsl@1.0.0"
+      - kind: "motif_spec"
+        schema_uri: "ldna://json/motif_spec@1.0.0"
 
-		releases: []
+    releases: []

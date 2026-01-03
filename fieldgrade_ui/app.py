@@ -11,7 +11,7 @@ import hashlib
 import yaml
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Protocol, cast
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, Request, Body
 from fastapi.responses import FileResponse, JSONResponse
@@ -56,6 +56,13 @@ def _tenants_root() -> Path:
     if override:
         return _safe_resolve_path(Path(override))
     return REPO_ROOT / "fieldgrade_ui" / "runtime" / "tenants"
+
+
+def _ui_runtime_dir() -> Path:
+    override = (os.environ.get("FG_UI_RUNTIME_DIR") or "").strip()
+    if override:
+        return _safe_resolve_path(Path(override))
+    return REPO_ROOT / "fieldgrade_ui" / "runtime"
 
 
 def _path_mite_db() -> Path:
@@ -677,6 +684,56 @@ def api_metrics(request: Request):
     }
 
 
+@app.get("/api/worker/status")
+def api_worker_status() -> Dict[str, Any]:
+    """Best-effort worker liveness signal.
+
+    The separate worker process periodically writes a heartbeat file into the
+    shared UI runtime volume. This endpoint reports freshness of that heartbeat.
+    """
+
+    hb_path = _ui_runtime_dir() / "worker_heartbeat.json"
+    max_age_s = float(os.environ.get("FG_WORKER_HEARTBEAT_MAX_AGE_S", "30"))
+    if max_age_s <= 0:
+        max_age_s = 30.0
+
+    if not hb_path.exists():
+        return {
+            "ok": False,
+            "reason": "heartbeat_missing",
+            "heartbeat_path": str(hb_path),
+            "max_age_s": max_age_s,
+        }
+
+    try:
+        hb = json.loads(hb_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return {
+            "ok": False,
+            "reason": "heartbeat_unreadable",
+            "heartbeat_path": str(hb_path),
+            "max_age_s": max_age_s,
+            "error": f"{type(e).__name__}: {e}",
+        }
+
+    ts = hb.get("ts")
+    try:
+        ts_f = float(ts)
+    except Exception:
+        ts_f = 0.0
+
+    age_s = max(0.0, time.time() - ts_f)
+    ok = age_s <= max_age_s
+    return {
+        "ok": ok,
+        "reason": "ok" if ok else "heartbeat_stale",
+        "max_age_s": max_age_s,
+        "age_s": age_s,
+        "heartbeat": hb,
+        "heartbeat_path": str(hb_path),
+    }
+
+
 @app.get("/api/jobs")
 def api_jobs(request: Request, limit: int = 50, status: str | None = None):
     dbp = jobs_db_path()
@@ -868,6 +925,34 @@ def termite_replay(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
         "--allowlist",
         str(allowlist),
     ]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.get("/api/termite/llm/status")
+def termite_llm_status() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "termite.cli", "llm", "status", "--json"]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/llm/start")
+def termite_llm_start() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "termite.cli", "llm", "start", "--force"]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/llm/stop")
+def termite_llm_stop() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "termite.cli", "llm", "stop", "--force-kill"]
+    res = _run_cmd(cmd, cwd=TERMITE_DIR)
+    return asdict(res)
+
+
+@app.post("/api/termite/llm/ping")
+def termite_llm_ping() -> Dict[str, Any]:
+    cmd = [sys.executable, "-m", "termite.cli", "llm", "ping"]
     res = _run_cmd(cmd, cwd=TERMITE_DIR)
     return asdict(res)
 
@@ -1089,6 +1174,10 @@ def _import_mite_ecology_module(name: str):
 
 def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
     """Load a local registry via mite_ecology.registry with consistent error shaping."""
+    class _RegistryLoadResultLike(Protocol):
+        canonical_sha256: str
+        data: Dict[str, Any]
+
     try:
         from importlib import import_module
 
@@ -1114,7 +1203,7 @@ def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
 
     try:
-        r = loader()
+        r = cast(_RegistryLoadResultLike, loader())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"registry_load_failed: {e}")
 

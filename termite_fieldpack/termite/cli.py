@@ -19,7 +19,7 @@ from .bundle import SealInputs, build_bundle
 from .policy import load_policy, canonical_hash_dict
 from .verify import verify_bundle
 from .replay import replay_bundle
-from .llm_runtime import start as llm_start, stop as llm_stop, ping as llm_ping, read_status as llm_status
+from .llm_runtime import start_llm as llm_start, stop_llm as llm_stop, ping_llm as llm_ping, status_llm as llm_status
 from .llm_chat import chat as llm_chat
 from .tools import run_tool
 from .mission import run_mission
@@ -138,22 +138,22 @@ def cmd_replay(args) -> int:
 def cmd_llm_start(args) -> int:
     cfg = load_config(args.config)
     st = llm_start(cfg, force=args.force)
-    print(json.dumps(st.__dict__, indent=2, sort_keys=True))
+    print(json.dumps(st, indent=2, sort_keys=True))
     return 0
 
 
 def cmd_llm_stop(args) -> int:
     cfg = load_config(args.config)
     st = llm_stop(cfg, force_kill=args.force_kill)
-    print(json.dumps(st.__dict__, indent=2, sort_keys=True))
+    print(json.dumps(st, indent=2, sort_keys=True))
     return 0
 
 
 def cmd_llm_ping(args) -> int:
     cfg = load_config(args.config)
-    ok, msg = llm_ping(cfg)
-    print(json.dumps({"ok": bool(ok), "msg": msg}, indent=2, sort_keys=True))
-    return 0 if ok else 2
+    out = llm_ping(cfg)
+    print(json.dumps(out, indent=2, sort_keys=True))
+    return 0 if out.get("ok") else 2
 
 
 def cmd_llm_status(args) -> int:
