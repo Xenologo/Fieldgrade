@@ -1091,13 +1091,24 @@ def _load_registry_or_500(loader_name: str) -> Dict[str, Any]:
     try:
         from importlib import import_module
 
-        # Prefer the normal installed-module path, but fall back to the
-        # workspace layout if `mite_ecology.registry` resolves to the YAML
-        # directory (namespace package) rather than the code module.
-        registry_mod = import_module("mite_ecology.registry")
-        if not hasattr(registry_mod, loader_name):
-            registry_mod = import_module("mite_ecology.mite_ecology.registry")
-        loader = getattr(registry_mod, loader_name)
+        # Prefer the code module path first to avoid namespace-package shadowing
+        # when `mite_ecology/registry/` (YAML data) is on sys.path.
+        loader = None
+        last_err: Exception | None = None
+        for mod_name in ("mite_ecology.mite_ecology.registry", "mite_ecology.registry"):
+            try:
+                registry_mod = import_module(mod_name)
+                cand = getattr(registry_mod, loader_name, None)
+                if callable(cand):
+                    loader = cand
+                    break
+            except Exception as e:
+                last_err = e
+
+        if loader is None:
+            if last_err is not None:
+                raise last_err
+            raise AttributeError(f"no registry loader named {loader_name}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"registry_loader_unavailable: {e}")
 
