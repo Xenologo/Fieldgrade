@@ -153,6 +153,18 @@ def _atomic_write_json(path: Path, obj: Dict[str, Any]) -> None:
     tmp.replace(path)
 
 
+def _tail_text_file(path: Path, *, max_bytes: int = 4096) -> str:
+    try:
+        if not path.exists() or not path.is_file():
+            return ""
+        b = path.read_bytes()
+        if max_bytes > 0 and len(b) > max_bytes:
+            b = b[-max_bytes:]
+        return b.decode("utf-8", errors="replace").strip()
+    except Exception:
+        return ""
+
+
 def _build_launch_cmd(cfg: TermiteConfig) -> List[str]:
     """Return argv list for launching an OpenAI-compatible server.
 
@@ -395,6 +407,8 @@ def start(cfg: TermiteConfig, *, force: bool = False) -> LLMRuntimeStatus:
 
     launch_cmd: Optional[List[str]] = None
 
+    p: Optional[subprocess.Popen] = None
+
     if enabled:
         managed = True
         launch_cmd = _build_launch_cmd(cfg)
@@ -425,6 +439,14 @@ def start(cfg: TermiteConfig, *, force: bool = False) -> LLMRuntimeStatus:
     deadline = time.time() + _startup_timeout(cfg)
     last_err = ""
     while time.time() < deadline:
+        # If we launched a managed subprocess and it already exited, surface its log.
+        if managed and pid is not None and not _proc_running(pid):
+            tail = _tail_text_file(_log_path(cfg))
+            if tail:
+                last_err = f"process_exited_early (pid={pid})\n--- server.log (tail) ---\n{tail}"
+            else:
+                last_err = f"process_exited_early (pid={pid})"
+            break
         ok, _ = ping(cfg)
         if ok:
             break
@@ -432,7 +454,14 @@ def start(cfg: TermiteConfig, *, force: bool = False) -> LLMRuntimeStatus:
 
     ok, msg = ping(cfg)
     if not ok:
-        last_err = msg
+        last_err = last_err or msg
+        if not last_err:
+            last_err = "unready"
+
+        if managed:
+            tail = _tail_text_file(_log_path(cfg))
+            if tail and tail not in last_err:
+                last_err = f"{last_err}\n--- server.log (tail) ---\n{tail}"
         # ensure we do not leave a stale pid/state behind
         try:
             stop(cfg, force_kill=True)
