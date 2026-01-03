@@ -152,9 +152,22 @@ def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
         stderr = p.stderr or ""
         code = int(p.returncode)
     except subprocess.TimeoutExpired as e:
-        stdout = (e.stdout or "") if isinstance(e.stdout, str) else (e.stdout or b"").decode("utf-8", "replace")
-        stderr = (e.stderr or "") if isinstance(e.stderr, str) else (e.stderr or b"").decode("utf-8", "replace")
-        stderr = (stderr or "") + f"\n[timeout] command exceeded {timeout_s_raw}s"
+        def _coerce_text(v: object) -> str:
+            if v is None:
+                return ""
+            if isinstance(v, str):
+                return v
+            if isinstance(v, (bytes, bytearray)):
+                return bytes(v).decode("utf-8", "replace")
+            try:
+                # Some libraries expose a bytes-like object with .decode
+                return v.decode("utf-8", "replace")  # type: ignore[attr-defined]
+            except Exception:
+                return str(v)
+
+        stdout = _coerce_text(e.stdout)
+        stderr = _coerce_text(e.stderr)
+        stderr = f"{stderr}\n[timeout] command exceeded {timeout_s_raw}s" if stderr else f"[timeout] command exceeded {timeout_s_raw}s"
         code = 124
 
     parsed: Optional[Any] = None

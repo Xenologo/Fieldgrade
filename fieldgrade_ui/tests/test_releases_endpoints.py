@@ -5,7 +5,17 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from termite.signing import generate_keypair, save_keypair
+
+
+def _termite_signing():
+    """
+    Optional dependency: tests that require DSSE signing are skipped when termite
+    isn't installed in the environment running the test suite.
+    """
+    try:
+        return importlib.import_module("termite.signing")
+    except ModuleNotFoundError:
+        pytest.skip("Optional dependency 'termite' is not installed")
 
 
 def _h(token: str) -> dict[str, str]:
@@ -81,13 +91,15 @@ def test_release_build_cyclonedx_and_verify_required(client: TestClient) -> None
 
 
 def test_release_build_dsse_and_verify_required(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    termite_signing = _termite_signing()
+
     # Allow test-owned key material to be passed through the API sandbox.
     monkeypatch.setenv("FG_API_EXTRA_ROOTS", str(tmp_path))
 
     pub = tmp_path / "keys" / "test.pub.pem"
     priv = tmp_path / "keys" / "test.priv.pem"
-    kp = generate_keypair()
-    save_keypair(kp, priv_path=priv, pub_path=pub)
+    kp = termite_signing.generate_keypair()
+    termite_signing.save_keypair(kp, priv_path=priv, pub_path=pub)
 
     r = client.post(
         "/api/releases/build",
@@ -118,12 +130,14 @@ def test_release_build_dsse_and_verify_required(client: TestClient, tmp_path: Pa
 
 
 def test_release_verify_requires_pubkey_when_dsse_present(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    termite_signing = _termite_signing()
+
     monkeypatch.setenv("FG_API_EXTRA_ROOTS", str(tmp_path))
 
     pub = tmp_path / "keys" / "test.pub.pem"
     priv = tmp_path / "keys" / "test.priv.pem"
-    kp = generate_keypair()
-    save_keypair(kp, priv_path=priv, pub_path=pub)
+    kp = termite_signing.generate_keypair()
+    termite_signing.save_keypair(kp, priv_path=priv, pub_path=pub)
 
     r = client.post(
         "/api/releases/build",
