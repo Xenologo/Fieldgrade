@@ -352,16 +352,6 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--host-ram-mb", default=0, type=int)
     s.add_argument("--host-disk-mb", default=0, type=int)
     s.set_defaults(func=cmd_clutchscore)
-
-
-    s = sub.add_parser("release-build")
-    s.add_argument("--out", default="", help="Output directory for release artifacts (default: mite_ecology/artifacts/releases)")
-    s.add_argument("--components", default="", help="Override components registry YAML path")
-    s.add_argument("--variants", default="", help="Override variants registry YAML path")
-    s.add_argument("--remotes", default="", help="Override remotes registry YAML path")
-    s.set_defaults(func=cmd_release_build)
-
-
     return p
 
 
