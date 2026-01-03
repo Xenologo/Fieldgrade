@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, Request
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request, Body
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import threading
@@ -1171,7 +1171,7 @@ def releases_list(request: Request) -> Dict[str, Any]:
 
 
 @app.post("/api/releases/build")
-def releases_build(request: Request) -> Dict[str, Any]:
+def releases_build(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
     try:
         from importlib import import_module
 
@@ -1183,13 +1183,101 @@ def releases_build(request: Request) -> Dict[str, Any]:
 
     out_dir = _tenant_releases_root(request)
     try:
-        res = build_release(out_dir=out_dir)
+        include_dsse = bool(body.get("include_dsse"))
+        include_cyclonedx = bool(body.get("include_cyclonedx"))
+
+        signing_public_key_path = body.get("signing_public_key_path")
+        signing_private_key_path = body.get("signing_private_key_path")
+
+        pub_path: Optional[Path] = None
+        priv_path: Optional[Path] = None
+
+        if signing_public_key_path:
+            pub_path = _sandbox_path(
+                str(signing_public_key_path),
+                roots=[TERMITE_DIR],
+                what="signing_public_key_path",
+                must_exist=True,
+                must_be_file=True,
+            )
+        if signing_private_key_path:
+            priv_path = _sandbox_path(
+                str(signing_private_key_path),
+                roots=[TERMITE_DIR],
+                what="signing_private_key_path",
+                must_exist=True,
+                must_be_file=True,
+            )
+
+        if include_dsse and (pub_path is None or priv_path is None):
+            raise HTTPException(status_code=400, detail="missing_signing_key_paths")
+
+        res = build_release(
+            out_dir=out_dir,
+            include_dsse=include_dsse,
+            include_cyclonedx=include_cyclonedx,
+            signing_public_key_path=str(pub_path) if pub_path else None,
+            signing_private_key_path=str(priv_path) if priv_path else None,
+        )
         # enrich with zip sha for easy pinning
         out = {"ok": True, **res.__dict__}
         out["zip_sha256"] = release_zip_sha256(res.zip_path)
         return out
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"release_build_failed: {e}")
+
+
+@app.post("/api/releases/verify")
+def releases_verify(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    try:
+        from importlib import import_module
+
+        rel_mod = import_module("mite_ecology.release")
+        verify_release_zip = getattr(rel_mod, "verify_release_zip")
+        release_zip_sha256 = getattr(rel_mod, "release_zip_sha256")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"release_verifier_unavailable: {e}")
+
+    zip_root = _tenant_releases_root(request)
+    zip_path = _sandbox_path(
+        str(body.get("zip_path") or ""),
+        roots=[zip_root],
+        what="zip_path",
+        must_exist=True,
+        must_be_file=True,
+    )
+
+    require_dsse = bool(body.get("require_dsse"))
+    require_cyclonedx = bool(body.get("require_cyclonedx"))
+
+    signing_public_key_path = body.get("signing_public_key_path")
+    pub_path: Optional[Path] = None
+    if signing_public_key_path:
+        pub_path = _sandbox_path(
+            str(signing_public_key_path),
+            roots=[TERMITE_DIR],
+            what="signing_public_key_path",
+            must_exist=True,
+            must_be_file=True,
+        )
+
+    try:
+        report = verify_release_zip(
+            zip_path=str(zip_path),
+            signing_public_key_path=str(pub_path) if pub_path else None,
+            require_dsse=require_dsse,
+            require_cyclonedx=require_cyclonedx,
+        )
+        return {
+            "ok": True,
+            "zip_path": str(zip_path),
+            "zip_sha256": release_zip_sha256(zip_path),
+            "report": report,
+        }
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"release_verify_failed: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"release_verify_error: {e}")
 
 
 @app.get("/api/graph/nodes")

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from termite.signing import generate_keypair, save_keypair
 
 
 def _h(token: str) -> dict[str, str]:
@@ -43,3 +44,102 @@ def test_release_build_and_list(client: TestClient) -> None:
     assert r.status_code == 200, r.text
     items = r.json()["releases"]
     assert any(x["release_id"] == body["release_id"] for x in items)
+
+
+def test_release_verify_default_ok(client: TestClient) -> None:
+    r = client.post("/api/releases/build", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    built = r.json()
+
+    r = client.post(
+        "/api/releases/verify",
+        headers=_h("token_a"),
+        json={"zip_path": built["zip_path"]},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["ok"] is True
+    assert body["zip_sha256"]
+
+
+def test_release_build_cyclonedx_and_verify_required(client: TestClient) -> None:
+    r = client.post(
+        "/api/releases/build",
+        headers=_h("token_a"),
+        json={"include_cyclonedx": True},
+    )
+    assert r.status_code == 200, r.text
+    built = r.json()
+
+    r = client.post(
+        "/api/releases/verify",
+        headers=_h("token_a"),
+        json={"zip_path": built["zip_path"], "require_cyclonedx": True},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["ok"] is True
+
+
+def test_release_build_dsse_and_verify_required(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Allow test-owned key material to be passed through the API sandbox.
+    monkeypatch.setenv("FG_API_EXTRA_ROOTS", str(tmp_path))
+
+    pub = tmp_path / "keys" / "test.pub.pem"
+    priv = tmp_path / "keys" / "test.priv.pem"
+    kp = generate_keypair()
+    save_keypair(kp, priv_path=priv, pub_path=pub)
+
+    r = client.post(
+        "/api/releases/build",
+        headers=_h("token_a"),
+        json={
+            "include_dsse": True,
+            "include_cyclonedx": True,
+            "signing_public_key_path": str(pub),
+            "signing_private_key_path": str(priv),
+        },
+    )
+    assert r.status_code == 200, r.text
+    built = r.json()
+
+    # Verifying a DSSE-signed release requires the public key.
+    r = client.post(
+        "/api/releases/verify",
+        headers=_h("token_a"),
+        json={
+            "zip_path": built["zip_path"],
+            "require_dsse": True,
+            "require_cyclonedx": True,
+            "signing_public_key_path": str(pub),
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["ok"] is True
+
+
+def test_release_verify_requires_pubkey_when_dsse_present(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FG_API_EXTRA_ROOTS", str(tmp_path))
+
+    pub = tmp_path / "keys" / "test.pub.pem"
+    priv = tmp_path / "keys" / "test.priv.pem"
+    kp = generate_keypair()
+    save_keypair(kp, priv_path=priv, pub_path=pub)
+
+    r = client.post(
+        "/api/releases/build",
+        headers=_h("token_a"),
+        json={
+            "include_dsse": True,
+            "signing_public_key_path": str(pub),
+            "signing_private_key_path": str(priv),
+        },
+    )
+    assert r.status_code == 200, r.text
+    built = r.json()
+
+    r = client.post(
+        "/api/releases/verify",
+        headers=_h("token_a"),
+        json={"zip_path": built["zip_path"], "require_dsse": True},
+    )
+    assert r.status_code == 400, r.text
