@@ -273,11 +273,10 @@ def _spawn_process(cfg: TermiteConfig, argv: List[str], *, cwd: Path, env: Dict[
     # Stream stdout/stderr to a single log file.
     out = logf.open("ab")
     popen_kwargs["stdout"] = out
-    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
     # Termite intentionally launches a local OpenAI-compatible server. The argv
     # comes from operator-controlled config (or a fixed template), and we
     # explicitly avoid shell=True.
-    p = subprocess.Popen(argv, **popen_kwargs)
+    p = subprocess.Popen(argv, **popen_kwargs)  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
     return p
 
 
