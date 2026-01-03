@@ -108,13 +108,21 @@ def _load_registry(*, yaml_path: Path, schema_path: Path, what: str) -> Registry
 
 
 def load_components_registry(path: str | Path | None = None) -> RegistryLoadResult:
-    p = Path(path) if path is not None else (_registry_dir() / "components_v1.yaml")
+    if path is not None:
+        p = Path(path)
+    else:
+        p_new = _registry_dir() / "components.yaml"
+        p = p_new if p_new.exists() else (_registry_dir() / "components_v1.yaml")
     s = _schemas_dir() / "registry_components_v1.json"
     return _load_registry(yaml_path=p, schema_path=s, what="components_registry")
 
 
 def load_variants_registry(path: str | Path | None = None) -> RegistryLoadResult:
-    p = Path(path) if path is not None else (_registry_dir() / "variants_v1.yaml")
+    if path is not None:
+        p = Path(path)
+    else:
+        p_new = _registry_dir() / "variants.yaml"
+        p = p_new if p_new.exists() else (_registry_dir() / "variants_v1.yaml")
     s = _schemas_dir() / "registry_variants_v1.json"
     return _load_registry(yaml_path=p, schema_path=s, what="variants_registry")
 

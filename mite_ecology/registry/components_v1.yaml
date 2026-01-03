@@ -1,3 +1,82 @@
 type: registry_components/1.0
 version: "1.0"
-components: []
+catalog_id: "ldna://yaml/registry_components@1.0.0"
+generated_at: 0
+
+components:
+	- component_id: "mitecomp://fieldgrade_ui"
+		title: "Fieldgrade UI"
+		description: "Web UI for uploading bundles, browsing jobs, inspecting outputs."
+		name: "fieldgrade_ui"
+		kind: "frontend"
+		role: "bundle_uploader"
+		runtime: "python"
+		distribution:
+			type: "python_module"
+			module: "fieldgrade_ui"
+		entrypoint: "python -m fieldgrade_ui serve"
+		constraints:
+			offline_ok: true
+			network_required: false
+		tests:
+			- name: "pytest_smoke"
+				cmd: "python -m pytest -q fieldgrade_ui"
+		provenance:
+			owner: "Xenologo"
+			license: "MIT"
+		schemas:
+			inputs:
+				- "termite_bundle"
+			outputs:
+				- "job_submission"
+				- "job_logs"
+
+	- component_id: "mitecomp://termite_fieldpack"
+		title: "Termite Fieldpack"
+		description: "Fieldpack toolchain: ingest→CAS→provenance→seal→verify→replay."
+		name: "termite"
+		kind: "backend"
+		role: "ingest+seal+verify"
+		runtime: "cli"
+		distribution:
+			type: "cli"
+			path: "termite_fieldpack/bin/termite"
+		entrypoint: "./termite_fieldpack/bin/termite"
+		policy_mode: "meap_v1"
+		policy:
+			tool_allowlist_ref: "ldna://policy/tool_allowlist@1.0.0"
+			meap_profile: "meap_v1"
+		tests:
+			- name: "fieldpack_smoke"
+				cmd: "cd termite_fieldpack && python -m pytest -q"
+		schemas:
+			outputs:
+				- "kg_delta_jsonl:ldna://json/kg_delta@1.0.0"
+				- "sealed_bundle"
+				- "sbom"
+				- "provenance_chain"
+
+	- component_id: "mitecomp://mite_ecology"
+		title: "Mite Ecology"
+		description: "Design-time pipeline: import verified bundles→KG→motifs→GA→NeuroArch export."
+		name: "mite-ecology"
+		kind: "backend"
+		role: "import+gnn+gat+ga+export"
+		runtime: "python"
+		distribution:
+			type: "python_module"
+			module: "mite_ecology"
+		entrypoint: "python -m mite_ecology.cli auto-run --cycles 3"
+		constraints:
+			offline_ok: true
+			deterministic: true
+		tests:
+			- name: "pytest"
+				cmd: "cd mite_ecology && python -m pytest -q"
+		schemas:
+			inputs:
+				- "sealed_bundle"
+				- "kg_delta_jsonl:ldna://json/kg_delta@1.0.0"
+			outputs:
+				- "motif_spec:ldna://json/motif_spec@1.0.0"
+				- "neuroarch_dsl:ldna://json/neuroarch_dsl@1.0.0"

@@ -6,16 +6,28 @@ schemas:
   description: Hypothesis list and scores
 - uri: ldna://json/kg_delta@1.0.0
   description: Knowledge graph delta operation stream
+  path: schemas/kg_delta.json
+  sha256: d0f1ee0cba98fe1c244f24e5575dd452592034dc51b8e7f79d959876c00bda76
 - uri: ldna://json/motif_spec@1.0.0
   description: Motif spec (GNN/GAT/etc) payload
+  path: schemas/motif_spec.json
+  sha256: 2a25215b1d301d250bcd147bfc8f39c14734a88397fbb9ec1690150df25e8bcf
 - uri: ldna://json/neuroarch_dsl@1.0.0
   description: Neuroarch DSL fragment
+  path: schemas/neuroarch_dsl.json
+  sha256: 9cde04f8fb1d3626811795d16783b2307acf18da640f2e3be5e3d49a8ef62e37
 - uri: ldna://yaml/registry_components@1.0.0
   description: Registry catalog (components)
+  path: schemas/registry_components_v1.json
+  sha256: 760e9fef47e03fc691dc9d69e13a44783e7806401564373c3a1f34b7e64c125e
 - uri: ldna://yaml/registry_variants@1.0.0
   description: Registry catalog (variants)
+  path: schemas/registry_variants_v1.json
+  sha256: f02bbbbb4675a7b5f35ea6f0052472861cbb123aadc616f523f868cae2b96cac
 - uri: ldna://yaml/registry_remotes@1.0.0
   description: Registry remotes configuration
+  path: schemas/registry_remotes_v1.json
+  sha256: 2b1d3be6f8fdd540479eb85a87bc028ca881c49461d3142b3f4a295225c9ec59
 compat:
   rule: major_version_compat
   notes: Consumers must accept same major; producers may emit higher minor/patch.
