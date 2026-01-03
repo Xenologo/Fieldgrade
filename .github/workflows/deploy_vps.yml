@@ -81,9 +81,41 @@ jobs:
             set -euo pipefail
             cd '${DEPLOY_PATH}'
 
-            git fetch --all --prune
-            git checkout '${REF}'
-            git pull --ff-only origin '${REF}' || true
+            # Deploy deterministically: resolve REF (branch/tag/SHA) to a commit SHA,
+            # then checkout that commit in detached HEAD mode.
+            git fetch --prune origin
+
+            ref_raw='${REF}'
+            ref_in=\"${ref_raw}\"
+            ref_in=\"${ref_in#refs/heads/}\"
+            ref_in=\"${ref_in#refs/tags/}\"
+            ref_in=\"${ref_in#origin/}\"
+
+            # Refuse to deploy if tracked files are locally modified.
+            if ! git diff --quiet; then
+              echo 'ERROR: tracked files modified in working tree; refusing deploy.' >&2
+              git status --porcelain >&2 || true
+              exit 3
+            fi
+
+            target=''
+            if git show-ref --verify --quiet \"refs/remotes/origin/${ref_in}\"; then
+              target=\"refs/remotes/origin/${ref_in}\"
+            elif git show-ref --verify --quiet \"refs/tags/${ref_in}\"; then
+              target=\"refs/tags/${ref_in}\"
+            elif git rev-parse --verify --quiet \"${ref_raw}^{commit}\" >/dev/null; then
+              target=\"${ref_raw}^{commit}\"
+            elif git rev-parse --verify --quiet \"${ref_in}^{commit}\" >/dev/null; then
+              target=\"${ref_in}^{commit}\"
+            else
+              echo \"ERROR: unable to resolve ref '${ref_raw}' (branch/tag/SHA not found)\" >&2
+              exit 2
+            fi
+
+            sha=\"$(git rev-parse \"${target}\")\"
+            echo \"Deploying REF='${ref_raw}' -> SHA=${sha}\"
+            git checkout --detach \"${sha}\"
+            echo \"Checked out SHA=$(git rev-parse HEAD)\"
 
             docker compose ${compose_args} config >/dev/null
             docker compose ${compose_args} up -d --build

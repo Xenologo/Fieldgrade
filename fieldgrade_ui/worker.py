@@ -3,11 +3,48 @@ from __future__ import annotations
 import os
 import re
 import time
+import json
 from pathlib import Path
 
 from .config import jobs_db_path, repo_root
 from .jobs import append_log, claim_next_job, fail_job, succeed_job
 from .pipeline import run_termite_to_ecology_pipeline
+
+_LAST_HEARTBEAT_WRITE_S = 0.0
+
+
+def _ui_runtime_dir() -> Path:
+    override = (os.environ.get("FG_UI_RUNTIME_DIR") or "").strip()
+    if override:
+        return _safe_resolve(Path(override))
+    return _safe_resolve(repo_root() / "fieldgrade_ui" / "runtime")
+
+
+def _heartbeat_path() -> Path:
+    return _ui_runtime_dir() / "worker_heartbeat.json"
+
+
+def _write_worker_heartbeat() -> None:
+    global _LAST_HEARTBEAT_WRITE_S
+
+    now = time.time()
+    interval_s = float(os.environ.get("FG_WORKER_HEARTBEAT_INTERVAL_S", "5"))
+    if interval_s <= 0:
+        interval_s = 0.0
+
+    if interval_s and (now - _LAST_HEARTBEAT_WRITE_S) < interval_s:
+        return
+
+    hb = {
+        "ts": now,
+        "pid": os.getpid(),
+    }
+    path = _heartbeat_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(hb, sort_keys=True), encoding="utf-8")
+    tmp.replace(path)
+    _LAST_HEARTBEAT_WRITE_S = now
 
 def _safe_resolve(p: Path) -> Path:
     p = Path(p).expanduser()
@@ -73,6 +110,14 @@ def _sandbox_upload_path(p: Path) -> Path:
 
 
 def run_once() -> bool:
+    # Heartbeat is written even when there is no work, so monitoring can detect
+    # a dead/stuck worker process.
+    try:
+        _write_worker_heartbeat()
+    except Exception:
+        # Best-effort; never fail jobs because heartbeat couldn't write.
+        pass
+
     db_path = jobs_db_path()
     claimed = claim_next_job(db_path, kinds=["pipeline"])
     if not claimed:
