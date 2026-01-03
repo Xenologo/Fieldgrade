@@ -224,6 +224,21 @@ def _spawn_process(cfg: TermiteConfig, argv: List[str], *, cwd: Path, env: Dict[
     logf = _log_path(cfg)
     logf.parent.mkdir(parents=True, exist_ok=True)
 
+    # Ensure repo-local Python modules can be imported even when the child
+    # process runs with cwd under runtime_root (common in laptop mode and CI).
+    try:
+        repo_root = Path(__file__).resolve().parents[2]
+        pp = str(env.get("PYTHONPATH") or "").strip()
+        repo_root_s = str(repo_root)
+        if pp:
+            parts = pp.split(os.pathsep)
+            if repo_root_s not in parts:
+                env["PYTHONPATH"] = repo_root_s + os.pathsep + pp
+        else:
+            env["PYTHONPATH"] = repo_root_s
+    except Exception:
+        pass
+
     popen_kwargs: Dict[str, Any] = {
         "cwd": str(cwd),
         "env": env,
