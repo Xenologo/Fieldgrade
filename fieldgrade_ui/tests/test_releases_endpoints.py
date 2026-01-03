@@ -173,3 +173,12 @@ def test_registry_endpoints_ok(client: TestClient) -> None:
         assert body["canonical_sha256"]
         assert isinstance(body.get("registry"), dict)
         assert key in body["registry"]
+
+
+def test_registry_health_ok(client: TestClient) -> None:
+    r = client.get("/api/registry/health", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert "registries" in body
+    assert "ldna_registry" in body
+    assert "openapi" in body
