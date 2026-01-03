@@ -143,3 +143,19 @@ def test_release_verify_requires_pubkey_when_dsse_present(client: TestClient, tm
         json={"zip_path": built["zip_path"], "require_dsse": True},
     )
     assert r.status_code == 400, r.text
+
+
+def test_registry_endpoints_ok(client: TestClient) -> None:
+    # Catalog refresh depends on these endpoints.
+    for path, key in (
+        ("/api/registry/components", "components"),
+        ("/api/registry/variants", "variants"),
+        ("/api/registry/remotes", "remotes"),
+    ):
+        r = client.get(path, headers=_h("token_a"))
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["ok"] is True
+        assert body["canonical_sha256"]
+        assert isinstance(body.get("registry"), dict)
+        assert key in body["registry"]
