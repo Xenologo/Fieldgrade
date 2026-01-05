@@ -357,6 +357,26 @@ def accept_termite_bundle(
                     ingest_kind="MERGED",
                     notes=notes,
                 )
+            from .graph_delta import append_graph_delta_event, default_ledger_path_for_db
+            append_graph_delta_event(
+                default_ledger_path_for_db(db_path),
+                source="TERMITE",
+                ops_lines=delta_payload.splitlines(),
+                context_node_id=None,
+                run_id=None,
+                trace_id=None,
+                meta={
+                    "bundle_sha256": bundle_sha,
+                    "bundle_name": bundle_name,
+                    "delta_hash": delta_hash,
+                    "ingested_id": ing_id,
+                    "policy_id": policy_id,
+                    "policy_hash": policy_hash,
+                    "allowlist_hash": allowlist_hash,
+                    "toolchain_id": toolchain_id,
+                    "bundle_map_hash": bundle_map_hash,
+                },
+            )
             return {
                 "status": "MERGED",
                 "bundle_sha256": bundle_sha,

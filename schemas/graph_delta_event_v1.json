@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mite_ecology.schemas.graph_delta_event.v1",
+  "title": "GraphDelta Ledger Event (JSONL line)",
+  "type": "object",
+  "required": ["v", "kind", "prev_hash", "event_hash", "payload"],
+  "properties": {
+    "v": {"type": "integer", "const": 1},
+    "kind": {"type": "string", "const": "graph_delta"},
+    "prev_hash": {"type": ["string", "null"]},
+    "event_hash": {"type": "string"},
+    "payload": {
+      "type": "object",
+      "required": ["ops_kind", "ops_payload", "ops_hash", "source"],
+      "properties": {
+        "source": {"type": "string"},
+        "context_node_id": {"type": ["string", "null"]},
+        "run_id": {"type": ["string", "null"]},
+        "trace_id": {"type": ["string", "null"]},
+        "ops_kind": {"type": "string", "const": "kg_delta.jsonl"},
+        "ops_payload": {"type": "string", "description": "Canonicalized JSONL of KG ops"},
+        "ops_hash": {"type": "string", "description": "sha256_hex(canonical_ops_payload)"},
+        "meta": {"type": ["object", "null"], "additionalProperties": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
