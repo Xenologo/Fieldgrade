@@ -18,6 +18,34 @@ from .gnn import message_passing_embeddings
 from .gat import compute_edge_attention
 
 
+def _resolve_graph_delta_ledger_path(cfg_raw: Dict[str, Any], cfg_base_dir: Path) -> Optional[Path]:
+    """Resolve the GraphDelta ledger path from config.
+
+    Order:
+      1) mite_ecology.graph_delta_ledger_path
+      2) sibling to mite_ecology.db_path: <db_dir>/graph_delta_ledger.jsonl
+    """
+
+    def _expand_path(p: str) -> Path:
+        s = os.path.expandvars(os.path.expanduser(str(p)))
+        pp = Path(s)
+        if not pp.is_absolute():
+            pp = (cfg_base_dir / pp).resolve()
+        return pp.resolve()
+
+    me = (cfg_raw.get("mite_ecology") or {})
+    explicit = me.get("graph_delta_ledger_path")
+    if explicit:
+        return _expand_path(str(explicit))
+
+    db_raw = me.get("db_path")
+    if db_raw:
+        dbp = _expand_path(str(db_raw))
+        return dbp.parent / "graph_delta_ledger.jsonl"
+
+    return None
+
+
 # -----------------------------
 # Config structures (read from ecology.yaml)
 # -----------------------------
@@ -644,6 +672,9 @@ def apply_llm_result_to_kg(
     res: LLMResult,
     prompt_hash: str,
     context_hash: str,
+    graph_delta_ledger_path: Optional[Path] = None,
+    run_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
 ) -> int:
     """
     Applies the validated LLM output to the KG and records a provenance-linked kg_deltas row.
@@ -653,7 +684,19 @@ def apply_llm_result_to_kg(
         assert isinstance(res.content, str)
         payload = res.content.strip() + ("\n" if res.content and not res.content.endswith("\n") else "")
         append_kg_delta(kg, source="LLM", context_node_id=None, delta_kind="kg_delta.jsonl", delta_payload_text=payload)
-        return apply_delta_lines(kg, payload.splitlines())
+        applied = apply_delta_lines(kg, payload.splitlines())
+        if graph_delta_ledger_path:
+            from .graph_delta import append_graph_delta_event
+            append_graph_delta_event(
+                Path(graph_delta_ledger_path),
+                source="LLM",
+                ops_lines=payload.splitlines(),
+                context_node_id=None,
+                run_id=run_id,
+                trace_id=trace_id,
+                meta={"response_kind": "kg_delta.jsonl", "prompt_hash": prompt_hash, "context_hash": context_hash},
+            )
+        return applied
 
     if res.response_kind == "motif_spec.json":
         assert isinstance(res.content, dict)
@@ -666,7 +709,19 @@ def apply_llm_result_to_kg(
         append_kg_delta(kg, source="LLM", context_node_id=str(res.content.get("context") or ""), delta_kind="motif_spec.json", delta_payload_text=payload)
         ops = motif_spec_to_ops(res.content, prompt_hash=prompt_hash, context_hash=context_hash)
         op_lines = [canonical_json(o) for o in ops]
-        return apply_delta_lines(kg, op_lines)
+        applied = apply_delta_lines(kg, op_lines)
+        if graph_delta_ledger_path:
+            from .graph_delta import append_graph_delta_event
+            append_graph_delta_event(
+                Path(graph_delta_ledger_path),
+                source="LLM",
+                ops_lines=op_lines,
+                context_node_id=str(res.content.get("context") or "") or None,
+                run_id=run_id,
+                trace_id=trace_id,
+                meta={"response_kind": "motif_spec.json", "prompt_hash": prompt_hash, "context_hash": context_hash},
+            )
+        return applied
 
     if res.response_kind == "neuroarch_dsl.json":
         assert isinstance(res.content, dict)
@@ -674,7 +729,19 @@ def apply_llm_result_to_kg(
         append_kg_delta(kg, source="LLM", context_node_id=str(res.content.get("context_node_id") or ""), delta_kind="neuroarch_dsl.json", delta_payload_text=payload)
         ops = neuroarch_to_ops(res.content, prompt_hash=prompt_hash, context_hash=context_hash)
         op_lines = [canonical_json(o) for o in ops]
-        return apply_delta_lines(kg, op_lines)
+        applied = apply_delta_lines(kg, op_lines)
+        if graph_delta_ledger_path:
+            from .graph_delta import append_graph_delta_event
+            append_graph_delta_event(
+                Path(graph_delta_ledger_path),
+                source="LLM",
+                ops_lines=op_lines,
+                context_node_id=str(res.content.get("context_node_id") or res.content.get("context") or "") or None,
+                run_id=run_id,
+                trace_id=trace_id,
+                meta={"response_kind": "neuroarch_dsl.json", "prompt_hash": prompt_hash, "context_hash": context_hash},
+            )
+        return applied
 
     raise ValueError(f"Unsupported kind: {res.response_kind}")
 
@@ -694,7 +761,14 @@ def llm_sync(kg: KnowledgeGraph, *, cfg_raw: Dict[str, Any], cfg_base_dir: Path,
         prompt_template=prompt_template,
         desired_kind=None,
     )
-    return apply_llm_result_to_kg(kg, res=res, prompt_hash=ph, context_hash=ch)
+    graph_delta_ledger_path = _resolve_graph_delta_ledger_path(cfg_raw, cfg_base_dir)
+    return apply_llm_result_to_kg(
+        kg,
+        res=res,
+        prompt_hash=ph,
+        context_hash=ch,
+        graph_delta_ledger_path=graph_delta_ledger_path,
+    )
 
 def llm_propose_motif(kg: KnowledgeGraph, *, cfg_raw: Dict[str, Any], cfg_base_dir: Path, task_id: str, scope_rule: str = "") -> int:
     prompts = ((cfg_raw.get("llm") or {}).get("prompts") or {})
@@ -708,7 +782,14 @@ def llm_propose_motif(kg: KnowledgeGraph, *, cfg_raw: Dict[str, Any], cfg_base_d
         prompt_template=prompt_template,
         desired_kind="motif_spec.json",
     )
-    return apply_llm_result_to_kg(kg, res=res, prompt_hash=ph, context_hash=ch)
+    graph_delta_ledger_path = _resolve_graph_delta_ledger_path(cfg_raw, cfg_base_dir)
+    return apply_llm_result_to_kg(
+        kg,
+        res=res,
+        prompt_hash=ph,
+        context_hash=ch,
+        graph_delta_ledger_path=graph_delta_ledger_path,
+    )
 
 def llm_propose_delta(kg: KnowledgeGraph, *, cfg_raw: Dict[str, Any], cfg_base_dir: Path, task_id: str, scope_rule: str) -> int:
     prompts = ((cfg_raw.get("llm") or {}).get("prompts") or {})
@@ -722,4 +803,11 @@ def llm_propose_delta(kg: KnowledgeGraph, *, cfg_raw: Dict[str, Any], cfg_base_d
         prompt_template=prompt_template,
         desired_kind="kg_delta.jsonl",
     )
-    return apply_llm_result_to_kg(kg, res=res, prompt_hash=ph, context_hash=ch)
+    graph_delta_ledger_path = _resolve_graph_delta_ledger_path(cfg_raw, cfg_base_dir)
+    return apply_llm_result_to_kg(
+        kg,
+        res=res,
+        prompt_hash=ph,
+        context_hash=ch,
+        graph_delta_ledger_path=graph_delta_ledger_path,
+    )

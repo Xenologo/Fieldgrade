@@ -16,6 +16,10 @@ schemas:
   description: Neuroarch DSL fragment
   path: schemas/neuroarch_dsl.json
   sha256: 9cde04f8fb1d3626811795d16783b2307acf18da640f2e3be5e3d49a8ef62e37
+- uri: ldna://json/graph_delta_event@1.0.0
+  description: GraphDelta append-only ledger event (hash-chained)
+  path: schemas/graph_delta_event_v1.json
+  sha256: 08630866089a71926f5403ff5e9b1f89f9dedda4b1469d2bdbabb3b56b0be0b8
 - uri: ldna://yaml/registry_components@1.0.0
   description: Registry catalog (components)
   path: schemas/registry_components_v1.json
