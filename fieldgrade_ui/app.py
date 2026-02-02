@@ -164,7 +164,7 @@ def _run_cmd(cmd: List[str], cwd: Path, *, env: Optional[Dict[str, str]] = None)
         raise HTTPException(status_code=400, detail="command_not_allowed")
 
     try:
-        p = subprocess.run(
+        p = subprocess.run(  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
             cmd,
             cwd=str(cwd),
             env=env,
