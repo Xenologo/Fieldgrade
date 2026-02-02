@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -40,7 +41,12 @@ def scan_and_enqueue(uploads_dir: Path, label: str = "watch") -> int:
         # update state first to prevent duplicate enqueues on crash loops
         state[key] = sig
         save_state(state)
-        create_job(jobs_db_path(), "pipeline", {"upload_path": key, "label": label})
+        run_id = uuid.uuid4().hex
+        create_job(
+            jobs_db_path(),
+            "pipeline",
+            {"upload_path": key, "label": label, "run_id": run_id},
+        )
         enq += 1
     return enq
 

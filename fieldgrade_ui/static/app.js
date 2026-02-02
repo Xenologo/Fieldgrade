@@ -102,10 +102,106 @@ function selectedBundlePath() {
 
 let cy = null;
 
+let _runsById = new Map();
+
 function shortId(id) {
   if (!id) return '';
   const s = String(id);
   return s.length > 34 ? s.slice(0, 34) + '…' : s;
+}
+
+function _setText(id, text) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+}
+
+function _selectedRunId() {
+  const sel = $('runSelect');
+  if (!sel) return null;
+  const v = (sel.value || '').trim();
+  return v ? v : null;
+}
+
+function _renderRunContext(runId) {
+  if (!runId) {
+    _setText('selectedRunId', '(all)');
+    _setText('selectedTraceIds', '(n/a)');
+    return;
+  }
+  const r = _runsById.get(runId) || null;
+  _setText('selectedRunId', runId);
+  if (r && Array.isArray(r.trace_ids) && r.trace_ids.length > 0) {
+    const shown = r.trace_ids.slice(0, 6).map(t => shortId(t));
+    const more = r.trace_ids.length > shown.length ? ` (+${r.trace_ids.length - shown.length})` : '';
+    _setText('selectedTraceIds', shown.join(', ') + more);
+  } else {
+    _setText('selectedTraceIds', '(none)');
+  }
+}
+
+function _fmtDeltaLine(e) {
+  const h = (e && e.event_hash ? String(e.event_hash) : '').slice(0, 12);
+  const prev = (e && e.prev_hash ? String(e.prev_hash) : '').slice(0, 12);
+  const ops = (e && e.ops_hash ? String(e.ops_hash) : '').slice(0, 12);
+  const src = e && e.source ? String(e.source) : '';
+  const ctx = e && e.context_node_id ? shortId(e.context_node_id) : '';
+  const run = e && e.run_id ? shortId(e.run_id) : '';
+  const trace = e && e.trace_id ? shortId(e.trace_id) : '';
+  return `${h} prev=${prev} src=${src} ctx=${ctx} run=${run} trace=${trace} ops=${ops}`.trim();
+}
+
+async function refreshRunsUI() {
+  const sel = $('runSelect');
+  if (!sel) return;
+  const prev = _selectedRunId();
+
+  const data = await apiJson('/api/runs?limit=200');
+  const runs = (data && data.runs) ? data.runs : [];
+
+  _runsById = new Map();
+  for (const r of runs) {
+    if (r && r.run_id) _runsById.set(String(r.run_id), r);
+  }
+
+  sel.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = '';
+  optAll.textContent = '(all)';
+  sel.appendChild(optAll);
+
+  for (const r of runs) {
+    const rid = r && r.run_id ? String(r.run_id) : '';
+    if (!rid) continue;
+    const opt = document.createElement('option');
+    opt.value = rid;
+    const nEvents = (r && typeof r.events === 'number') ? r.events : null;
+    opt.textContent = nEvents != null ? `${shortId(rid)}  (${nEvents} events)` : shortId(rid);
+    sel.appendChild(opt);
+  }
+
+  if (prev && _runsById.has(prev)) {
+    sel.value = prev;
+  } else {
+    sel.value = '';
+  }
+  _renderRunContext(_selectedRunId());
+}
+
+async function loadDeltasUI() {
+  const pre = $('deltasPre');
+  if (!pre) return;
+  const runId = _selectedRunId();
+  const qs = new URLSearchParams();
+  qs.set('limit', '200');
+  if (runId) qs.set('run_id', runId);
+  const data = await apiJson('/api/deltas?' + qs.toString());
+  const events = (data && data.events) ? data.events : [];
+  if (!events || events.length === 0) {
+    pre.textContent = '(none)';
+    return;
+  }
+  pre.textContent = events.map(_fmtDeltaLine).join('\n');
 }
 
 function ensureCy() {
@@ -894,6 +990,41 @@ async function init() {
   const stSel = $('stagedStatusSel');
   if (stSel) stSel.onchange = async () => { await refreshStagedUI(true); };
 
+  // GraphDelta ledger
+  const btnRefreshRuns = $('btnRefreshRuns');
+  const btnLoadDeltas = $('btnLoadDeltas');
+  const runSel = $('runSelect');
+
+  if (btnRefreshRuns) {
+    btnRefreshRuns.onclick = async () => {
+      await withDisabled(btnRefreshRuns, async () => {
+        await refreshRunsUI();
+      });
+    };
+  }
+
+  if (btnLoadDeltas) {
+    btnLoadDeltas.onclick = async () => {
+      await withDisabled(btnLoadDeltas, async () => {
+        _renderRunContext(_selectedRunId());
+        await loadDeltasUI();
+      });
+    };
+  }
+
+  if (runSel) {
+    runSel.onchange = async () => {
+      _renderRunContext(_selectedRunId());
+      if (btnLoadDeltas) {
+        await withDisabled(btnLoadDeltas, async () => {
+          await loadDeltasUI();
+        });
+      } else {
+        await loadDeltasUI();
+      }
+    };
+  }
+
   // Graph
   $("btnLoadNodes").onclick = async () => {
     await withDisabled($("btnLoadNodes"), async () => {
@@ -912,6 +1043,14 @@ async function init() {
   // Initial loads
   await refreshBundles();
   await refreshExports();
+
+  // Best-effort: populate run selector for filtering deltas.
+  try {
+    await refreshRunsUI();
+    await loadDeltasUI();
+  } catch (e) {
+    // Ignore (e.g., auth); user can retry via Refresh.
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

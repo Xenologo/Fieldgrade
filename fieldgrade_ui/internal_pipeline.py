@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -109,6 +110,7 @@ def run_termite_to_ecology_pipeline_library(
     *,
     upload_path: Path,
     label: str,
+    run_id: Optional[str] = None,
     policy_path: Optional[Path] = None,
     allowlist_path: Optional[Path] = None,
     termite_config_path: Optional[Path] = None,
@@ -125,6 +127,8 @@ def run_termite_to_ecology_pipeline_library(
     upload_path = _safe_resolve(upload_path)
     if not upload_path.exists():
         raise FileNotFoundError(str(upload_path))
+
+    rid = (run_id or "").strip() or uuid.uuid4().hex
 
     # Resolve config paths
     if termite_config_path is None:
@@ -152,6 +156,7 @@ def run_termite_to_ecology_pipeline_library(
     from mite_ecology.kg import KnowledgeGraph
     from mite_ecology.auto import autorun, AutoRunConfig
     from mite_ecology.hashutil import sha256_str, canonical_json
+    from mite_ecology.run_context import run_context
 
     # ------------------------
     # 1) termite ingest
@@ -160,21 +165,22 @@ def run_termite_to_ecology_pipeline_library(
         log(f"pipeline(lib): upload_path={upload_path}")
         log(f"pipeline(lib): label={label}")
 
-    cas = CAS(t_cfg.cas_root)
-    cas.init()
-    t_con = t_connect(t_cfg.db_path)
-    prov = Provenance(t_cfg.toolchain_id)
-    ingest_res = ingest_path(
-        t_con,
-        cas,
-        prov,
-        upload_path,
-        max_bytes=t_cfg.max_bytes,
-        extract_text=t_cfg.extract_text,
-        chunk_chars=t_cfg.chunk_chars,
-        overlap_chars=t_cfg.overlap_chars,
-        min_chunk_chars=t_cfg.min_chunk_chars,
-    )
+    with run_context(run_id=rid, trace_id=f"{rid}:termite_ingest"):
+        cas = CAS(t_cfg.cas_root)
+        cas.init()
+        t_con = t_connect(t_cfg.db_path)
+        prov = Provenance(t_cfg.toolchain_id)
+        ingest_res = ingest_path(
+            t_con,
+            cas,
+            prov,
+            upload_path,
+            max_bytes=t_cfg.max_bytes,
+            extract_text=t_cfg.extract_text,
+            chunk_chars=t_cfg.chunk_chars,
+            overlap_chars=t_cfg.overlap_chars,
+            min_chunk_chars=t_cfg.min_chunk_chars,
+        )
 
     # ------------------------
     # 2) termite seal
@@ -205,16 +211,19 @@ def run_termite_to_ecology_pipeline_library(
         policy_hash=pol.canonical_hash(),
         allowlist_hash=canonical_hash_dict(allow_for_hash),
     )
-    bundle_path = build_bundle(inp, label=label)
+    with run_context(run_id=rid, trace_id=f"{rid}:termite_seal"):
+        bundle_path = build_bundle(inp, label=label)
 
     # ------------------------
     # 3) termite verify + replay
     # ------------------------
-    vr = verify_bundle(bundle_path, policy=pol, allowlist=allow)
+    with run_context(run_id=rid, trace_id=f"{rid}:termite_verify"):
+        vr = verify_bundle(bundle_path, policy=pol, allowlist=allow)
     if not vr.ok:
         raise RuntimeError(f"termite verify not ok: {vr.__dict__}")
 
-    rs = replay_bundle(bundle_path, policy=pol, allowlist=allow)
+    with run_context(run_id=rid, trace_id=f"{rid}:termite_replay"):
+        rs = replay_bundle(bundle_path, policy=pol, allowlist=allow)
     if not rs.ok:
         raise RuntimeError(f"termite replay not ok: {rs.__dict__}")
 
@@ -232,21 +241,22 @@ def run_termite_to_ecology_pipeline_library(
     # ------------------------
     # 5) import bundle (idempotent)
     # ------------------------
-    accept_termite_bundle(
-        e_cfg.db_path,
-        bundle_path,
-        policy_path=e_cfg.policy_path,
-        allowlist_path=e_cfg.allowlist_path,
-        accept_policy=AcceptPolicy(
-            max_ops=e_cfg.max_bundle_ops,
-            max_new_nodes=getattr(e_cfg, "max_bundle_new_nodes", 2000),
-            max_new_edges=getattr(e_cfg, "max_bundle_new_edges", 10000),
-        ),
-        override_mode=None,
-        actor=None,
-        notes=None,
-        idempotent=True,
-    )
+    with run_context(run_id=rid, trace_id=f"{rid}:ecology_import"):
+        accept_termite_bundle(
+            e_cfg.db_path,
+            bundle_path,
+            policy_path=e_cfg.policy_path,
+            allowlist_path=e_cfg.allowlist_path,
+            accept_policy=AcceptPolicy(
+                max_ops=e_cfg.max_bundle_ops,
+                max_new_nodes=getattr(e_cfg, "max_bundle_new_nodes", 2000),
+                max_new_edges=getattr(e_cfg, "max_bundle_new_edges", 10000),
+            ),
+            override_mode=None,
+            actor=None,
+            notes=None,
+            idempotent=True,
+        )
 
     # ------------------------
     # 6) auto-run (same defaults as CLI)
@@ -286,4 +296,5 @@ def run_termite_to_ecology_pipeline_library(
         "bundle_path": str(bundle_path),
         "verify": vr.__dict__,
         "replay_verify": replay_json,
+        "run_id": rid,
     }

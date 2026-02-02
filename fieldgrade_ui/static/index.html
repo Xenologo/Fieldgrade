@@ -322,6 +322,25 @@
     <section class="panel" id="panel-graph">
       <h2>Graph Explorer</h2>
 
+      <div class="card">
+        <h3>GraphDelta ledger</h3>
+        <div class="row">
+          <label for="runSelect">Run</label>
+          <select id="runSelect" title="Filter ledger by run_id"></select>
+          <button type="button" id="btnRefreshRuns">Refresh</button>
+          <button type="button" id="btnLoadDeltas">Load deltas</button>
+        </div>
+        <div class="kv">
+          <div class="k">run_id</div>
+          <div class="v mono" id="selectedRunId">(all)</div>
+        </div>
+        <div class="kv">
+          <div class="k">trace_ids</div>
+          <div class="v mono" id="selectedTraceIds">(n/a)</div>
+        </div>
+        <pre id="deltasPre" class="mono small pre"></pre>
+      </div>
+
       <div class="row">
         <div class="col">
           <label for="nodeFilter">Node filter</label>

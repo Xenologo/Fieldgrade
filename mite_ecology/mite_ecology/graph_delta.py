@@ -99,6 +99,13 @@ def append_graph_delta_event(
     ops_payload = _canonical_jsonl(ops_lines)
     ops_hash = sha256_str(ops_payload)
 
+    # Always attach run context (may come from env vars or contextvars).
+    from .run_context import current
+
+    ctx = current(create=True)
+    rid = str(run_id) if run_id is not None else ctx.run_id
+    tid = str(trace_id) if trace_id is not None else ctx.trace_id
+
     prev = latest_event_hash(ledger_path)
     body = {
         "v": 1,
@@ -107,8 +114,8 @@ def append_graph_delta_event(
         "payload": {
             "source": str(source),
             "context_node_id": (str(context_node_id) if context_node_id is not None else None),
-            "run_id": (str(run_id) if run_id is not None else None),
-            "trace_id": (str(trace_id) if trace_id is not None else None),
+            "run_id": rid,
+            "trace_id": tid,
             "ops_kind": "kg_delta.jsonl",
             "ops_payload": ops_payload,
             "ops_hash": ops_hash,
