@@ -4,6 +4,7 @@ import os
 import re
 import time
 import json
+import uuid
 from pathlib import Path
 
 from .config import jobs_db_path, repo_root
@@ -132,8 +133,16 @@ def run_once() -> bool:
         if kind == "pipeline":
             upload_path = _sandbox_upload_path(Path(params["upload_path"]))
             label = str(params.get("label", "run"))
+            run_id = str(params.get("run_id") or "").strip() or uuid.uuid4().hex
             log("starting pipeline job")
-            result = run_termite_to_ecology_pipeline(repo_root(), upload_path=upload_path, label=label, log=log)
+            log(f"run_id={run_id}")
+            result = run_termite_to_ecology_pipeline(
+                repo_root(),
+                upload_path=upload_path,
+                label=label,
+                run_id=run_id,
+                log=log,
+            )
             succeed_job(db_path, job_id, result)
         else:
             raise RuntimeError(f"unknown job kind={kind}")

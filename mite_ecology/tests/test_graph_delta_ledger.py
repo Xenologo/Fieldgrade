@@ -75,3 +75,17 @@ def test_replay_equivalence(tmp_path: Path) -> None:
     h2 = snapshot_hash(con2)
 
     assert h1 == h2
+
+
+def test_event_has_run_context(tmp_path: Path) -> None:
+    lp = tmp_path / "graph_delta_ledger.jsonl"
+    ops = [json.dumps({"op": "ADD_NODE", "id": "n1", "type": "Thing", "attrs": {"x": 1}})]
+    append_graph_delta_event(lp, source="TEST", ops_lines=ops)
+
+    recs = list(iter_ledger(lp))
+    assert len(recs) == 1
+    payload = recs[0].get("payload") or {}
+    assert isinstance(payload.get("run_id"), str)
+    assert payload.get("run_id")
+    assert isinstance(payload.get("trace_id"), str)
+    assert payload.get("trace_id")

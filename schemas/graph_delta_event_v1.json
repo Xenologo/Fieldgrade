@@ -11,12 +11,12 @@
     "event_hash": {"type": "string"},
     "payload": {
       "type": "object",
-      "required": ["ops_kind", "ops_payload", "ops_hash", "source"],
+      "required": ["ops_kind", "ops_payload", "ops_hash", "source", "run_id", "trace_id"],
       "properties": {
         "source": {"type": "string"},
         "context_node_id": {"type": ["string", "null"]},
-        "run_id": {"type": ["string", "null"]},
-        "trace_id": {"type": ["string", "null"]},
+        "run_id": {"type": "string"},
+        "trace_id": {"type": "string"},
         "ops_kind": {"type": "string", "const": "kg_delta.jsonl"},
         "ops_payload": {"type": "string", "description": "Canonicalized JSONL of KG ops"},
         "ops_hash": {"type": "string", "description": "sha256_hex(canonical_ops_payload)"},

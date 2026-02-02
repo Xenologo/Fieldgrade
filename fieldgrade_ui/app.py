@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Protocol, cast
 
+import uuid
 from fastapi import FastAPI, File, HTTPException, UploadFile, Request, Body
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -138,7 +139,7 @@ class CmdResult:
     parsed: Optional[Any] = None
 
 
-def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
+def _run_cmd(cmd: List[str], cwd: Path, *, env: Optional[Dict[str, str]] = None) -> CmdResult:
     """Run a subprocess with stdout/stderr capture and a configurable timeout.
 
     Timeout is controlled by FG_CMD_TIMEOUT_S (default 600). Set to 0/empty to disable.
@@ -150,6 +151,7 @@ def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
         p = subprocess.run(
             cmd,
             cwd=str(cwd),
+            env=env,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -195,6 +197,99 @@ def _run_cmd(cmd: List[str], cwd: Path) -> CmdResult:
         stderr=stderr,
         parsed=parsed,
     )
+
+
+def _graph_delta_ledger_path() -> Path:
+    from mite_ecology.graph_delta import default_ledger_path_for_db
+
+    return default_ledger_path_for_db(_path_mite_db())
+
+
+@app.get("/api/runs")
+def api_runs(limit: int = 200) -> Dict[str, Any]:
+    """List known run_ids from the GraphDelta ledger."""
+
+    from mite_ecology.graph_delta import iter_ledger
+
+    ledger = _graph_delta_ledger_path()
+    if not ledger.exists():
+        return {"ok": True, "ledger_path": str(ledger), "runs": []}
+
+    agg: Dict[str, Dict[str, Any]] = {}
+    for rec in iter_ledger(ledger):
+        payload = rec.get("payload") or {}
+        run_id = str(payload.get("run_id") or "").strip()
+        trace_id = str(payload.get("trace_id") or "").strip()
+        source = str(payload.get("source") or "").strip() or "unknown"
+        if not run_id:
+            continue
+
+        r = agg.get(run_id)
+        if r is None:
+            r = {
+                "run_id": run_id,
+                "events": 0,
+                "sources": set(),
+                "trace_ids": set(),
+                "last_event_hash": None,
+            }
+            agg[run_id] = r
+        r["events"] += 1
+        r["sources"].add(source)
+        if trace_id:
+            r["trace_ids"].add(trace_id)
+        r["last_event_hash"] = rec.get("event_hash")
+
+    runs = list(agg.values())
+    # Sort by most recently seen event in file order (best-effort)
+    runs.sort(key=lambda x: str(x.get("last_event_hash") or ""), reverse=True)
+    if limit and limit > 0:
+        runs = runs[: int(limit)]
+
+    # JSON-ify sets
+    for r in runs:
+        r["sources"] = sorted(list(r["sources"]))
+        r["trace_ids"] = sorted(list(r["trace_ids"]))
+
+    return {"ok": True, "ledger_path": str(ledger), "runs": runs}
+
+
+@app.get("/api/deltas")
+def api_deltas(run_id: str | None = None, limit: int = 200) -> Dict[str, Any]:
+    """List GraphDelta events, optionally filtered by run_id."""
+
+    from mite_ecology.graph_delta import iter_ledger
+
+    ledger = _graph_delta_ledger_path()
+    if not ledger.exists():
+        return {"ok": True, "ledger_path": str(ledger), "events": []}
+
+    want = (run_id or "").strip() or None
+    events: list[Dict[str, Any]] = []
+    for rec in iter_ledger(ledger):
+        payload = rec.get("payload") or {}
+        rid = str(payload.get("run_id") or "").strip() or None
+        if want and rid != want:
+            continue
+        events.append(
+            {
+                "event_hash": rec.get("event_hash"),
+                "prev_hash": rec.get("prev_hash"),
+                "ops_hash": payload.get("ops_hash"),
+                "source": payload.get("source"),
+                "context_node_id": payload.get("context_node_id"),
+                "run_id": payload.get("run_id"),
+                "trace_id": payload.get("trace_id"),
+                "meta": payload.get("meta"),
+            }
+        )
+
+    # Return newest-first.
+    events.reverse()
+    if limit and limit > 0:
+        events = events[: int(limit)]
+
+    return {"ok": True, "ledger_path": str(ledger), "events": events}
 
 
 def _require_exists(p: Path, what: str) -> None:
@@ -774,13 +869,14 @@ def api_jobs_pipeline(request: Request, payload: dict):
     """
     upload_path = _sandbox_path(str(payload.get("upload_path") or ""), roots=[UPLOADS_DIR], what="upload_path", must_exist=True, must_be_file=True)
     label = str(payload.get("label", "run") or "run")
+    run_id = uuid.uuid4().hex
     job_id = create_job(
         jobs_db_path(),
         "pipeline",
-        {"upload_path": str(upload_path), "label": label},
+        {"upload_path": str(upload_path), "label": label, "run_id": run_id},
         owner_token_hash=_owner_hash(request) or "",
     )
-    return {"ok": True, "job_id": job_id, "upload_path": str(upload_path), "label": label}
+    return {"ok": True, "job_id": job_id, "upload_path": str(upload_path), "label": label, "run_id": run_id}
 
 if _MULTIPART_OK:
     @app.post("/api/pipeline/upload_run")
@@ -822,13 +918,14 @@ if _MULTIPART_OK:
                     raise HTTPException(status_code=413, detail=f"upload_too_large: {total} > {max_bytes}")
                 f.write(chunk)
 
+        run_id = uuid.uuid4().hex
         job_id = create_job(
             jobs_db_path(),
             "pipeline",
-            {"upload_path": str(dest), "label": label},
+            {"upload_path": str(dest), "label": label, "run_id": run_id},
             owner_token_hash=_owner_hash(request) or "",
         )
-        return {"ok": True, "job_id": job_id, "upload_path": str(dest), "bytes": total}
+        return {"ok": True, "job_id": job_id, "upload_path": str(dest), "bytes": total, "run_id": run_id}
 else:
     @app.post("/api/pipeline/upload_run")
     async def api_pipeline_upload_run_disabled() -> Dict[str, Any]:

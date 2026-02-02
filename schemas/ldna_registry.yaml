@@ -19,7 +19,7 @@ schemas:
 - uri: ldna://json/graph_delta_event@1.0.0
   description: GraphDelta append-only ledger event (hash-chained)
   path: schemas/graph_delta_event_v1.json
-  sha256: 08630866089a71926f5403ff5e9b1f89f9dedda4b1469d2bdbabb3b56b0be0b8
+  sha256: e9f05316c1fa020630757e91ff5f808c9f682537ba34f9f70465354e8e4886f4
 - uri: ldna://yaml/registry_components@1.0.0
   description: Registry catalog (components)
   path: schemas/registry_components_v1.json

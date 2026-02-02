@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -60,6 +61,7 @@ def run_termite_to_ecology_pipeline(
     repo_root: Path,
     upload_path: Path,
     label: str,
+    run_id: Optional[str] = None,
     policy_path: Optional[Path] = None,
     allowlist_path: Optional[Path] = None,
     log: Optional[Callable[[str], None]] = None,
@@ -74,10 +76,20 @@ def run_termite_to_ecology_pipeline(
             repo_root,
             upload_path=upload_path,
             label=label,
+            run_id=run_id,
             policy_path=policy_path,
             allowlist_path=allowlist_path,
             log=log,
         )
+
+    rid = (run_id or "").strip() or uuid.uuid4().hex
+
+    def _env(stage: str) -> dict[str, str]:
+        e = dict(os.environ)
+        e["FG_RUN_ID"] = rid
+        # Trace IDs are stage-scoped to make operator correlation easier.
+        e["FG_TRACE_ID"] = f"{rid}:{stage}"
+        return e
 
     # Paths
     fieldpack_dir = repo_root / "termite_fieldpack"
@@ -93,13 +105,23 @@ def run_termite_to_ecology_pipeline(
         log(f"pipeline: label={label}")
 
     # 1) termite ingest
-    rc, out, err = run_cmd([py, "-m", "termite.cli", "ingest", str(upload_path)], cwd=fieldpack_dir, log=log)
+    rc, out, err = run_cmd(
+        [py, "-m", "termite.cli", "ingest", str(upload_path)],
+        cwd=fieldpack_dir,
+        env=_env("termite_ingest"),
+        log=log,
+    )
     if rc != 0:
         raise RuntimeError(f"termite ingest failed rc={rc}: {err or out}")
     ingest_json = json.loads(out) if out else {}
 
     # 2) termite seal
-    rc, out, err = run_cmd([py, "-m", "termite.cli", "seal", "--label", label], cwd=fieldpack_dir, log=log)
+    rc, out, err = run_cmd(
+        [py, "-m", "termite.cli", "seal", "--label", label],
+        cwd=fieldpack_dir,
+        env=_env("termite_seal"),
+        log=log,
+    )
     if rc != 0:
         raise RuntimeError(f"termite seal failed rc={rc}: {err or out}")
     bundle_path = Path(out.strip())
@@ -130,6 +152,7 @@ def run_termite_to_ecology_pipeline(
     rc, out, err = run_cmd(
         [py, "-m", "termite.cli", "verify", str(bundle_path), "--policy", str(policy_path), "--allowlist", str(allowlist_path)],
         cwd=fieldpack_dir,
+        env=_env("termite_verify"),
         log=log,
     )
     if rc != 0:
@@ -139,22 +162,27 @@ def run_termite_to_ecology_pipeline(
         raise RuntimeError(f"termite verify not ok: {verify_json}")
 
     # 4) mite_ecology init
-    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "init"], cwd=ecology_dir, log=log)
+    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "init"], cwd=ecology_dir, env=_env("ecology_init"), log=log)
     if rc != 0:
         raise RuntimeError(f"mite_ecology init failed rc={rc}: {err or out}")
 
     # 5) import bundle
-    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "import-bundle", str(bundle_path), "--idempotent"], cwd=ecology_dir, log=log)
+    rc, out, err = run_cmd(
+        [py, "-m", "mite_ecology.cli", "import-bundle", str(bundle_path), "--idempotent"],
+        cwd=ecology_dir,
+        env=_env("ecology_import"),
+        log=log,
+    )
     if rc != 0:
         raise RuntimeError(f"mite_ecology import-bundle failed rc={rc}: {err or out}")
 
     # 6) auto-run
-    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "auto-run"], cwd=ecology_dir, log=log)
+    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "auto-run"], cwd=ecology_dir, env=_env("ecology_auto_run"), log=log)
     if rc != 0:
         raise RuntimeError(f"mite_ecology auto-run failed rc={rc}: {err or out}")
 
     # 7) replay-verify
-    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "replay-verify"], cwd=ecology_dir, log=log)
+    rc, out, err = run_cmd([py, "-m", "mite_ecology.cli", "replay-verify"], cwd=ecology_dir, env=_env("ecology_replay_verify"), log=log)
     if rc != 0:
         raise RuntimeError(f"mite_ecology replay-verify failed rc={rc}: {err or out}")
     replay_json = json.loads(out) if out else {}
@@ -164,5 +192,6 @@ def run_termite_to_ecology_pipeline(
         "bundle_path": str(bundle_path),
         "verify": verify_json,
         "replay_verify": replay_json,
+        "run_id": rid,
         **bundle_store_info,
     }
