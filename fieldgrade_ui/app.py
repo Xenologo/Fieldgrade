@@ -147,11 +147,28 @@ def _run_cmd(cmd: List[str], cwd: Path, *, env: Optional[Dict[str, str]] = None)
     timeout_s_raw = (os.environ.get("FG_CMD_TIMEOUT_S", "600") or "600").strip()
     timeout_s = cmd_timeout_s()
 
+    # Basic argv validation: the UI should only spawn known local Python entrypoints.
+    if not isinstance(cmd, list) or not cmd or any(not isinstance(a, str) for a in cmd):
+        raise HTTPException(status_code=400, detail="invalid_command")
+    if any("\x00" in a for a in cmd):
+        raise HTTPException(status_code=400, detail="invalid_command")
+    exe_name = Path(cmd[0]).name.lower()
+    allowed_exe_names = {
+        Path(sys.executable).name.lower(),
+        "python",
+        "python.exe",
+        "python3",
+        "python3.exe",
+    }
+    if exe_name not in allowed_exe_names:
+        raise HTTPException(status_code=400, detail="command_not_allowed")
+
     try:
         p = subprocess.run(
             cmd,
             cwd=str(cwd),
             env=env,
+            shell=False,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -203,6 +220,46 @@ def _graph_delta_ledger_path() -> Path:
     from mite_ecology.graph_delta import default_ledger_path_for_db
 
     return default_ledger_path_for_db(_path_mite_db())
+
+
+_worker_stop_evt: threading.Event | None = None
+_worker_thread: threading.Thread | None = None
+_watcher_stop_evt: threading.Event | None = None
+_watcher_thread: threading.Thread | None = None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    global _worker_stop_evt, _worker_thread, _watcher_stop_evt, _watcher_thread
+
+    if enable_embedded_worker():
+        _worker_stop_evt = threading.Event()
+        _worker_thread = threading.Thread(target=_bg_worker_loop, args=(_worker_stop_evt,), daemon=True)
+        _worker_thread.start()
+
+    # Optional: autonomic uploads watcher (drop files into uploads dir).
+    if env_bool("FG_WATCH_UPLOADS", default=False):
+        _watcher_stop_evt = threading.Event()
+        poll_s = env_float("FG_WATCH_POLL", default=2.0)
+        label = env_str("FG_WATCH_LABEL", default="watch")
+        _watcher_thread = threading.Thread(
+            target=watcher_loop,
+            args=(_path_uploads(), _watcher_stop_evt, poll_s, label),
+            daemon=True,
+        )
+        _watcher_thread.start()
+
+    try:
+        yield
+    finally:
+        if _worker_stop_evt is not None:
+            _worker_stop_evt.set()
+        if _watcher_stop_evt is not None:
+            _watcher_stop_evt.set()
+
+
+# Define the FastAPI app before any @app.* route decorators.
+app = FastAPI(title="Fieldgrade UI", version="0.1", lifespan=lifespan)
 
 
 @app.get("/api/runs")
@@ -382,38 +439,6 @@ def _safe_json_loads(s: Optional[str]) -> Optional[Any]:
         return None
 
 safe_json_loads = _safe_json_loads
-
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    global _worker_stop_evt, _worker_thread, _watcher_stop_evt, _watcher_thread
-
-    if enable_embedded_worker():
-        _worker_stop_evt = threading.Event()
-        _worker_thread = threading.Thread(target=_bg_worker_loop, args=(_worker_stop_evt,), daemon=True)
-        _worker_thread.start()
-
-    # Optional: autonomic uploads watcher (drop files into uploads dir).
-    if env_bool("FG_WATCH_UPLOADS", default=False):
-        _watcher_stop_evt = threading.Event()
-        poll_s = env_float("FG_WATCH_POLL", default=2.0)
-        label = env_str("FG_WATCH_LABEL", default="watch")
-        _watcher_thread = threading.Thread(
-            target=watcher_loop,
-            args=(_path_uploads(), _watcher_stop_evt, poll_s, label),
-            daemon=True,
-        )
-        _watcher_thread.start()
-
-    try:
-        yield
-    finally:
-        if _worker_stop_evt is not None:
-            _worker_stop_evt.set()
-        if _watcher_stop_evt is not None:
-            _watcher_stop_evt.set()
-
-
-app = FastAPI(title="Fieldgrade UI", version="0.1", lifespan=lifespan)
 
 
 @app.get("/healthz")
