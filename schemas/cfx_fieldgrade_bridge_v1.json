@@ -4,11 +4,31 @@
   "title": "CFX Fieldgrade Bridge v1",
   "description": "Evidence-bound handoff object emitted by Fieldgrade for downstream Xenoclaw import or CAO registry preparation. This object is not a canonical admission record.",
   "type": "object",
-  "additionalProperties": false,
+  "unevaluatedProperties": false,
+  "$defs": {
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-fA-F0-9]{64}$"
+    },
+    "plainSha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deliveryMode": {
+      "enum": ["webhook", "pull", "deferred", "manual"]
+    }
+  },
   "required": [
     "schema_version",
+    "kind",
+    "version",
     "bridge_id",
     "bundle_id",
+    "bundle_digest",
     "manifest_sha256",
     "fieldpack_path",
     "kg_delta_path",
@@ -16,36 +36,46 @@
     "replay_status",
     "verification_status",
     "admissibility_hint",
-    "review_required"
+    "review_required",
+    "source_context",
+    "evidence_packet"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "schema_version": {
       "const": "cfx.fieldgrade_bridge.v1"
     },
+    "kind": {
+      "const": "cfx_fieldgrade_bridge"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
     "bridge_id": {
       "type": "string",
-      "minLength": 1,
-      "description": "Stable identifier for this bridge object. Recommended form: FG-BRIDGE-<hash-prefix>."
+      "pattern": "^FG-BRIDGE-[A-Za-z0-9_.:TZ-]+$",
+      "description": "Stable identifier for this bridge object. Recommended form: FG-BRIDGE-<timestamp-or-hash-prefix>."
     },
     "bundle_id": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "bundle_digest": {
+      "$ref": "#/$defs/sha256Digest"
     },
     "manifest_sha256": {
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{64}$"
+      "$ref": "#/$defs/sha256Digest"
     },
     "fieldpack_path": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/nonEmptyString"
     },
     "kg_delta_path": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/nonEmptyString"
     },
     "provenance_chain_head": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/sha256Digest"
     },
     "replay_status": {
       "enum": ["passed", "failed", "not_run"]
@@ -59,6 +89,96 @@
     },
     "review_required": {
       "const": true
+    },
+    "source_context": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["producer", "lane"],
+      "properties": {
+        "producer": {
+          "const": "fieldgrade"
+        },
+        "lane": {
+          "const": "evidence"
+        },
+        "sealed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "submitted_by": {
+          "type": "string"
+        },
+        "corridor": {
+          "enum": ["CFX", "mite_ecology", "HXMM", "QFIM-Triad", "unknown"]
+        }
+      }
+    },
+    "runtime_delta_ref": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["delta_id", "hardened"],
+      "properties": {
+        "delta_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "hardened": {
+          "type": "boolean"
+        },
+        "trace_sha256": {
+          "$ref": "#/$defs/sha256Digest"
+        }
+      }
+    },
+    "evidence_packet": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["packet_id", "manifest_path", "verification_report_path"],
+      "properties": {
+        "packet_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "manifest_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sbom_path": {
+          "type": ["string", "null"]
+        },
+        "verification_report_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "xenoclaw": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": ["delivery_mode"],
+          "properties": {
+            "delivery_mode": {
+              "$ref": "#/$defs/deliveryMode"
+            },
+            "url": {
+              "type": "string"
+            }
+          }
+        },
+        "cao": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": ["delivery_mode"],
+          "properties": {
+            "delivery_mode": {
+              "$ref": "#/$defs/deliveryMode"
+            },
+            "url": {
+              "type": "string"
+            }
+          }
+        }
+      }
     },
     "created_at": {
       "type": "string",
