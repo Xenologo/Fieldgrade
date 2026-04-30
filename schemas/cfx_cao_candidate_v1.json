@@ -4,9 +4,24 @@
   "title": "CFX CAO Registry Candidate v1",
   "description": "Review-bound registry candidate prepared by Fieldgrade for CAO. This is not a canonical object and must retain review_required=true.",
   "type": "object",
-  "additionalProperties": false,
+  "unevaluatedProperties": false,
+  "$defs": {
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-fA-F0-9]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain": {
+      "enum": ["CFX", "mite_ecology", "HXMM", "QFIM-Triad", "unknown"]
+    }
+  },
   "required": [
     "schema_version",
+    "kind",
+    "version",
     "candidate_id",
     "source_bundle_id",
     "source_manifest_sha256",
@@ -14,43 +29,64 @@
     "proposed_domain",
     "claim_level_recommendation",
     "review_required",
-    "canonical_status"
+    "canonical_status",
+    "source_evidence"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "schema_version": {
       "const": "cfx.cao_candidate.v1"
     },
+    "kind": {
+      "const": "cfx_cao_candidate"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
     "candidate_id": {
       "type": "string",
-      "minLength": 1,
-      "description": "Stable candidate identifier. Recommended form: CAO-CANDIDATE-<hash-prefix>."
+      "pattern": "^CAO-CANDIDATE-[A-Za-z0-9_.:-]+$",
+      "description": "Stable candidate identifier. Recommended form: CAO-CANDIDATE-<date-or-hash-prefix>."
     },
     "source_bundle_id": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "#/$defs/nonEmptyString"
     },
     "source_manifest_sha256": {
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{64}$"
+      "$ref": "#/$defs/sha256Digest"
+    },
+    "evidence_packet": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "proposed_object_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z0-9_.-]*$"
+    },
+    "canonical_title": {
+      "type": ["string", "null"]
     },
     "proposed_title": {
       "type": ["string", "null"]
     },
     "proposed_domain": {
-      "enum": ["CFX", "mite_ecology", "HXMM", "QFIM-Triad", "unknown"]
+      "$ref": "#/$defs/domain"
     },
     "proposed_object_type": {
       "type": ["string", "null"]
     },
-    "evidence_packet": {
-      "type": "string",
-      "minLength": 1
+    "object_type": {
+      "type": ["string", "null"]
     },
-    "runtime_trace": {
+    "claim_level": {
       "type": ["string", "null"]
     },
     "claim_level_recommendation": {
       "enum": ["evidence-supported", "lab-active", "speculative", "unknown"]
+    },
+    "parent_architecture": {
+      "type": ["string", "null"]
     },
     "review_required": {
       "const": true
@@ -58,6 +94,76 @@
     "canonical_status": {
       "const": "not_canonical",
       "description": "Fieldgrade cannot emit canonical status. CAO owns canonical admission."
+    },
+    "admissibility_recommendation": {
+      "enum": ["under_review", "lab-active", "quarantine", "reject", "archive", "unknown"]
+    },
+    "source_evidence": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["bundle_id", "packet_id", "manifest_sha256"],
+      "properties": {
+        "bridge_id": {
+          "type": ["string", "null"]
+        },
+        "bundle_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "packet_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "manifest_sha256": {
+          "$ref": "#/$defs/sha256Digest"
+        }
+      }
+    },
+    "runtime_trace_ref": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["delta_id", "verification_status"],
+      "properties": {
+        "delta_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "verification_status": {
+          "enum": ["passed", "failed", "not_run"]
+        },
+        "trace_sha256": {
+          "$ref": "#/$defs/sha256Digest"
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "registry_path": {
+          "type": "string"
+        },
+        "corridor": {
+          "type": "string"
+        },
+        "chapter": {
+          "type": "string"
+        },
+        "atlas_plate": {
+          "type": "string"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "uniqueItems": true
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submitted_by": {
+      "type": "string"
     },
     "created_at": {
       "type": "string",
