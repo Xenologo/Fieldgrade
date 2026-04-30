@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldgrade.local/schemas/cfx_cao_candidate_v1.json",
+  "title": "CFX CAO Registry Candidate v1",
+  "description": "Review-bound registry candidate prepared by Fieldgrade for CAO. This is not a canonical object and must retain review_required=true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "source_bundle_id",
+    "source_manifest_sha256",
+    "evidence_packet",
+    "proposed_domain",
+    "claim_level_recommendation",
+    "review_required",
+    "canonical_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "cfx.cao_candidate.v1"
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable candidate identifier. Recommended form: CAO-CANDIDATE-<hash-prefix>."
+    },
+    "source_bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "proposed_title": {
+      "type": ["string", "null"]
+    },
+    "proposed_domain": {
+      "enum": ["CFX", "mite_ecology", "HXMM", "QFIM-Triad", "unknown"]
+    },
+    "proposed_object_type": {
+      "type": ["string", "null"]
+    },
+    "evidence_packet": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_trace": {
+      "type": ["string", "null"]
+    },
+    "claim_level_recommendation": {
+      "enum": ["evidence-supported", "lab-active", "speculative", "unknown"]
+    },
+    "review_required": {
+      "const": true
+    },
+    "canonical_status": {
+      "const": "not_canonical",
+      "description": "Fieldgrade cannot emit canonical status. CAO owns canonical admission."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
