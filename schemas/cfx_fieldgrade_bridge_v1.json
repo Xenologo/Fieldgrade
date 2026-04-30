@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldgrade.local/schemas/cfx_fieldgrade_bridge_v1.json",
+  "title": "CFX Fieldgrade Bridge v1",
+  "description": "Evidence-bound handoff object emitted by Fieldgrade for downstream Xenoclaw import or CAO registry preparation. This object is not a canonical admission record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bridge_id",
+    "bundle_id",
+    "manifest_sha256",
+    "fieldpack_path",
+    "kg_delta_path",
+    "provenance_chain_head",
+    "replay_status",
+    "verification_status",
+    "admissibility_hint",
+    "review_required"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "cfx.fieldgrade_bridge.v1"
+    },
+    "bridge_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for this bridge object. Recommended form: FG-BRIDGE-<hash-prefix>."
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "fieldpack_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kg_delta_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance_chain_head": {
+      "type": "string",
+      "minLength": 1
+    },
+    "replay_status": {
+      "enum": ["passed", "failed", "not_run"]
+    },
+    "verification_status": {
+      "enum": ["passed", "failed", "not_run"]
+    },
+    "admissibility_hint": {
+      "const": "evidence_only",
+      "description": "Fieldgrade may assert evidence-bearing status only. Canonical admission belongs to CAO."
+    },
+    "review_required": {
+      "const": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
