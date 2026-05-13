@@ -42,6 +42,7 @@ from .config import (
     jobs_db_path,
     uploads_dir,
 )
+from .governance import GovernanceLedger
 from .jobs import create_job, list_jobs as jobs_list, get_job as jobs_get, get_job_logs as jobs_logs, cancel_job as jobs_cancel, ensure_db as ensure_jobs_db
 from .worker import run_once as worker_run_once
 from .watcher import loop as watcher_loop
@@ -581,6 +582,29 @@ def _tenant_releases_root(request: Request) -> Path:
     return root
 
 
+def _tenant_governance_root(request: Request) -> Path:
+    if not _multi_tenant_enabled():
+        root = _ui_runtime_dir() / "governance"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+    td = _tenant_dir(request)
+    if td is None:
+        root = _ui_runtime_dir() / "governance"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+    root = td / "governance"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _governance_ledger(request: Request) -> GovernanceLedger:
+    return GovernanceLedger(
+        repo_root=REPO_ROOT,
+        runtime_root=_tenant_governance_root(request),
+        jobs_db_path=jobs_db_path(),
+    )
+
+
 def _visible_bundle_paths_for_owner(request: Request) -> list[Path]:
     """Return bundle paths visible to this principal.
 
@@ -699,6 +723,7 @@ def state() -> Dict[str, Any]:
         "tenants_root": str(_tenants_root()),
         "multi_tenant": _multi_tenant_enabled(),
         "uploads_dir": str(UPLOADS_DIR),
+        "governance_root": str(_ui_runtime_dir() / "governance"),
         "python": sys.executable,
     }
 
@@ -1269,6 +1294,138 @@ def list_exports(request: Request) -> Dict[str, Any]:
         "ok": True,
         "exports": [str(p) for p in items if p.is_file()],
     }
+
+
+@app.get("/api/governance/dashboard")
+def governance_dashboard(request: Request) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    return {"ok": True, **ledger.dashboard()}
+
+
+@app.get("/api/governance/organizations")
+def governance_list_organizations(request: Request) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    return {"ok": True, "organizations": ledger.list_organizations()}
+
+
+@app.post("/api/governance/organizations")
+def governance_create_organization(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    return {"ok": True, "organization": ledger.create_organization(body or {}, actor_id=actor)}
+
+
+@app.get("/api/governance/systems")
+def governance_list_systems(request: Request) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    return {"ok": True, "systems": ledger.list_systems()}
+
+
+@app.post("/api/governance/systems")
+def governance_create_system(request: Request, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.create_system(body or {}, actor_id=actor)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.get("/api/governance/systems/{record_id}")
+def governance_get_system(request: Request, record_id: str) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    try:
+        record = ledger.get_system(record_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    return {"ok": True, "record": record, "audit_events": ledger.audit_events(record_id)}
+
+
+@app.put("/api/governance/systems/{record_id}")
+def governance_update_system(request: Request, record_id: str, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.update_system(record_id, body or {}, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.post("/api/governance/systems/{record_id}/evidence")
+def governance_add_evidence(request: Request, record_id: str, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.add_evidence(record_id, body or {}, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.post("/api/governance/systems/{record_id}/risks")
+def governance_add_risk(request: Request, record_id: str, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.add_risk(record_id, body or {}, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.post("/api/governance/systems/{record_id}/controls")
+def governance_add_control(request: Request, record_id: str, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.add_control(record_id, body or {}, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.post("/api/governance/systems/{record_id}/review_gates")
+def governance_add_review_gate(request: Request, record_id: str, body: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        record = ledger.add_review_gate(record_id, body or {}, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "record": record}
+
+
+@app.get("/api/governance/systems/{record_id}/crosswalk")
+def governance_crosswalk(request: Request, record_id: str) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    try:
+        crosswalk = ledger.record_crosswalk(record_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    return {"ok": True, **crosswalk}
+
+
+@app.post("/api/governance/systems/{record_id}/exports/generate")
+def governance_generate_exports(request: Request, record_id: str) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    actor = _owner_hash(request) or "system"
+    try:
+        payload = ledger.generate_exports(record_id, actor_id=actor)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    return {"ok": True, **payload}
 
 
 def _import_mite_ecology_module(name: str):

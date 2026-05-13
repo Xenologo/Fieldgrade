@@ -1,0 +1,112 @@
+{
+  "type": "fieldgrade_policy_crosswalks/1.0",
+  "templates": [
+    {
+      "template_id": "govai_core_v1",
+      "title": "GovAI core accountability crosswalk",
+      "frameworks": [
+        {
+          "framework_id": "ATRS",
+          "title": "Algorithmic Transparency Recording Standard",
+          "obligations": [
+            {
+              "obligation_id": "atrs_ownership",
+              "title": "Ownership and accountability are recorded",
+              "required_paths": [
+                "owners.senior_responsible_owner",
+                "owners.data_owner",
+                "owners.technical_owner"
+              ]
+            },
+            {
+              "obligation_id": "atrs_purpose",
+              "title": "Purpose and decision context are recorded",
+              "required_paths": [
+                "purpose.plain_english_summary",
+                "purpose.decision_context"
+              ]
+            },
+            {
+              "obligation_id": "atrs_data",
+              "title": "Data provenance and lawful basis are recorded",
+              "required_paths": [
+                "data.operational_data_sources",
+                "data.lawful_basis"
+              ]
+            }
+          ]
+        },
+        {
+          "framework_id": "UK_DATA_AI_ETHICS_FRAMEWORK",
+          "title": "UK Data and AI Ethics Framework",
+          "obligations": [
+            {
+              "obligation_id": "ethics_oversight",
+              "title": "Human oversight and challenge routes are recorded",
+              "required_paths": [
+                "human_oversight.oversight_model",
+                "human_oversight.appeal_route"
+              ]
+            },
+            {
+              "obligation_id": "ethics_risk",
+              "title": "Risks and controls are recorded",
+              "required_paths": [
+                "risks",
+                "controls"
+              ]
+            }
+          ]
+        },
+        {
+          "framework_id": "ISO_42001",
+          "title": "ISO/IEC 42001",
+          "obligations": [
+            {
+              "obligation_id": "iso_governance_record",
+              "title": "System record and review date exist",
+              "required_paths": [
+                "title",
+                "next_review_due"
+              ]
+            }
+          ]
+        },
+        {
+          "framework_id": "NIST_AI_RMF",
+          "title": "NIST AI RMF",
+          "obligations": [
+            {
+              "obligation_id": "nist_supplier_and_monitoring",
+              "title": "Supplier and model change information is recorded",
+              "required_paths": [
+                "supplier.supplier_name",
+                "supplier.change_policy"
+              ]
+            }
+          ]
+        },
+        {
+          "framework_id": "FIELDGRADE_INTERNAL_CONTROLS",
+          "title": "Fieldgrade internal control baseline",
+          "obligations": [
+            {
+              "obligation_id": "fg_evidence",
+              "title": "At least one evidence item is attached",
+              "required_paths": [
+                "evidence"
+              ]
+            },
+            {
+              "obligation_id": "fg_export_ready",
+              "title": "Review gates are defined before export",
+              "required_paths": [
+                "review_gates"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "$id": "https://fieldgrade.local/schemas/fieldgrade_core_objects_v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "source_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_source_object/1.0" },
+        "source_id": { "$ref": "#/$defs/identifier" },
+        "source_type": { "type": "string" },
+        "supplied_by": { "type": "string" },
+        "captured_at_ms": { "type": "integer", "minimum": 0 },
+        "confidence": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["type", "source_id"]
+    },
+    "evidence_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_evidence_object/1.0" },
+        "evidence_id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "evidence_kind": { "type": "string" },
+        "stored_path": { "type": "string" },
+        "url": { "type": "string" },
+        "claim_ids": { "$ref": "#/$defs/string_array" },
+        "captured_at_ms": { "type": "integer", "minimum": 0 },
+        "captured_by": { "type": "string" },
+        "source": { "$ref": "#/$defs/source_object" }
+      },
+      "required": ["type", "evidence_id", "title"]
+    },
+    "claim_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_claim_object/1.0" },
+        "claim_id": { "$ref": "#/$defs/identifier" },
+        "statement": { "type": "string" },
+        "status": { "type": "string" },
+        "evidence_ids": { "$ref": "#/$defs/string_array" }
+      },
+      "required": ["type", "claim_id", "statement"]
+    },
+    "decision_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_decision_object/1.0" },
+        "decision_id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "owner": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["type", "decision_id"]
+    },
+    "risk_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_risk_object/1.0" },
+        "risk_id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string" },
+        "severity": { "type": "string" },
+        "likelihood": { "type": "string" },
+        "affected_groups": { "$ref": "#/$defs/string_array" },
+        "mitigations": { "$ref": "#/$defs/string_array" },
+        "residual_risk": { "type": "string" },
+        "review_status": { "type": "string" }
+      },
+      "required": ["type", "risk_id", "title"]
+    },
+    "control_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_control_object/1.0" },
+        "control_id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string" },
+        "control_kind": { "type": "string" },
+        "status": { "type": "string" },
+        "owner": { "type": "string" }
+      },
+      "required": ["type", "control_id", "title"]
+    },
+    "actor_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_actor_object/1.0" },
+        "actor_id": { "$ref": "#/$defs/identifier" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "organisation": { "type": "string" },
+        "contact": { "type": "string" }
+      },
+      "required": ["type", "actor_id", "name"]
+    },
+    "review_gate": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_review_gate/1.0" },
+        "review_gate_id": { "$ref": "#/$defs/identifier" },
+        "stage": { "type": "string" },
+        "status": { "type": "string" },
+        "owner": { "type": "string" },
+        "due_date": { "type": "string" }
+      },
+      "required": ["type", "review_gate_id", "stage"]
+    },
+    "audit_event": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_audit_event/1.0" },
+        "event_id": { "$ref": "#/$defs/identifier" },
+        "execution_id": { "$ref": "#/$defs/identifier" },
+        "event_hash": { "type": "string" },
+        "prev_hash": { "type": ["string", "null"] },
+        "actor_id": { "type": "string" },
+        "action_type": { "type": "string" },
+        "status": { "type": "string" },
+        "ts_ms": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["type", "execution_id", "event_hash"]
+    },
+    "policy_crosswalk": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_policy_crosswalk/1.0" },
+        "crosswalk_id": { "$ref": "#/$defs/identifier" },
+        "framework_id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "required_paths": { "$ref": "#/$defs/string_array" },
+        "missing_paths": { "$ref": "#/$defs/string_array" }
+      },
+      "required": ["type", "crosswalk_id", "framework_id"]
+    },
+    "export_pack": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_export_pack/1.0" },
+        "export_kind": { "type": "string" },
+        "record_id": { "$ref": "#/$defs/identifier" },
+        "generated_at_ms": { "type": "integer", "minimum": 0 },
+        "path": { "type": "string" },
+        "sha256": { "type": "string" }
+      },
+      "required": ["type", "export_kind", "record_id"]
+    },
+    "registry_record": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "record_id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string" },
+        "sector_variant": { "type": "string" },
+        "status": { "type": "string" },
+        "risk_tier": { "type": "string" },
+        "owners": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "senior_responsible_owner": { "type": "string" },
+            "data_owner": { "type": "string" },
+            "technical_owner": { "type": "string" },
+            "supplier_owner": { "type": "string" }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "execution_id": { "type": "string" },
+            "last_event_hash": { "type": "string" },
+            "chain_ok": { "type": "boolean" },
+            "events": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+      "required": ["type", "record_id", "title", "sector_variant"]
+    }
+  }
+}
