@@ -540,10 +540,394 @@ function wireAuthUI() {
 
   render();
 }
+
+let _govCurrentRecordId = null;
+let _govCurrentRecord = null;
+
+function splitCsv(text) {
+  return (text || '')
+    .split(',')
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function joinCsv(items) {
+  return Array.isArray(items) ? items.join(', ') : '';
+}
+
+function renderSimpleList(hostId, items, fmt) {
+  const host = $(hostId);
+  if (!host) return;
+  host.innerHTML = '';
+  if (!items || items.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = '(none)';
+    host.appendChild(li);
+    return;
+  }
+  for (const item of items) {
+    const li = document.createElement('li');
+    li.textContent = fmt(item);
+    host.appendChild(li);
+  }
+}
+
+function govSelectedRecordId() {
+  return _govCurrentRecordId || (($('govSystemSelect') && $('govSystemSelect').value) || '').trim() || null;
+}
+
+function govSetCounts(counts) {
+  if (!counts) return;
+  $('govDashboardOrganizations').textContent = String(counts.organizations || 0);
+  $('govDashboardSystems').textContent = String(counts.systems || 0);
+  const statusText = Object.entries(counts.by_status || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  const riskText = Object.entries(counts.by_risk_tier || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  $('govDashboardStatus').textContent = statusText || '(none)';
+  $('govDashboardRisk').textContent = riskText || '(none)';
+}
+
+function govPopulateOrganizations(orgs) {
+  const selects = [$('govSystemOrganization')];
+  for (const sel of selects) {
+    if (!sel) continue;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = '(select organisation)';
+    sel.appendChild(blank);
+    for (const org of orgs || []) {
+      const opt = document.createElement('option');
+      opt.value = org.organization_id;
+      opt.textContent = `${org.organization_id} — ${org.name}`;
+      sel.appendChild(opt);
+    }
+    if (prev) sel.value = prev;
+  }
+}
+
+function govPopulateSystems(systems) {
+  const sel = $('govSystemSelect');
+  if (!sel) return;
+  const prev = govSelectedRecordId();
+  sel.innerHTML = '';
+  for (const record of systems || []) {
+    const opt = document.createElement('option');
+    opt.value = record.record_id;
+    opt.textContent = `${record.record_id} · ${record.title || '(untitled)'} · ${record.status || 'Unknown'} · ${record.risk_tier || 'Unknown'}`;
+    sel.appendChild(opt);
+  }
+  if (prev) sel.value = prev;
+}
+
+function govRenderRecord(record, auditEvents=[]) {
+  _govCurrentRecord = record;
+  _govCurrentRecordId = record ? record.record_id : null;
+  if (!record) {
+    $('govSystemSnapshot').textContent = '(no record selected)';
+    return;
+  }
+
+  $('govSystemOrganization').value = record.organization_id || '';
+  $('govSystemTitle').value = record.title || '';
+  $('govSystemStatus').value = record.status || '';
+  $('govSystemRiskTier').value = record.risk_tier || '';
+  $('govSystemNextReview').value = record.next_review_due || '';
+  $('govSystemSummary').value = record.purpose?.plain_english_summary || '';
+  $('govSystemDecisionContext').value = record.purpose?.decision_context || '';
+  $('govSystemAffectedGroups').value = joinCsv(record.purpose?.affected_groups || []);
+  $('govOwnerSRO').value = record.owners?.senior_responsible_owner || '';
+  $('govOwnerData').value = record.owners?.data_owner || '';
+  $('govOwnerTech').value = record.owners?.technical_owner || '';
+  $('govOwnerSupplier').value = record.owners?.supplier_owner || '';
+  $('govSupplierName').value = record.supplier?.supplier_name || record.system?.supplier || '';
+  $('govModelType').value = record.system?.model_type || '';
+  $('govAutomationLevel').value = record.system?.automation_level || '';
+  $('govHumanFinalDecision').checked = !!record.system?.human_final_decision;
+  $('govSupplierDocs').value = record.supplier?.model_documentation_status || '';
+  $('govSupplierHosting').value = record.supplier?.hosting_location || '';
+  $('govSupplierChangePolicy').value = record.supplier?.change_policy || '';
+  $('govOversightModel').value = record.human_oversight?.oversight_model || '';
+  $('govHumanReviewers').value = joinCsv(record.human_oversight?.human_reviewers || []);
+  $('govAppealRoute').value = record.human_oversight?.appeal_route || '';
+  $('govEscalationPath').value = record.human_oversight?.escalation_path || '';
+  $('govOperationalData').value = joinCsv(record.data?.operational_data_sources || []);
+  $('govLawfulBasis').value = joinCsv(record.data?.lawful_basis || []);
+  $('govRetentionPeriod').value = record.data?.retention_period || '';
+  $('govDataQualityNotes').value = record.data?.data_quality_notes || '';
+
+  renderSimpleList('govEvidenceList', record.evidence || [], (item) => `${item.evidence_id}: ${item.title}${item.stored_path ? ` → ${item.stored_path}` : ''}`);
+  renderSimpleList('govExportList', Object.entries(record.export_status || {}).filter(([, ok]) => ok).map(([kind]) => kind), (item) => item);
+
+  const snapshot = {
+    record_id: record.record_id,
+    title: record.title,
+    organization_id: record.organization_id,
+    status: record.status,
+    risk_tier: record.risk_tier,
+    risks: record.risks || [],
+    controls: record.controls || [],
+    review_gates: record.review_gates || [],
+    audit: record.audit || {},
+    audit_events: auditEvents || [],
+  };
+  $('govSystemSnapshot').textContent = JSON.stringify(snapshot, null, 2);
+}
+
+function govBuildSystemPatch() {
+  return {
+    organization_id: $('govSystemOrganization').value || '',
+    title: $('govSystemTitle').value || '',
+    status: $('govSystemStatus').value || '',
+    risk_tier: $('govSystemRiskTier').value || '',
+    next_review_due: $('govSystemNextReview').value || '',
+    owners: {
+      senior_responsible_owner: $('govOwnerSRO').value || '',
+      data_owner: $('govOwnerData').value || '',
+      technical_owner: $('govOwnerTech').value || '',
+      supplier_owner: $('govOwnerSupplier').value || '',
+    },
+    purpose: {
+      plain_english_summary: $('govSystemSummary').value || '',
+      decision_context: $('govSystemDecisionContext').value || '',
+      affected_groups: splitCsv($('govSystemAffectedGroups').value || ''),
+    },
+    system: {
+      supplier: $('govSupplierName').value || '',
+      model_type: $('govModelType').value || '',
+      automation_level: $('govAutomationLevel').value || '',
+      human_final_decision: !!$('govHumanFinalDecision').checked,
+    },
+    data: {
+      operational_data_sources: splitCsv($('govOperationalData').value || ''),
+      lawful_basis: splitCsv($('govLawfulBasis').value || ''),
+      retention_period: $('govRetentionPeriod').value || '',
+      data_quality_notes: $('govDataQualityNotes').value || '',
+      development_data_sources: (_govCurrentRecord?.data?.development_data_sources) || [],
+    },
+    supplier: {
+      supplier_name: $('govSupplierName').value || '',
+      model_documentation_status: $('govSupplierDocs').value || '',
+      hosting_location: $('govSupplierHosting').value || '',
+      change_policy: $('govSupplierChangePolicy').value || '',
+      contract_notes: (_govCurrentRecord?.supplier?.contract_notes) || '',
+    },
+    human_oversight: {
+      oversight_model: $('govOversightModel').value || '',
+      human_reviewers: splitCsv($('govHumanReviewers').value || ''),
+      appeal_route: $('govAppealRoute').value || '',
+      escalation_path: $('govEscalationPath').value || '',
+    },
+  };
+}
+
+async function govLoadDashboard(silent=false) {
+  try {
+    const data = await apiJson('/api/governance/dashboard');
+    govSetCounts(data.counts || {});
+    govPopulateOrganizations(data.organizations || []);
+    govPopulateSystems(data.systems || []);
+    if (_govCurrentRecordId && (data.systems || []).some(x => x.record_id === _govCurrentRecordId)) {
+      $('govSystemSelect').value = _govCurrentRecordId;
+    }
+  } catch (e) {
+    if (!silent) $('govOrgOut').textContent = String(e);
+  }
+}
+
+async function govLoadSystem(recordId, silent=false) {
+  if (!recordId) return;
+  try {
+    const data = await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}`);
+    govRenderRecord(data.record, data.audit_events || []);
+    $('govSystemSelect').value = recordId;
+    await govLoadCrosswalk(true);
+  } catch (e) {
+    if (!silent) $('govSystemSnapshot').textContent = String(e);
+  }
+}
+
+async function govLoadCrosswalk(silent=false) {
+  const recordId = govSelectedRecordId();
+  if (!recordId) {
+    $('govCrosswalkOut').textContent = '(no record selected)';
+    return;
+  }
+  try {
+    const data = await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/crosswalk`);
+    $('govCrosswalkOut').textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    if (!silent) $('govCrosswalkOut').textContent = String(e);
+  }
+}
+
+async function govGenerateExports() {
+  const recordId = govSelectedRecordId();
+  if (!recordId) throw new Error('Select a GovAI record first');
+  const data = await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/exports/generate`, { method: 'POST' });
+  $('govExportOut').textContent = JSON.stringify(data, null, 2);
+  renderSimpleList('govExportList', data.exports || [], (item) => `${item.kind}: ${item.path}`);
+  govRenderRecord(data.record || _govCurrentRecord);
+  await govLoadDashboard(true);
+}
+
+function wireGovernanceUI() {
+  const required = ['btnGovCreateOrg', 'btnGovRefreshDashboard', 'btnGovRefreshSystems', 'btnGovNewSystem', 'btnGovSaveSystem', 'btnGovAddRisk', 'btnGovAddControl', 'btnGovAddReviewGate', 'btnGovUploadEvidence', 'btnGovAttachEvidence', 'btnGovRefreshCrosswalk', 'btnGovGenerateExports', 'govSystemSelect'];
+  if (!required.every(id => $(id))) return;
+
+  $('btnGovCreateOrg').onclick = async () => {
+    await withDisabled($('btnGovCreateOrg'), async () => {
+      const body = {
+        name: $('govOrgName').value || '',
+        sector: $('govOrgSector').value || '',
+        deployment_model: $('govOrgDeployment').value || '',
+      };
+      const data = await apiJson('/api/governance/organizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      $('govOrgOut').textContent = JSON.stringify(data.organization, null, 2);
+      $('govOrgName').value = '';
+      await govLoadDashboard(true);
+    });
+  };
+
+  $('btnGovRefreshDashboard').onclick = async () => { await govLoadDashboard(); };
+  $('btnGovRefreshSystems').onclick = async () => { await govLoadDashboard(); };
+
+  $('btnGovNewSystem').onclick = async () => {
+    await withDisabled($('btnGovNewSystem'), async () => {
+      const body = govBuildSystemPatch();
+      const data = await apiJson('/api/governance/systems', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      await govLoadDashboard(true);
+      await govLoadSystem(data.record.record_id, true);
+    });
+  };
+
+  $('btnGovSaveSystem').onclick = async () => {
+    await withDisabled($('btnGovSaveSystem'), async () => {
+      const recordId = govSelectedRecordId();
+      if (!recordId) throw new Error('Create or select a GovAI record first');
+      const data = await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(govBuildSystemPatch()),
+      });
+      await govLoadDashboard(true);
+      govRenderRecord(data.record || _govCurrentRecord);
+      await govLoadCrosswalk(true);
+    });
+  };
+
+  $('govSystemSelect').onchange = async () => {
+    const recordId = $('govSystemSelect').value || '';
+    if (recordId) await govLoadSystem(recordId, true);
+  };
+
+  $('btnGovAddRisk').onclick = async () => {
+    await withDisabled($('btnGovAddRisk'), async () => {
+      const recordId = govSelectedRecordId();
+      if (!recordId) throw new Error('Select a GovAI record first');
+      await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/risks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: $('govRiskTitle').value || '',
+          severity: $('govRiskSeverity').value || '',
+          likelihood: $('govRiskLikelihood').value || '',
+          mitigations: splitCsv($('govRiskMitigation').value || ''),
+        }),
+      });
+      $('govRiskTitle').value = '';
+      $('govRiskMitigation').value = '';
+      await govLoadSystem(recordId, true);
+    });
+  };
+
+  $('btnGovAddControl').onclick = async () => {
+    await withDisabled($('btnGovAddControl'), async () => {
+      const recordId = govSelectedRecordId();
+      if (!recordId) throw new Error('Select a GovAI record first');
+      await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/controls`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: $('govControlTitle').value || '',
+          owner: $('govControlOwner').value || '',
+        }),
+      });
+      $('govControlTitle').value = '';
+      $('govControlOwner').value = '';
+      await govLoadSystem(recordId, true);
+    });
+  };
+
+  $('btnGovAddReviewGate').onclick = async () => {
+    await withDisabled($('btnGovAddReviewGate'), async () => {
+      const recordId = govSelectedRecordId();
+      if (!recordId) throw new Error('Select a GovAI record first');
+      await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/review_gates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage: $('govReviewGateStage').value || '',
+          owner: $('govReviewGateOwner').value || '',
+          due_date: $('govSystemNextReview').value || '',
+        }),
+      });
+      await govLoadSystem(recordId, true);
+    });
+  };
+
+  $('btnGovUploadEvidence').onclick = async () => {
+    await withDisabled($('btnGovUploadEvidence'), async () => {
+      const file = $('govEvidenceFile').files[0];
+      if (!file) throw new Error('Choose a file to upload');
+      const fd = new FormData();
+      fd.append('file', file);
+      const data = await apiJson('/api/ingest/upload', { method: 'POST', body: fd });
+      $('govEvidenceSavedPath').textContent = data.saved_path || '(none)';
+    });
+  };
+
+  $('btnGovAttachEvidence').onclick = async () => {
+    await withDisabled($('btnGovAttachEvidence'), async () => {
+      const recordId = govSelectedRecordId();
+      if (!recordId) throw new Error('Select a GovAI record first');
+      await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/evidence`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: $('govEvidenceTitle').value || '',
+          summary: $('govEvidenceSummary').value || '',
+          source_type: $('govEvidenceSourceType').value || '',
+          stored_path: $('govEvidenceSavedPath').textContent === '(none)' ? '' : $('govEvidenceSavedPath').textContent,
+        }),
+      });
+      $('govEvidenceTitle').value = '';
+      $('govEvidenceSummary').value = '';
+      await govLoadSystem(recordId, true);
+    });
+  };
+
+  $('btnGovRefreshCrosswalk').onclick = async () => { await govLoadCrosswalk(); };
+  $('btnGovGenerateExports').onclick = async () => {
+    await withDisabled($('btnGovGenerateExports'), async () => {
+      await govGenerateExports();
+    });
+  };
+}
+
 async function init() {
   wireTabs();
   wireAuthUI();
   wireLLMUI();
+  wireGovernanceUI();
 
   // Catalog
   initCatalogView({ toast });
@@ -644,6 +1028,8 @@ async function init() {
     setAuthStatus('auth may be required — set API token and retry an action');
     renderStateBadges(null);
   }
+
+  await govLoadDashboard(true);
 
   // Ingest
   $("btnUpload").onclick = async () => {

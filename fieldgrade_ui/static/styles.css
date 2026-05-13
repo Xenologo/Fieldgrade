@@ -95,6 +95,7 @@ label {
 }
 
 input[type="text"],
+textarea,
 select {
   width: 100%;
   padding: var(--s2);
@@ -103,6 +104,11 @@ select {
   background: var(--panel);
   color: FieldText;
   box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 72px;
 }
 
 input[type="file"] {

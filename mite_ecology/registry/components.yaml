@@ -6,10 +6,10 @@ generated_at: 0
 components:
   - component_id: "mitecomp://fieldgrade_ui"
     title: "Fieldgrade UI"
-    description: "Web UI for uploading bundles, browsing jobs, inspecting outputs."
+    description: "Application shell for governance workspaces, exports, and advanced operational controls."
     name: "fieldgrade_ui"
     kind: "frontend"
-    role: "bundle_uploader"
+    role: "governance_workspace"
     runtime: "python"
     distribution:
       type: "python_module"
@@ -33,10 +33,10 @@ components:
 
   - component_id: "mitecomp://termite_fieldpack"
     title: "Termite Fieldpack"
-    description: "Fieldpack toolchain: ingest→CAS→provenance→seal→verify→replay."
+    description: "Fieldgrade Core evidence/provenance kernel: ingest→CAS→provenance→seal→verify→replay."
     name: "termite"
     kind: "backend"
-    role: "ingest+seal+verify"
+    role: "evidence_provenance_kernel"
     runtime: "cli"
     distribution:
       type: "cli"
@@ -58,10 +58,10 @@ components:
 
   - component_id: "mitecomp://mite_ecology"
     title: "Mite Ecology"
-    description: "Design-time pipeline: import verified bundles→KG→motifs→GA→NeuroArch export."
+    description: "Fieldgrade Core review/analysis kernel: verified bundle intake, review workflows, deterministic analysis, and exports."
     name: "mite-ecology"
     kind: "backend"
-    role: "import+gnn+gat+ga+export"
+    role: "review_analysis_kernel"
     runtime: "python"
     distribution:
       type: "python_module"

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fieldgrade UI</title>
+  <title>Fieldgrade Governance &amp; Evidence Ledger</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div class="topbarRow">
       <div class="topbarLeft">
         <div class="title">Fieldgrade</div>
-        <div class="subtitle">Ops console (Termite + mite_ecology)</div>
+        <div class="subtitle">Evidence-led governance workspace for accountable AI, data, and algorithmic systems</div>
         <div id="stateBadges" class="badges" aria-label="Server state"></div>
       </div>
 
@@ -28,18 +28,244 @@
   </header>
 
   <nav class="tabs" id="tabs">
-    <button type="button" class="tab active" data-panel="ingest">Ingest</button>
-    <button type="button" class="tab" data-panel="bundles">Bundles</button>
-    <button type="button" class="tab" data-panel="ecology">Ecology</button>
-    <button type="button" class="tab" data-panel="jobs">Jobs</button>
-    <button type="button" class="tab" data-panel="llm">LLM</button>
+    <button type="button" class="tab active" data-panel="dashboard">Dashboard</button>
+    <button type="button" class="tab" data-panel="system">System Record</button>
+    <button type="button" class="tab" data-panel="evidence">Evidence Room</button>
+    <button type="button" class="tab" data-panel="crosswalk">Crosswalk</button>
+    <button type="button" class="tab" data-panel="exports-centre">Export Centre</button>
+    <button type="button" class="tab" data-panel="ingest">Advanced: Ingest</button>
+    <button type="button" class="tab" data-panel="bundles">Advanced: Bundles</button>
+    <button type="button" class="tab" data-panel="ecology">Advanced: Ecology</button>
+    <button type="button" class="tab" data-panel="jobs">Advanced: Jobs</button>
+    <button type="button" class="tab" data-panel="llm">Advanced: LLM</button>
     <button type="button" class="tab" data-panel="catalog">Catalog</button>
     <button type="button" class="tab" data-panel="graph">Graph Explorer</button>
     <button type="button" class="tab" data-panel="logs">Logs</button>
   </nav>
 
   <main class="panels">
-    <section class="panel active" id="panel-ingest">
+    <section class="panel active" id="panel-dashboard">
+      <h2>GovAI Register Dashboard</h2>
+      <p class="hint">Track accountable AI systems before deployment, procurement, audit, or publication.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Create organisation</h3>
+          <label for="govOrgName">Organisation name</label>
+          <input id="govOrgName" type="text" placeholder="Example Borough Council" />
+          <label for="govOrgSector">Sector</label>
+          <input id="govOrgSector" type="text" value="UK public sector" />
+          <label for="govOrgDeployment">Deployment model</label>
+          <input id="govOrgDeployment" type="text" value="Local-first / private cloud" />
+          <div class="actions">
+            <button type="button" id="btnGovCreateOrg" class="primary">Create organisation</button>
+            <button type="button" id="btnGovRefreshDashboard">Refresh dashboard</button>
+          </div>
+          <pre id="govOrgOut" class="mono small pre"></pre>
+        </div>
+
+        <div class="card">
+          <h3>Summary</h3>
+          <div class="kv">
+            <div class="k">Organisations</div>
+            <div class="v" id="govDashboardOrganizations">0</div>
+          </div>
+          <div class="kv">
+            <div class="k">GovAI systems</div>
+            <div class="v" id="govDashboardSystems">0</div>
+          </div>
+          <div class="kv">
+            <div class="k">Status mix</div>
+            <div class="v" id="govDashboardStatus">(none)</div>
+          </div>
+          <div class="kv">
+            <div class="k">Risk mix</div>
+            <div class="v" id="govDashboardRisk">(none)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>System register</h3>
+        <div class="actions">
+          <button type="button" id="btnGovRefreshSystems">Refresh systems</button>
+        </div>
+        <label for="govSystemSelect">Systems</label>
+        <select id="govSystemSelect" size="8" title="GovAI system records"></select>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-system">
+      <h2>System Record</h2>
+      <p class="hint">Canonical record for ownership, purpose, data, supplier notes, human oversight, risks, controls, and review gates.</p>
+
+      <div class="actions">
+        <button type="button" id="btnGovNewSystem" class="primary">Create new GovAI record</button>
+        <button type="button" id="btnGovSaveSystem">Save record</button>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Core record</h3>
+          <label for="govSystemOrganization">Organisation</label>
+          <select id="govSystemOrganization" title="Organisation"></select>
+          <label for="govSystemTitle">Title</label>
+          <input id="govSystemTitle" type="text" placeholder="Housing Arrears Prioritisation Tool" />
+          <label for="govSystemStatus">Status</label>
+          <input id="govSystemStatus" type="text" value="Under Review" />
+          <label for="govSystemRiskTier">Risk tier</label>
+          <input id="govSystemRiskTier" type="text" value="High" />
+          <label for="govSystemNextReview">Next review due</label>
+          <input id="govSystemNextReview" type="text" placeholder="2026-06-30" />
+          <label for="govSystemSummary">Plain-English summary</label>
+          <textarea id="govSystemSummary" rows="4" placeholder="Describe what the system does in plain English."></textarea>
+          <label for="govSystemDecisionContext">Decision context</label>
+          <textarea id="govSystemDecisionContext" rows="3" placeholder="Explain whether the system supports or makes decisions."></textarea>
+          <label for="govSystemAffectedGroups">Affected groups (comma separated)</label>
+          <input id="govSystemAffectedGroups" type="text" placeholder="Council tenants, housing officers" />
+        </div>
+
+        <div class="card">
+          <h3>Ownership, supplier, and oversight</h3>
+          <label for="govOwnerSRO">Senior responsible owner</label>
+          <input id="govOwnerSRO" type="text" />
+          <label for="govOwnerData">Data owner</label>
+          <input id="govOwnerData" type="text" />
+          <label for="govOwnerTech">Technical owner</label>
+          <input id="govOwnerTech" type="text" />
+          <label for="govOwnerSupplier">Supplier owner</label>
+          <input id="govOwnerSupplier" type="text" />
+          <label for="govSupplierName">Supplier name</label>
+          <input id="govSupplierName" type="text" />
+          <label for="govModelType">Model type</label>
+          <input id="govModelType" type="text" placeholder="Machine learning classifier" />
+          <label for="govAutomationLevel">Automation level</label>
+          <input id="govAutomationLevel" type="text" value="Decision support" />
+          <label><input id="govHumanFinalDecision" type="checkbox" checked /> Human makes final decision</label>
+          <label for="govSupplierDocs">Supplier documentation status</label>
+          <input id="govSupplierDocs" type="text" placeholder="Model card and DPIA received" />
+          <label for="govSupplierHosting">Hosting location</label>
+          <input id="govSupplierHosting" type="text" />
+          <label for="govSupplierChangePolicy">Model change policy</label>
+          <textarea id="govSupplierChangePolicy" rows="3"></textarea>
+          <label for="govOversightModel">Oversight model</label>
+          <textarea id="govOversightModel" rows="2"></textarea>
+          <label for="govHumanReviewers">Human reviewers (comma separated)</label>
+          <input id="govHumanReviewers" type="text" />
+          <label for="govAppealRoute">Appeal / challenge route</label>
+          <textarea id="govAppealRoute" rows="2"></textarea>
+          <label for="govEscalationPath">Escalation path</label>
+          <textarea id="govEscalationPath" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Data provenance</h3>
+          <label for="govOperationalData">Operational data sources (comma separated)</label>
+          <textarea id="govOperationalData" rows="3"></textarea>
+          <label for="govLawfulBasis">Lawful basis (comma separated)</label>
+          <input id="govLawfulBasis" type="text" />
+          <label for="govRetentionPeriod">Retention period</label>
+          <input id="govRetentionPeriod" type="text" />
+          <label for="govDataQualityNotes">Data quality notes</label>
+          <textarea id="govDataQualityNotes" rows="4"></textarea>
+        </div>
+
+        <div class="card">
+          <h3>Risk register and controls</h3>
+          <label for="govRiskTitle">Add risk</label>
+          <input id="govRiskTitle" type="text" placeholder="Bias against protected groups" />
+          <div class="row">
+            <div class="col">
+              <label for="govRiskSeverity">Severity</label>
+              <input id="govRiskSeverity" type="text" value="High" />
+            </div>
+            <div class="col">
+              <label for="govRiskLikelihood">Likelihood</label>
+              <input id="govRiskLikelihood" type="text" value="Medium" />
+            </div>
+          </div>
+          <label for="govRiskMitigation">Mitigations (comma separated)</label>
+          <textarea id="govRiskMitigation" rows="3"></textarea>
+          <div class="actions">
+            <button type="button" id="btnGovAddRisk">Add risk</button>
+          </div>
+          <label for="govControlTitle">Add control</label>
+          <input id="govControlTitle" type="text" placeholder="Monthly human review sampling" />
+          <label for="govControlOwner">Control owner</label>
+          <input id="govControlOwner" type="text" />
+          <div class="actions">
+            <button type="button" id="btnGovAddControl">Add control</button>
+          </div>
+          <label for="govReviewGateStage">Add review gate</label>
+          <input id="govReviewGateStage" type="text" value="assessed" />
+          <label for="govReviewGateOwner">Review gate owner</label>
+          <input id="govReviewGateOwner" type="text" />
+          <div class="actions">
+            <button type="button" id="btnGovAddReviewGate">Add review gate</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Loaded record snapshot</h3>
+        <pre id="govSystemSnapshot" class="mono small pre">(no record selected)</pre>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-evidence">
+      <h2>Evidence Room</h2>
+      <p class="hint">Attach files, URLs, or notes as attributable evidence objects.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Upload and attach evidence</h3>
+          <label for="govEvidenceTitle">Evidence title</label>
+          <input id="govEvidenceTitle" type="text" />
+          <label for="govEvidenceSummary">Evidence summary</label>
+          <textarea id="govEvidenceSummary" rows="3"></textarea>
+          <label for="govEvidenceSourceType">Source classification</label>
+          <input id="govEvidenceSourceType" type="text" value="primary" />
+          <label for="govEvidenceFile">Upload file</label>
+          <input id="govEvidenceFile" type="file" title="Evidence upload" />
+          <div class="actions">
+            <button type="button" id="btnGovUploadEvidence">Upload file</button>
+            <button type="button" id="btnGovAttachEvidence">Attach evidence</button>
+          </div>
+          <div class="kv">
+            <div class="k">Saved upload</div>
+            <div class="v" id="govEvidenceSavedPath">(none)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Evidence list</h3>
+          <ul id="govEvidenceList" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-crosswalk">
+      <h2>Crosswalk</h2>
+      <p class="hint">Declarative mapping from the system record to ATRS, the UK Data and AI Ethics Framework, ISO/IEC 42001, NIST AI RMF, and Fieldgrade internal controls.</p>
+      <div class="actions">
+        <button type="button" id="btnGovRefreshCrosswalk">Refresh crosswalk</button>
+      </div>
+      <pre id="govCrosswalkOut" class="mono small pre">(no record selected)</pre>
+    </section>
+
+    <section class="panel" id="panel-exports-centre">
+      <h2>Export Centre</h2>
+      <p class="hint">Generate the first sellable GovAI pack: internal record, ATRS-style draft, public summary, and evidence-gap report.</p>
+      <div class="actions">
+        <button type="button" id="btnGovGenerateExports" class="primary">Generate GovAI export pack</button>
+      </div>
+      <pre id="govExportOut" class="mono small pre">(no exports yet)</pre>
+      <ul id="govExportList" class="list"></ul>
+    </section>
+
+    <section class="panel" id="panel-ingest">
       <h2>Ingest</h2>
 
       <div class="row">

@@ -1,0 +1,154 @@
+{
+  "$id": "https://fieldgrade.local/schemas/fieldgrade_govai_system_record_v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "fieldgrade_core_objects_v1.json#/$defs/registry_record"
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "const": "fieldgrade_govai_system_record/1.0" },
+        "fieldgrade_object_type": { "type": "string", "const": "AI_SYSTEM_RECORD" },
+        "variant_pack": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "variant_id": { "type": "string" },
+            "title": { "type": "string" }
+          },
+          "required": ["variant_id"]
+        },
+        "organization_id": { "type": "string" },
+        "purpose": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "plain_english_summary": { "type": "string" },
+            "decision_context": { "type": "string" },
+            "affected_groups": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["plain_english_summary", "decision_context", "affected_groups"]
+        },
+        "system": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "supplier": { "type": "string" },
+            "model_type": { "type": "string" },
+            "automation_level": { "type": "string" },
+            "human_final_decision": { "type": "boolean" }
+          },
+          "required": ["automation_level", "human_final_decision"]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "development_data_sources": { "type": "array", "items": { "type": "string" } },
+            "operational_data_sources": { "type": "array", "items": { "type": "string" } },
+            "lawful_basis": { "type": "array", "items": { "type": "string" } },
+            "retention_period": { "type": "string" },
+            "data_quality_notes": { "type": "string" }
+          },
+          "required": ["development_data_sources", "operational_data_sources", "lawful_basis"]
+        },
+        "supplier": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "supplier_name": { "type": "string" },
+            "model_documentation_status": { "type": "string" },
+            "hosting_location": { "type": "string" },
+            "change_policy": { "type": "string" },
+            "contract_notes": { "type": "string" }
+          }
+        },
+        "human_oversight": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "oversight_model": { "type": "string" },
+            "human_reviewers": { "type": "array", "items": { "type": "string" } },
+            "appeal_route": { "type": "string" },
+            "escalation_path": { "type": "string" }
+          },
+          "required": ["human_reviewers"]
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/actor_object"
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/risk_object"
+          }
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/control_object"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/evidence_object"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/decision_object"
+          }
+        },
+        "review_gates": {
+          "type": "array",
+          "items": {
+            "$ref": "fieldgrade_core_objects_v1.json#/$defs/review_gate"
+          }
+        },
+        "crosswalks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "export_status": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        }
+      },
+      "required": [
+        "type",
+        "fieldgrade_object_type",
+        "record_id",
+        "title",
+        "sector_variant",
+        "variant_pack",
+        "status",
+        "risk_tier",
+        "owners",
+        "purpose",
+        "system",
+        "data",
+        "supplier",
+        "human_oversight",
+        "risks",
+        "controls",
+        "evidence",
+        "review_gates",
+        "crosswalks",
+        "export_status"
+      ]
+    }
+  ]
+}

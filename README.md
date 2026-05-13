@@ -1,3 +1,17 @@
+# Fieldgrade Governance & Evidence Ledger
+
+This repository now treats **Fieldgrade as the base class** for evidence-bearing governance products:
+
+- **Fieldgrade Core** — provenance, evidence, governance, audit, and export engine
+- **GovAI** — the first flagship variant for accountable AI, data, and algorithmic system records
+- Future sector packs such as SME-AI, Procurement, DataEthics, and FoodQA
+
+The existing monorepo spine still matters:
+
+- `termite_fieldpack/` is the evidence/provenance kernel
+- `mite_ecology/` is the review/analysis kernel
+- `fieldgrade_ui/` is the application shell and governance workspace
+
 # mite_ecology_fullstack (Fieldpack-grade)
 
 This monorepo provides:
