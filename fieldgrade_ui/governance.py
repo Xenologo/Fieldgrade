@@ -84,7 +84,7 @@ class GovernanceLedger:
         now_ms = int(time.time() * 1000)
         org = {
             "organization_id": org_id,
-            "name": str(body.get("name") or "Untitled organisation").strip(),
+            "name": str(body.get("name") or "Untitled organization").strip(),
             "sector": str(body.get("sector") or "Public sector").strip(),
             "deployment_model": str(body.get("deployment_model") or "Local-first / private cloud").strip(),
             "created_at_ms": now_ms,
@@ -243,7 +243,7 @@ class GovernanceLedger:
         risks = record.get("risks", [])
         controls = record.get("controls", [])
         affected = purpose.get("affected_groups") or []
-        affected_text = ", ".join(str(x) for x in affected) if affected else "Not yet recorded"
+        affected_lines = [f"- {str(x)}" for x in affected] if affected else ["Not yet recorded"]
         return "\n".join(
             [
                 f"# {record.get('title', 'Untitled GovAI record')}",
@@ -261,7 +261,7 @@ class GovernanceLedger:
                 f"- Human final decision: {'Yes' if system.get('human_final_decision') else 'No / not recorded'}",
                 "",
                 "## Who may be affected",
-                f"- {affected_text}",
+                *affected_lines,
                 "",
                 "## Human oversight and appeal",
                 f"- Oversight model: {oversight.get('oversight_model') or 'Not yet recorded'}",

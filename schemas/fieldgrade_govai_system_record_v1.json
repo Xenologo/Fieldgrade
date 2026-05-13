@@ -21,6 +21,7 @@
           "required": ["variant_id"]
         },
         "organization_id": { "type": "string" },
+        "next_review_due": { "type": "string" },
         "purpose": {
           "type": "object",
           "additionalProperties": true,

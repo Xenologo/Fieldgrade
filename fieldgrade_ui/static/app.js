@@ -594,7 +594,7 @@ function govPopulateOrganizations(orgs) {
     sel.innerHTML = '';
     const blank = document.createElement('option');
     blank.value = '';
-    blank.textContent = '(select organisation)';
+    blank.textContent = '(select organization)';
     sel.appendChild(blank);
     for (const org of orgs || []) {
       const opt = document.createElement('option');
@@ -899,6 +899,7 @@ function wireGovernanceUI() {
     await withDisabled($('btnGovAttachEvidence'), async () => {
       const recordId = govSelectedRecordId();
       if (!recordId) throw new Error('Select a GovAI record first');
+      const savedPath = $('govEvidenceSavedPath').textContent;
       await apiJson(`/api/governance/systems/${encodeURIComponent(recordId)}/evidence`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -906,7 +907,7 @@ function wireGovernanceUI() {
           title: $('govEvidenceTitle').value || '',
           summary: $('govEvidenceSummary').value || '',
           source_type: $('govEvidenceSourceType').value || '',
-          stored_path: $('govEvidenceSavedPath').textContent === '(none)' ? '' : $('govEvidenceSavedPath').textContent,
+          stored_path: savedPath === '(none)' ? '' : savedPath,
         }),
       });
       $('govEvidenceTitle').value = '';
