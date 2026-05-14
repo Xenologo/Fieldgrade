@@ -15,6 +15,14 @@ EXPORT_STATES = ("pending", "ready", "exported")
 VERIFICATION_STATES = ("passed", "failed", "not_run")
 RUNTIME_HANDOFF_STATES = ("review_required", "ready_for_bridge", "blocked")
 JOB_LIFECYCLE_STATES = ("queued", "running", "succeeded", "failed", "canceled")
+VERIFICATION_MATERIAL_FILES = {
+    "manifest.json",
+    "attestation.json",
+    "attestation.sig",
+    "attestation.dsse.json",
+    "sbom/bom.cdx.json",
+    "sbom/bom.dsse.json",
+}
 
 _RISK_STATUS_MAP = {
     "open": "open",
@@ -95,6 +103,14 @@ def _zip_member_uri(bundle_path: Path, name: str) -> str:
     return f"zip:{bundle_path}!/{name}"
 
 
+def _contract_seed(meta: Dict[str, Any]) -> str:
+    return str(meta.get("manifest_sha256") or meta.get("bundle_sha256") or "unknown")[:12]
+
+
+def _contract_id(prefix: str, meta: Dict[str, Any]) -> str:
+    return f"{prefix}{_contract_seed(meta)}"
+
+
 def _normalize(raw: Any, mapping: Dict[str, str], *, default: str) -> str:
     key = str(raw or "").strip().lower()
     return mapping.get(key, default)
@@ -110,6 +126,13 @@ def normalize_control_status(raw: Any) -> str:
 
 def normalize_review_gate_status(raw: Any) -> str:
     return _normalize(raw, _REVIEW_GATE_STATUS_MAP, default="staged")
+
+
+def normalize_contract_review_state(raw: Any) -> str:
+    normalized = normalize_review_gate_status(raw)
+    if normalized in {"approved", "quarantined", "staged"}:
+        return normalized
+    return "staged"
 
 
 def status_vocabulary() -> Dict[str, Any]:
@@ -279,9 +302,19 @@ def _bundle_metadata(bundle_path: Path) -> Dict[str, Any]:
         "verification_materials": sorted(
             name
             for name in names
-            if name in {"manifest.json", "attestation.json", "attestation.sig", "attestation.dsse.json", "sbom/bom.cdx.json", "sbom/bom.dsse.json"}
+            if name in VERIFICATION_MATERIAL_FILES
         ),
     }
+
+
+def _bridge_provenance(meta: Dict[str, Any]) -> tuple[str, str]:
+    head = str(meta.get("provenance_chain_head") or "").strip()
+    if head:
+        return head, "provenance_chain_head"
+    provenance_sha = str(meta.get("provenance_sha256") or "").strip()
+    if provenance_sha:
+        return provenance_sha, "provenance_sha256_fallback"
+    return str(meta.get("bundle_sha256") or "").strip(), "bundle_sha256_fallback"
 
 
 def _list_export_files(export_root: Path) -> list[str]:
@@ -314,15 +347,18 @@ def build_pipeline_contracts(
     verification_status = "passed" if verify_ok else "failed"
     replay_status = "passed" if replay_ok else "failed"
 
+    normalized_review_state = normalize_contract_review_state(review_state)
+    bridge_provenance_head, bridge_provenance_source = _bridge_provenance(meta)
+
     evidence_packet = {
         "schema_version": "fieldgrade.evidence_packet.v1",
-        "packet_id": f"FG-PACKET-{meta['manifest_sha256'][:12] or meta['bundle_sha256'][:12]}",
+        "packet_id": _contract_id("FG-PACKET-", meta),
         "bundle_id": meta["bundle_id"],
         "bundle_path": meta["bundle_path"],
         "manifest_sha256": meta["manifest_sha256"],
-        "provenance_chain_head": meta["provenance_chain_head"],
+        "provenance_chain_head": bridge_provenance_head,
         "evidence_state": evidence_state,
-        "review_state": review_state if review_state in {"staged", "approved", "quarantined"} else "staged",
+        "review_state": normalized_review_state,
         "review_required": True,
         "canonical_status": "not_canonical",
         "created_at": _utc_now_iso(),
@@ -330,7 +366,7 @@ def build_pipeline_contracts(
 
     runtime_hardening_report = {
         "schema_version": "fieldgrade.runtime_hardening_report.v1",
-        "report_id": f"FG-RUNTIME-{run_id[:12]}",
+        "report_id": f"FG-RUNTIME-{str(run_id)[:12]}",
         "run_id": run_id,
         "bundle_id": meta["bundle_id"],
         "verification_status": verification_status,
@@ -343,23 +379,23 @@ def build_pipeline_contracts(
 
     fieldgrade_bridge = {
         "schema_version": "cfx.fieldgrade_bridge.v1",
-        "bridge_id": f"FG-BRIDGE-{meta['manifest_sha256'][:12] or meta['bundle_sha256'][:12]}",
+        "bridge_id": _contract_id("FG-BRIDGE-", meta),
         "bundle_id": meta["bundle_id"],
         "manifest_sha256": meta["manifest_sha256"],
         "fieldpack_path": meta["fieldpack_path"],
         "kg_delta_path": meta["kg_delta_path"],
-        "provenance_chain_head": meta["provenance_chain_head"] or meta["provenance_sha256"] or meta["bundle_sha256"],
+        "provenance_chain_head": bridge_provenance_head,
         "replay_status": replay_status,
         "verification_status": verification_status,
         "admissibility_hint": "evidence_only",
         "review_required": True,
         "created_at": _utc_now_iso(),
-        "notes": "Bridge artifact is review-bound and evidence-only.",
+        "notes": f"Bridge artifact is review-bound and evidence-only. provenance_source={bridge_provenance_source}",
     }
 
     cao_candidate = {
         "schema_version": "cfx.cao_candidate.v1",
-        "candidate_id": f"CAO-CANDIDATE-{meta['manifest_sha256'][:12] or meta['bundle_sha256'][:12]}",
+        "candidate_id": _contract_id("CAO-CANDIDATE-", meta),
         "source_bundle_id": meta["bundle_id"],
         "source_manifest_sha256": meta["manifest_sha256"],
         "proposed_title": f"Fieldgrade bundle {meta['bundle_id']}",
