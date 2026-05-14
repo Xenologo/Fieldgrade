@@ -1,51 +1,51 @@
 # Fieldgrade
 
-**Fieldgrade is the missing evidence layer for modern operations.** Capture files, seal provenance, govern AI-assisted work, and export audit-ready proof packs without deploying a heavyweight ERP.
+**Evidence governance for audit-ready technical work.** Fieldgrade helps teams capture files, seal provenance, review decisions, govern AI-assisted work, and export proof packs without deploying a heavyweight ERP or QMS.
 
-> **SAP runs the transaction layer; Fieldgrade proves the evidence layer.**
+> **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
 
-Fieldgrade is an evidence-governance operating system for organisations that need SAP-grade provenance, auditability, review discipline, and AI accountability without SAP-scale cost or implementation burden.
+## Fieldgrade public doctrine
 
-## Commercial product shape
+> **Show the proof layer. Occlude the complexity layer.**
+
+Fieldgrade should publicly appear as a calm, practical evidence-governance product. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
+
+## Public product family
 
 Fieldgrade is structured as a family of evidence-governance products:
 
-- **Fieldgrade Core** — evidence registry, provenance ledger, bundle sealing, replay verification, and audit export
-- **Fieldgrade ProofOps** — review workflow, evidence timelines, QA records, audit packs, and operator dashboards
-- **Fieldgrade GovAI** — AI-use register, prompt/output evidence, model/version recording, human review gates, and accountability reports
-- **Fieldgrade FoodQA** — batch records, deviations, CAPA, supplier evidence, calibration records, and audit-readiness packs
-- **Fieldgrade Enterprise Bridge** — SAP export adapters, CSV/XLSX ingest, REST API, webhooks, and external QMS/ERP connectors
+- **Fieldgrade Core** — the evidence and provenance engine beneath the product family
+- **Fieldgrade ProofOps** — turn messy operational evidence into reviewable, exportable proof
+- **Fieldgrade GovAI** — govern AI-assisted work with evidence, review, and accountability
+- **Fieldgrade FoodQA** — audit-ready evidence control for food, beverage, QA, and production teams
 
-The first commercial wedge is **Fieldgrade ProofOps**:
+## Public-facing materials in this repository
 
-> **Evidence governance, AI accountability, and audit-ready provenance for technical teams.**
+- Landing page: [`/site/landing.html`](site/landing.html)
+- Product pages: [`/site/products/`](site/products/)
+- Demo page: [`/site/demo/index.html`](site/demo/index.html)
+- Public docs page: [`/site/docs/index.html`](site/docs/index.html)
+- Security and responsible AI-use page: [`/site/security/index.html`](site/security/index.html)
+- Pricing and setup page: [`/site/pricing/index.html`](site/pricing/index.html)
+- Sample deliverables: [`/exports`](exports)
 
-ProofOps is designed for the messy operational edge that heavyweight ERP programs handle badly: spreadsheets, emailed PDFs, screenshots, supplier evidence, QA notes, SOP deviations, review trails, and AI-generated analysis with unclear provenance.
+## What buyers should see first
 
-## Why this repository is commercially credible
+Fieldgrade publicly emphasizes:
 
-This monorepo already implements the audit substrate behind that positioning:
+- evidence capture
+- provenance sealing
+- review workflow
+- audit pack export
+- AI accountability
+- local-first governance
 
-- file ingestion into **content-addressed storage**
-- **SQLite + FTS5** search
-- **hash-chained provenance** events
-- KG delta records
-- deterministic signed bundles
-- MEAP policy verification
-- replay verification
-- deterministic GNN/GAT-style analysis
-- memoized deterministic GA
-- local UI
-- local/OpenAI-compatible LLM runtime ownership
-- review modes: `AUTO_MERGE`, `REVIEW_ONLY`, `QUARANTINE`, `KILL`
-- strict deterministic mode
+Fieldgrade publicly avoids over-claiming:
 
-## Buyer-facing materials in this repository
-
-- Positioning and market docs: `/docs`
-- Lightweight landing page: `/site/landing.html`
-- Demo inputs by use case: `/examples`
-- Sample deliverables: `/exports`
+- it is **not** a full ERP
+- it is **not** a full QMS
+- it does **not** ask buyers to trust AI automatically
+- it does **not** claim legally binding or regulator-approved decisions by default
 
 ## Initial offer
 
@@ -57,16 +57,38 @@ This monorepo already implements the audit substrate behind that positioning:
 - one customer-specific evidence template
 - one audit-pack export template
 - one workflow pack such as FoodQA or GovAI
-- one hour of setup/training
-- optional monthly support
+- guided setup and training
+- optional support
 
-## Monorepo spine
+## Public trust notes
 
-The existing monorepo spine still matters:
+- Fieldgrade separates capture, analysis, review, and approval.
+- Evidence may be ingested automatically, but authority remains explicit.
+- Sensitive evidence should not need to leave your machine just to become organised.
+- AI output is never silently treated as truth.
 
-- `termite_fieldpack/` is the evidence/provenance kernel
-- `mite_ecology/` is the review/analysis kernel
-- `fieldgrade_ui/` is the application shell and governance workspace
+## Repository architecture and advanced internals
+
+This monorepo still carries the deeper substrate behind the public product surface:
+
+- `termite_fieldpack/` is the evidence and provenance kernel
+- `mite_ecology/` is the review and analysis kernel
+- `fieldgrade_ui/` is the governance workspace and application shell
+
+If you want the implementation depth, use the repository docs under `/docs`, especially architecture and deployment materials. The public site should not require buyers to understand those internals before they see value.
+
+## Why this repository is technically credible
+
+This monorepo already implements the audit substrate behind the public positioning:
+
+- file ingestion into **content-addressed storage**
+- **SQLite + FTS5** search
+- **hash-chained provenance** events
+- deterministic signed bundles
+- replay verification
+- local UI
+- local/OpenAI-compatible LLM runtime ownership
+- strict deterministic mode
 
 # Technical overview
 

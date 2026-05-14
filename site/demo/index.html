@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fieldgrade Demo</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div class="brand">
+        <img src="../brand/fieldgrade-logo.svg" alt="Fieldgrade logo" width="960" height="380">
+        <span>Public demo</span>
+      </div>
+      <nav class="nav" aria-label="Fieldgrade demo links">
+        <a href="../landing.html">Home</a>
+        <a href="../products/foodqa.html">FoodQA</a>
+        <a href="../products/govai.html">GovAI</a>
+        <a href="../docs/index.html">Docs</a>
+      </nav>
+    </header>
+
+    <section class="hero single">
+      <div>
+        <div class="eyebrow">From messy file to audit pack</div>
+        <h1>One public journey.</h1>
+        <p class="lead">The public demo should show one beautiful path: upload a document, register it, add support, seal the bundle, review the record, and export the proof pack.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="sectionHead"><div><h2>Demo flow</h2><p>Use simple labels and visible proof at every step.</p></div></div>
+      <div class="steps">
+        <article class="step"><strong>Upload a document</strong><p>Example: <code>Supplier_COA_Batch_24-118.pdf</code>.</p></article>
+        <article class="step"><strong>Register the evidence</strong><p>Visible fields: object ID, file name, evidence type, source, uploader or operator, timestamp, SHA-256 fingerprint, and review state.</p></article>
+        <article class="step"><strong>Add supporting evidence</strong><p>Example additions: screenshot, spreadsheet, operator note, deviation comment, AI-assisted summary.</p></article>
+        <article class="step"><strong>Seal the bundle</strong><p>Visible outputs: bundle ID, canonical hash, manifest, included files, provenance event chain.</p></article>
+        <article class="step"><strong>Review the record</strong><p>Visible states: Raw, Witnessed, Pending Review, Approved, Rejected, Quarantined, Exported.</p></article>
+        <article class="step"><strong>Export the proof pack</strong><p>Outputs: PDF audit report, ZIP evidence bundle, JSON manifest, provenance log, reviewer decision record.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="sectionHead"><div><h2>Sample packs</h2><p>Give the public a concrete sense of the deliverables.</p></div></div>
+      <div class="grid two">
+        <article class="card"><strong>FoodQA demo</strong><p>Batch events, supplier files, deviation notes, review state, and release-ready pack structure.</p></article>
+        <article class="card"><strong>GovAI demo</strong><p>Prompt/output records, model version fields, human review gate, and exportable decision record.</p></article>
+      </div>
+      <div class="ctaRow">
+        <a href="https://github.com/Xenologo/Fieldgrade/blob/main/site/demo-data/foodqa_batch_events.csv">FoodQA sample data</a>
+        <a href="https://github.com/Xenologo/Fieldgrade/blob/main/site/demo-data/govai_system_register.json">GovAI sample data</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>Sell the experience: from messy file to audit-ready proof.</div>
+      <div class="footerLinks">
+        <a href="../pricing/index.html#demo">Free demo</a>
+        <a href="../security/index.html">Security</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
