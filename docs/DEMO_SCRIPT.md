@@ -20,7 +20,7 @@ Use the public doctrine throughout the demo:
 
 Open one concrete input such as:
 
-- `Supplier_COA_Batch_24-118.pdf`
+- `Supplier_COA_Batch_118.pdf`
 
 Explain that this is the kind of operational evidence teams already have.
 
