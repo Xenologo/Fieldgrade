@@ -313,10 +313,12 @@ For a local smoke test with the development overlay:
 export FG_API_TOKEN=demo-local-token
 docker compose -f compose.yaml -f compose.dev.yaml up -d --build
 curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
+docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -c "from pathlib import Path; from mite_ecology.db import connect, init_db; db_path = Path('/app/mite_ecology/runtime/mite_ecology.sqlite'); db_path.parent.mkdir(parents=True, exist_ok=True); con = connect(db_path); init_db(con, Path('/app/mite_ecology/sql/schema.sql'))"
 curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
 docker compose -f compose.yaml -f compose.dev.yaml down
 ```
 
+`/readyz` is intentionally conservative and stays unhealthy until the required runtime DBs exist.
 Record the outcome in release notes before publishing a pilot build.
 
 For production proxy header trust, prefer trusting only the Docker network CIDR (instead of `*`):
