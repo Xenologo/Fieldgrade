@@ -10,8 +10,10 @@
 - branded workspace
 - one workflow pack
 - one export template
-- one demo dataset
+- one sample completed proof pack
+- one reviewer decision model
 - one guided training session
+- one short guide for repeating the proof workflow next time
 
 ## Suitable first buyers
 
@@ -25,9 +27,9 @@
 1. Pilot intake review
 2. Local install on a customer machine or single host
 3. Workspace branding and workflow pack setup
-4. Demo dataset import
-5. Proof-pack walkthrough
-6. Guided training session
+4. Build one real or demo workflow, with FoodQA supplier COA and batch release as the default first scenario
+5. Leave behind one completed proof pack and export template
+6. Guided training session and repeat-it-next-time guide
 
 ## Deliberate scope boundary
 
@@ -35,4 +37,4 @@ This offer is not a broad SaaS subscription and it is not positioned as a full E
 
 ## Commercial promise
 
-The goal of the first paid engagement is simple: make the buyer able to capture evidence, govern review, export a proof pack, and decide whether to expand the workflow.
+The goal of the first paid engagement is simple: turn one messy operational process into a reusable proof-pack workflow, then decide whether to expand the system.

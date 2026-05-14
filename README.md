@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/Xenologo/Fieldgrade)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-**Evidence governance for audit-ready technical work.** Fieldgrade helps teams capture files, seal provenance, review decisions, govern AI-assisted work, and export proof packs without deploying a heavyweight ERP or QMS.
+**Turn messy operational evidence into audit-ready proof packs.** Fieldgrade is a local-first ProofOps workspace that helps small technical teams capture evidence, seal provenance, review decisions, and export proof they can defend without buying a heavyweight ERP or QMS.
 
 > **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
 
@@ -13,22 +13,22 @@
 
 > **Show the proof layer. Occlude the complexity layer.**
 
-Fieldgrade should publicly appear as a calm, practical evidence-governance product. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
+Fieldgrade should publicly appear as a calm, practical proof compiler. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
 
 ## Fieldgrade Phase 2 — Pilot Release and ProofOps Commercialisation
 
-> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led pilot product with release artifacts, reproducible installation, proof-pack demos, setup intake, and first paid ProofOps packaging.
+> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led ProofOps pilot product with release artifacts, reproducible installation, one flagship proof-pack demo, setup intake, and first paid packaging.
 
 This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a proof pack, and request a paid setup.
 
 ## Public product family
 
-Fieldgrade is structured as a family of evidence-governance products:
+Fieldgrade is structured as a family of ProofOps products:
 
-- **Fieldgrade Core** — the evidence and provenance engine beneath the product family
+- **Fieldgrade FoodQA** — the first flagship workflow for supplier records, batch evidence, deviations, and release proof packs
 - **Fieldgrade ProofOps** — turn messy operational evidence into reviewable, exportable proof
-- **Fieldgrade GovAI** — govern AI-assisted work with evidence, review, and accountability
-- **Fieldgrade FoodQA** — audit-ready evidence control for food, beverage, QA, and production teams
+- **Fieldgrade GovAI** — keep AI-assisted work in a human-reviewed evidence register
+- **Fieldgrade Core** — the evidence and provenance engine beneath the product family
 
 ## Public-facing materials in this repository
 
@@ -61,7 +61,7 @@ Fieldgrade publicly emphasizes:
 - evidence capture
 - provenance sealing
 - review workflow
-- audit pack export
+- proof-pack export
 - AI accountability
 - local-first governance
 
@@ -79,17 +79,19 @@ Fieldgrade publicly avoids over-claiming:
 - **£750 starting package**
 - local installation
 - branded workspace
-- one demo dataset
+- one real or demo workflow
 - one export template
-- one workflow pack such as FoodQA or GovAI
+- one sample completed proof pack
+- one reviewer decision model
 - one guided training session
+- one short guide for repeating the proof workflow next time
 
 ## Public trust notes
 
 - Fieldgrade separates capture, analysis, review, and approval.
 - Evidence may be ingested automatically, but authority remains explicit.
 - Sensitive evidence should not need to leave your machine just to become organised.
-- AI output is never silently treated as truth.
+- AI outputs are not decisions until reviewed.
 - Fieldgrade supports evidence governance and audit preparation; it does not itself certify compliance or replace qualified auditors, QA managers, regulators, or responsible persons.
 - Fieldgrade does not provide legal advice, and AI-assisted outputs require human review before operational or compliance decisions.
 
@@ -99,7 +101,7 @@ Fieldgrade publicly avoids over-claiming:
 - Contact and pilot request page: [`site/contact/index.html`](site/contact/index.html)
 - Structured intake form: [GitHub Issue template](https://github.com/Xenologo/Fieldgrade/issues/new?template=fieldgrade_pilot_request.yml)
 - Starting commercial package: **Fieldgrade ProofOps Setup — £750 starting package**
-- Suggested scope: local install, branded workspace, one workflow pack, one export template, one demo dataset, and one guided training session
+- Suggested scope: local install, branded workspace, one workflow pack, one export template, one sample completed proof pack, one reviewer decision model, and one guided training session
 
 ## Release install mode vs development mode
 
