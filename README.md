@@ -15,6 +15,12 @@
 
 Fieldgrade should publicly appear as a calm, practical evidence-governance product. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
 
+## Fieldgrade Phase 2 — Pilot Release and ProofOps Commercialisation
+
+> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led pilot product with release artifacts, reproducible installation, proof-pack demos, setup intake, and first paid ProofOps packaging.
+
+This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a proof pack, and request a paid setup.
+
 ## Public product family
 
 Fieldgrade is structured as a family of evidence-governance products:
@@ -31,8 +37,11 @@ Fieldgrade is structured as a family of evidence-governance products:
 - Demo page: [`/site/demo/index.html`](site/demo/index.html)
 - Public docs page: [`/site/docs/index.html`](site/docs/index.html)
 - Security and responsible AI-use page: [`/site/security/index.html`](site/security/index.html)
+- Pilot setup page: [`/site/setup/index.html`](site/setup/index.html)
+- Contact and pilot request page: [`/site/contact/index.html`](site/contact/index.html)
 - Pricing and setup page: [`/site/pricing/index.html`](site/pricing/index.html)
 - Sample deliverables: [`/exports`](exports)
+- Release packet: [`/releases/v0.9.0-alpha`](releases/v0.9.0-alpha)
 
 ## Release-hardening documents
 
@@ -43,6 +52,7 @@ Fieldgrade is structured as a family of evidence-governance products:
 - [`DATA_HANDLING.md`](DATA_HANDLING.md)
 - [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
 - [`RELEASE_NOTES_v0.9.0-alpha.md`](RELEASE_NOTES_v0.9.0-alpha.md)
+- [`docs/FIELDGRADE_PHASE2_PILOT_RELEASE.md`](docs/FIELDGRADE_PHASE2_PILOT_RELEASE.md)
 
 ## What buyers should see first
 
@@ -66,14 +76,13 @@ Fieldgrade publicly avoids over-claiming:
 
 **Fieldgrade ProofOps Setup** is the recommended first paid offer:
 
+- **£750 starting package**
 - local installation
 - branded workspace
 - one demo dataset
-- one customer-specific evidence template
-- one audit-pack export template
+- one export template
 - one workflow pack such as FoodQA or GovAI
-- guided setup and training
-- optional support
+- one guided training session
 
 ## Public trust notes
 
@@ -86,9 +95,45 @@ Fieldgrade publicly avoids over-claiming:
 
 ## Pilot setup and contact path
 
-- Founder-led setup requests: open a pilot/setup request via [GitHub Issues](https://github.com/Xenologo/Fieldgrade/issues/new?title=Fieldgrade%20ProofOps%20setup%20request)
-- Starting commercial package: **Fieldgrade ProofOps Setup**
+- Founder-led setup page: [`site/setup/index.html`](site/setup/index.html)
+- Contact and pilot request page: [`site/contact/index.html`](site/contact/index.html)
+- Structured intake form: [GitHub Issue template](https://github.com/Xenologo/Fieldgrade/issues/new?template=fieldgrade_pilot_request.yml)
+- Starting commercial package: **Fieldgrade ProofOps Setup — £750 starting package**
 - Suggested scope: local install, branded workspace, one workflow pack, one export template, one demo dataset, and one guided training session
+
+## Release install mode vs development mode
+
+### Pilot release install mode
+
+Use pinned artifacts when you are evaluating or deploying the alpha:
+
+- `uv lock`
+- `uv.lock`
+- `requirements.lock`
+- `releases/v0.9.0-alpha/`
+
+Recommended commands:
+
+**Linux / WSL**
+
+```bash
+python3 -m pip install -U uv
+uv sync --frozen
+```
+
+**Windows PowerShell**
+
+```powershell
+python -m pip install -U uv
+uv sync --frozen
+```
+
+### Development mode
+
+Use the bootstrap scripts when you want the editable workspace plus dev tools:
+
+- `bash scripts/bootstrap_dev.sh`
+- `.\scripts\bootstrap_dev.ps1`
 
 ## Repository architecture and advanced internals
 

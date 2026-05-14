@@ -16,24 +16,15 @@ $ErrorActionPreference = "Stop"
 $ROOT = (Resolve-Path (Join-Path $PSScriptRoot ".."))
 Set-Location $ROOT
 
-$VENV_DIR = if ($env:VENV_DIR) { $env:VENV_DIR } else { ".venv" }
-$ACT = Join-Path $VENV_DIR "Scripts\Activate.ps1"
-
-if (-not (Test-Path $ACT)) {
-  python -m venv $VENV_DIR
-}
-
-. $ACT
-
 python -m pip install -U pip
+if ($LASTEXITCODE -ne 0) { throw "pip upgrade failed" }
+python -m pip install uv
+if ($LASTEXITCODE -ne 0) { throw "uv install failed" }
 
-python -m pip install -r (Join-Path $ROOT "requirements.txt")
-python -m pip install -r (Join-Path $ROOT "requirements-dev.txt")
-
-python -m pip install -e (Join-Path $ROOT "termite_fieldpack")
-python -m pip install -e (Join-Path $ROOT "mite_ecology")
-python -m pip install -e (Join-Path $ROOT "fieldgrade_ui")
+$resolvedVenv = if ($env:VENV_DIR) { (Join-Path $ROOT $env:VENV_DIR) } else { (Join-Path $ROOT ".venv") }
+$env:UV_PROJECT_ENVIRONMENT = $resolvedVenv
+uv sync --frozen --group dev
 
 Write-Host "[bootstrap_dev] OK" -ForegroundColor Green
-Write-Host "- venv: $VENV_DIR" -ForegroundColor DarkGray
-Write-Host ("- python: " + (python -c "import sys; print(sys.executable)")) -ForegroundColor DarkGray
+Write-Host ("- venv: " + $resolvedVenv) -ForegroundColor DarkGray
+Write-Host ("- python: " + (& (Join-Path $resolvedVenv "Scripts\python.exe") -c "import sys; print(sys.executable)")) -ForegroundColor DarkGray

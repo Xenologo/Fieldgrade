@@ -108,6 +108,12 @@ p, li {
   font-weight: 700;
   font-size: 1.12rem;
 }
+.price {
+  margin-top: 18px;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.12rem;
+}
 .lead {
   font-size: 1.08rem;
 }
@@ -193,6 +199,20 @@ p, li {
   border: 1px solid var(--border);
   background: #ffffff;
   box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
+}
+.mediaFrame {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+.mediaFrame img {
+  width: 100%;
+  display: block;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #ffffff;
 }
 .steps {
   counter-reset: step;

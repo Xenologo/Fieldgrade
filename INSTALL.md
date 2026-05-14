@@ -1,6 +1,11 @@
 # Fieldgrade installation guide
 
-This guide is intentionally practical. Start with the option that matches how much of Fieldgrade you need to evaluate.
+This guide separates **pilot release install mode** from **development mode**.
+
+## Install modes
+
+- **Pilot release install mode** uses pinned lockfiles for deterministic evaluation and pilot deployment.
+- **Development mode** uses the bootstrap scripts to install the editable workspace plus dev tooling.
 
 ## Option A — Try the static demo
 
@@ -9,10 +14,13 @@ Use the public site materials first if you only need the buyer-facing narrative 
 - Open `/site/landing.html`
 - Review `/site/demo/index.html`
 - Inspect sample deliverables under `/exports`
+- Review release assets under `/releases/v0.9.0-alpha`
 
-## Option B — Run locally with Docker
+## Option B — Run locally with Docker (pilot release mode)
 
 Recommended for pilot evaluation on a developer workstation or single host.
+
+The Docker image installs pinned runtime dependencies from `requirements.lock`.
 
 1. Install Docker Engine and the Docker Compose plugin.
 2. From the repository root:
@@ -45,9 +53,31 @@ Recommended for pilot evaluation on a developer workstation or single host.
    docker compose -f compose.yaml -f compose.dev.yaml down
    ```
 
-## Option C — Run locally with Python
+## Option C — Run locally with the lockfile (pilot release mode)
 
-Recommended for development, CLI usage, or test execution.
+Recommended when evaluating the Python install path directly.
+
+### Linux / WSL
+
+```bash
+cd /path/to/Fieldgrade
+python3 -m pip install -U uv
+uv sync --frozen
+./.venv/bin/python -m pytest -q
+```
+
+### Windows PowerShell
+
+```powershell
+cd C:\path\to\Fieldgrade
+python -m pip install -U uv
+uv sync --frozen
+.\.venv\Scripts\python -m pytest -q
+```
+
+## Option D — Development mode
+
+Use this when you want editable installs plus developer tooling.
 
 ### Linux / WSL
 
@@ -65,7 +95,7 @@ cd C:\path\to\Fieldgrade
 .\.venv\Scripts\python -m pytest -q
 ```
 
-## Option D — VPS deployment
+## Option E — VPS deployment
 
 Recommended for founder-led pilot installs, not anonymous self-serve production.
 
@@ -86,11 +116,12 @@ Recommended for founder-led pilot installs, not anonymous self-serve production.
 
 ## Troubleshooting
 
+- **`uv sync --frozen` fails:** refresh or regenerate the lockfiles only when intentionally updating dependencies, then re-run the command
 - **Port 8787 already in use:** stop the conflicting process or change the local bind in `compose.dev.yaml`
 - **401/403 responses:** verify that `FG_API_TOKEN` is set and that requests include `X-API-Key`
 - **Compose config fails:** confirm required environment variables are present before running `docker compose`
 - **`/readyz` returns `503`:** initialize the first-run runtime DB as shown in Option B, then retry
-- **Tests fail during bootstrap:** recreate `.venv` and run `bash scripts/bootstrap_dev.sh` again
+- **Tests fail during bootstrap:** remove `.venv` and run the install step again
 
 ## Uninstall
 
@@ -102,7 +133,7 @@ docker compose -f compose.yaml -f compose.dev.yaml down -v
 
 ### Python environment
 
-Remove the virtual environment and any local runtime/artifact directories you no longer need.
+Remove `.venv` and any local runtime or artifact directories you no longer need.
 
 ## Where data is stored
 
@@ -119,4 +150,4 @@ Docker deployments persist the same paths through named volumes.
 - Back up runtime and artifact volumes before upgrades
 - Test restore procedures before storing important evidence
 - Keep backups encrypted and access-controlled
-- Review `DATA_HANDLING.md` and the deployment docs for retention expectations
+- Review `DATA_HANDLING.md`, `docs/PILOT_SECURITY_BRIEF.md`, and the deployment docs for retention expectations

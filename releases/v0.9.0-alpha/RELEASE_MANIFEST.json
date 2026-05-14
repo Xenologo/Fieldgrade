@@ -1,0 +1,33 @@
+{
+  "release": "v0.9.0-alpha",
+  "phase_title": "Fieldgrade Phase 2 \u2014 Pilot Release and ProofOps Commercialisation",
+  "disclaimer": "Fieldgrade v0.9.0-alpha is suitable for private evaluation, founder-led setup, and pilot deployments. It is not yet a self-serve commercial SaaS or certified compliance product.",
+  "release_notes": "RELEASE_NOTES_v0.9.0-alpha.md",
+  "installation_paths": {
+    "docker": "INSTALL.md#option-b--run-locally-with-docker-pilot-release-mode",
+    "linux": "INSTALL.md#option-c--run-locally-with-the-lockfile-pilot-release-mode",
+    "windows": "INSTALL.md#option-c--run-locally-with-the-lockfile-pilot-release-mode"
+  },
+  "artifacts": [
+    {
+      "name": "fieldgrade-v0.9.0-alpha-source.zip",
+      "sha256": "331b6e1e92decc667845a5a635da6d61e64bef34f7602382b699d9f4a4b63041",
+      "bytes": 733129
+    },
+    {
+      "name": "fieldgrade-proofops-demo-pack.zip",
+      "sha256": "7198a266d0d72cdcdafc231bb64feca89d7f14a748f9a34690066651d8cdc03f",
+      "bytes": 208516
+    },
+    {
+      "name": "fieldgrade-foodqa-sample-pack.zip",
+      "sha256": "441d32e2a2f72f1debef49fdd286028a18375575db6b84ad82c265e8285d75c3",
+      "bytes": 33358
+    },
+    {
+      "name": "fieldgrade-govai-sample-pack.zip",
+      "sha256": "e3a3f854b534a492ad541c3996d43698b61edb70e7b6a341469df1d0836cde64",
+      "bytes": 33055
+    }
+  ]
+}
