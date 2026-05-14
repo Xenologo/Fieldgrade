@@ -44,6 +44,7 @@ from .config import (
 )
 from .governance import GovernanceLedger
 from .jobs import create_job, list_jobs as jobs_list, get_job as jobs_get, get_job_logs as jobs_logs, cancel_job as jobs_cancel, ensure_db as ensure_jobs_db
+from .runtime_init import mite_db_path
 from .worker import run_once as worker_run_once
 from .watcher import loop as watcher_loop
 
@@ -68,39 +69,7 @@ def _ui_runtime_dir() -> Path:
 
 
 def _path_mite_db() -> Path:
-    """Return the resolved path to the mite_ecology SQLite DB.
-
-    Termux / zip extractions can end up in different places, and users may also
-    choose to keep the DB elsewhere. This helper makes DB discovery resilient.
-
-    Override knobs:
-      - FG_MITE_DB: explicit path to the sqlite DB file
-      - MITE_ECOLOGY_DB: alternate name (compatible with CLI)
-
-    Default layout:
-      - {repo}/mite_ecology/runtime/mite_ecology.sqlite
-    """
-
-    override = os.getenv("FG_MITE_DB") or os.getenv("MITE_ECOLOGY_DB")
-    if override:
-        p = Path(override).expanduser()
-        try:
-            return p.resolve()
-        except Exception:
-            return p
-
-    candidates = [
-        ECOLOGY_DIR / "runtime" / "mite_ecology.sqlite",
-        ECOLOGY_DIR / "runtime" / "mite_ecology.db",
-        ECOLOGY_DIR / "mite_ecology.sqlite",
-        REPO_ROOT / "mite_ecology.sqlite",
-    ]
-    for c in candidates:
-        if c.exists():
-            return c
-
-    # Return the default even if it doesn't exist yet; callers can handle that.
-    return candidates[0]
+    return mite_db_path()
 
 
 def _path_uploads() -> Path:
