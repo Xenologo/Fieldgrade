@@ -10,16 +10,23 @@
   <header class="topbar">
     <div class="topbarRow">
       <div class="topbarLeft">
-        <div class="title">Fieldgrade</div>
-        <div class="subtitle">Evidence-led governance workspace for accountable AI systems</div>
+        <div class="brandLockup">
+          <img class="brandLogo" src="/static/brand/fieldgrade-logo.svg" alt="Fieldgrade logo" />
+          <div class="brandCopy">
+            <div class="eyebrow">Fieldgrade GovAI workspace</div>
+            <div class="title">Evidence-led governance workspace</div>
+            <div class="subtitle">Accountable AI system records, evidence rooms, crosswalks, and audit-ready exports.</div>
+          </div>
+        </div>
         <div id="stateBadges" class="badges" aria-label="Server state"></div>
       </div>
 
-      <div class="topbarRight">
+      <div class="topbarRight authPanel">
+        <div class="authPanelTitle">Session access</div>
         <div class="authRow">
           <label class="inlineLabel" for="apiToken">API token</label>
           <input id="apiToken" type="password" placeholder="(optional)" autocomplete="off" />
-          <button type="button" id="btnSaveToken">Set</button>
+          <button type="button" id="btnSaveToken" class="primary">Set</button>
           <button type="button" id="btnClearToken">Clear</button>
         </div>
         <div id="authStatus" class="authStatus">(no token)</div>
@@ -261,340 +268,153 @@
       <div class="actions">
         <button type="button" id="btnGovGenerateExports" class="primary">Generate GovAI export pack</button>
       </div>
-      <pre id="govExportOut" class="mono small pre">(no exports yet)</pre>
-      <ul id="govExportList" class="list"></ul>
+      <pre id="govExportsOut" class="mono small pre">(no record selected)</pre>
     </section>
 
     <section class="panel" id="panel-ingest">
-      <h2>Ingest</h2>
-
-      <div class="row">
-        <div class="col">
-          <label for="uploadFile">Upload a file from your machine</label>
-          <input id="uploadFile" type="file" title="Upload a file from your machine" />
+      <h2>Advanced: Ingest</h2>
+      <p class="hint">Run termite ingest jobs against local files and capture deterministic provenance events.</p>
+      <div class="grid2">
+        <div class="card">
+          <label for="ingestPath">File or directory path</label>
+          <input id="ingestPath" type="text" placeholder="/absolute/path/to/file" />
           <div class="actions">
-            <button type="button" id="btnUpload">Upload</button>
-          </div>
-          <div class="kv">
-            <div class="k">Saved upload</div>
-            <div class="v" id="savedUploadPath">(none)</div>
+            <button type="button" id="btnIngest" class="primary">Ingest</button>
           </div>
         </div>
-
-        <div class="col">
-          <label for="btnIngest">Ingest → Termite</label>
-          <div class="actions">
-            <button type="button" id="btnIngest" disabled>Ingest</button>
-          </div>
-        </div>
-      </div>
-
-      <hr />
-
-      <div class="row">
-        <div class="col">
-          <label for="sealLabel">Bundle label</label>
-          <input id="sealLabel" type="text" value="demo" title="Bundle label" placeholder="demo" />
-          <div class="actions">
-            <button type="button" id="btnSeal">Seal Bundle</button>
-          </div>
-          <div class="kv">
-            <div class="k">Last bundle</div>
-            <div class="v" id="lastBundlePath">(none)</div>
-          </div>
+        <div class="card">
+          <h3>Result</h3>
+          <pre id="ingestOut" class="mono small pre"></pre>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-bundles">
-      <h2>Bundles</h2>
-
-      <div class="row">
-        <div class="col">
+      <h2>Advanced: Bundles</h2>
+      <p class="hint">Seal, verify, and replay termite bundles.</p>
+      <div class="grid2">
+        <div class="card">
           <div class="actions">
-            <button type="button" id="btnRefreshBundles">Refresh</button>
+            <button type="button" id="btnSeal" class="primary">Seal latest bundle</button>
+            <button type="button" id="btnListBundles">Refresh bundles</button>
           </div>
-          <label for="bundleSelect">Bundles (termite_fieldpack/artifacts/bundles_out/)</label>
-          <select id="bundleSelect" size="10" title="Bundles"></select>
-          <div class="hint">Tip: click an item then Verify / Replay.</div>
+          <label for="bundleSelect">Bundles</label>
+          <select id="bundleSelect" size="8"></select>
+          <div class="actions">
+            <button type="button" id="btnVerify">Verify selected</button>
+            <button type="button" id="btnReplay">Replay selected</button>
+          </div>
         </div>
-
-        <div class="col">
-          <label for="policyPath">Policy path</label>
-          <input id="policyPath" type="text" title="Policy path" placeholder="/path/to/policy" />
-          <label for="allowlistPath">Allowlist path</label>
-          <input id="allowlistPath" type="text" title="Allowlist path" placeholder="/path/to/allowlist" />
-          <div class="actions">
-            <button type="button" id="btnVerify" disabled>Verify</button>
-            <button type="button" id="btnReplay" disabled>Replay</button>
-          </div>
+        <div class="card">
+          <h3>Bundle output</h3>
+          <pre id="bundleOut" class="mono small pre"></pre>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-ecology">
-      <h2>Ecology</h2>
-
-      <div class="row">
-        <div class="col">
-          <div class="actions">
-            <button type="button" id="btnEcologyInit">Init DB</button>
-          </div>
-          <div class="actions">
-            <button type="button" id="btnEcologyImport" disabled>Import Bundle</button>
-            <button type="button" id="btnEcologyFull" disabled>Run Full Pipeline</button>
-          </div>
-          <div class="actions">
-            <button type="button" id="btnReplayVerify">Replay Verify</button>
-          </div>
-        </div>
-
-        <div class="col">
-          <div class="actions">
-            <button type="button" id="btnRefreshExports">Refresh Exports</button>
-          </div>
-          <label for="exportsList">Exports (mite_ecology/artifacts/export/)</label>
-          <ul id="exportsList" class="list"></ul>
-          <div class="hint">Click an export path to copy.</div>
-        </div>
-      </div>
-
-      <hr />
-
+      <h2>Advanced: Ecology</h2>
+      <p class="hint">Import bundles into mite_ecology and run deterministic analysis stages.</p>
       <div class="grid2">
         <div class="card">
-          <h3>KG Validation (SHACL-lite)</h3>
-          <div class="row">
-            <button type="button" id="kgValidateBtn">Validate KG</button>
+          <div class="actions">
+            <button type="button" id="btnEcologyImport">Import bundle</button>
+            <button type="button" id="btnEcologyRun">Run pipeline</button>
           </div>
-          <pre id="kgValidateOut" class="mono small pre"></pre>
+          <label for="ecologyBundle">Bundle path</label>
+          <input id="ecologyBundle" type="text" placeholder="/absolute/path/to/bundle.tar.gz" />
         </div>
-
         <div class="card">
-          <h3>Staged Bundles (Review/Quarantine)</h3>
-          <div class="row">
-            <label for="stagedStatusSel">Status</label>
-            <select id="stagedStatusSel" title="Staged bundle status filter">
-              <option value="">All</option>
-              <option value="PENDING">PENDING</option>
-              <option value="QUARANTINED">QUARANTINED</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="REJECTED">REJECTED</option>
-            </select>
-            <button type="button" id="stagedRefreshBtn">Refresh</button>
-          </div>
-          <div id="stagedList" class="list"></div>
+          <h3>Ecology output</h3>
+          <pre id="ecologyOut" class="mono small pre"></pre>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-jobs">
-      <h2>Jobs</h2>
-      <p class="hint">Run long pipelines as background jobs (ingest → seal → verify → import → auto-run → replay-verify). For reliability at volume: run the UI server and the worker as separate processes.</p>
-
-      <div class="grid2">
-        <div class="card">
-          <h3>Upload &amp; enqueue pipeline</h3>
-          <div class="row">
-            <label for="jobLabel">Label</label>
-            <input id="jobLabel" type="text" value="run" title="Job label" placeholder="run" />
-          </div>
-          <div class="row">
-            <label for="jobFile">File</label>
-            <input id="jobFile" type="file" title="Job input file" />
-          </div>
-          <div class="row">
-            <button type="button" id="btnUploadRun" class="primary">Enqueue pipeline job</button>
-            <button type="button" id="btnRefreshJobs">Refresh</button>
-          </div>
-          <div id="jobEnqueueOut" class="mono small pre"></div>
-        </div>
-
-        <div class="card">
-          <h3>Selected job</h3>
-          <div id="jobDetail" class="mono small pre">No job selected.</div>
-          <div class="row">
-            <button type="button" id="btnCancelJob" class="danger" disabled>Cancel queued job</button>
-          </div>
-        </div>
-      </div>
-
+      <h2>Advanced: Jobs</h2>
+      <p class="hint">Inspect queued and completed background jobs.</p>
       <div class="card">
-        <h3>Recent jobs</h3>
-        <div class="row">
-          <label for="jobsStatus">Status</label>
-          <select id="jobsStatus" title="Jobs status filter">
-            <option value="">(all)</option>
-            <option value="queued">queued</option>
-            <option value="running">running</option>
-            <option value="succeeded">succeeded</option>
-            <option value="failed">failed</option>
-            <option value="canceled">canceled</option>
-          </select>
-          <label for="jobsLimit">Limit</label>
-          <input id="jobsLimit" type="number" value="50" min="1" max="200" title="Maximum number of jobs to show" />
+        <div class="actions">
+          <button type="button" id="btnRefreshJobs">Refresh jobs</button>
         </div>
         <div id="jobsTableWrap"></div>
       </div>
-
       <div class="card">
-        <h3>Logs</h3>
-        <div id="jobLogs" class="mono small pre"></div>
+        <h3>Job detail</h3>
+        <pre id="jobOut" class="mono small pre"></pre>
       </div>
     </section>
 
     <section class="panel" id="panel-llm">
-      <h2>LLM</h2>
-      <p class="hint">Laptop-mode local OpenAI-compatible server control (Termite-owned runtime).</p>
-
+      <h2>Advanced: LLM</h2>
+      <p class="hint">Check termite-owned local LLM runtime status and binding.</p>
       <div class="grid2">
         <div class="card">
-          <h3>Controls</h3>
-          <div class="row">
-            <button type="button" id="btnLLMStart">Start</button>
-            <button type="button" id="btnLLMStop" class="danger">Stop</button>
+          <div class="actions">
+            <button type="button" id="btnLLMStatus">Status</button>
             <button type="button" id="btnLLMPing">Ping</button>
-            <button type="button" id="btnLLMRefresh">Refresh</button>
-          </div>
-          <div class="kv">
-            <div class="k">Status</div>
-            <div class="v mono" id="llmSummary">(unknown)</div>
-          </div>
-          <div class="kv">
-            <div class="k">Last error</div>
-            <div class="v mono" id="llmLastError">(none)</div>
+            <button type="button" id="btnLLMStart">Start</button>
+            <button type="button" id="btnLLMStop">Stop</button>
           </div>
         </div>
-
         <div class="card">
-          <h3>Raw status</h3>
-          <pre id="llmStatusPre" class="mono small pre"></pre>
+          <h3>LLM output</h3>
+          <pre id="llmOut" class="mono small pre"></pre>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-catalog">
       <h2>Catalog</h2>
-      <p class="hint">Browse local registry catalogs (components / variants / remotes). Deterministic canonical hash is shown for version pinning.</p>
-
-      <div class="row">
-        <div class="col">
+      <p class="hint">Inspect the current component, variant, and remote registries.</p>
+      <div class="grid2">
+        <div class="card">
           <div class="actions">
-            <button type="button" id="btnCatalogRefresh">Refresh catalog</button>
-            <button type="button" id="btnCatalogRefreshExports">Refresh exports</button>
+            <button type="button" id="btnCatalogRefresh">Refresh registry views</button>
           </div>
-
-          <div class="row">
-            <div class="col">
-              <label for="catalogKind">Catalog</label>
-              <select id="catalogKind" title="Catalog kind">
-                <option value="components">Components</option>
-                <option value="variants">Variants</option>
-                <option value="remotes">Remotes</option>
-              </select>
-            </div>
-            <div class="col">
-              <label for="catalogComponentsKind">Component kind</label>
-              <select id="catalogComponentsKind" title="Filter components by kind"></select>
-            </div>
-            <div class="col">
-              <label for="catalogComponentsRole">Component role</label>
-              <select id="catalogComponentsRole" title="Filter components by role"></select>
-            </div>
-            <div class="col">
-              <label for="catalogComponentsRuntime">Component runtime</label>
-              <select id="catalogComponentsRuntime" title="Filter components by runtime"></select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col">
-              <label for="catalogVariantsTag">Variant tag</label>
-              <select id="catalogVariantsTag" title="Filter variants by tag"></select>
-            </div>
-            <div class="col">
-              <label for="catalogVariantsDevice">Device</label>
-              <select id="catalogVariantsDevice" title="Filter variants by device"></select>
-            </div>
-            <div class="col">
-              <label for="catalogVariantsPolicyMode">Policy mode</label>
-              <select id="catalogVariantsPolicyMode" title="Filter variants by policy mode"></select>
-            </div>
-          </div>
-
-          <div class="kv">
-            <div class="k">Catalog hash</div>
-            <div class="v" id="catalogHash">(not loaded)</div>
-          </div>
-
-          <div id="catalogTableWrap"></div>
-
-          <hr />
-
-          <h3>Promote export → Variant Template</h3>
-          <p class="hint">Generates a PR-friendly YAML snippet you can paste into <span class="mono">mite_ecology/registry/variants_v1.yaml</span>.</p>
-          <ul id="catalogExportsList" class="list"></ul>
         </div>
-
-        <div class="col">
-          <div class="inspector">
-            <div class="inspectorTitle">Inspector</div>
-            <pre id="catalogInspectorPre" class="inspectorPre">Select a row to inspect.</pre>
-          </div>
+        <div class="card">
+          <h3>Registry output</h3>
+          <pre id="catalogOut" class="mono small pre"></pre>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-graph">
       <h2>Graph Explorer</h2>
-
-      <div class="card">
-        <h3>GraphDelta ledger</h3>
-        <div class="row">
-          <label for="runSelect">Run</label>
-          <select id="runSelect" title="Filter ledger by run_id"></select>
-          <button type="button" id="btnRefreshRuns">Refresh</button>
-          <button type="button" id="btnLoadDeltas">Load deltas</button>
-        </div>
-        <div class="kv">
-          <div class="k">run_id</div>
-          <div class="v mono" id="selectedRunId">(all)</div>
-        </div>
-        <div class="kv">
-          <div class="k">trace_ids</div>
-          <div class="v mono" id="selectedTraceIds">(n/a)</div>
-        </div>
-        <pre id="deltasPre" class="mono small pre"></pre>
-      </div>
-
-      <div class="row">
-        <div class="col">
-          <label for="nodeFilter">Node filter</label>
-          <input id="nodeFilter" type="text" title="Node filter" placeholder="filter by id/type" />
+      <p class="hint">Browse current graph nodes and inspect local neighbourhoods.</p>
+      <div class="grid2">
+        <div class="card">
+          <label for="graphFilter">Node filter</label>
+          <input id="graphFilter" type="text" placeholder="substring filter" />
           <div class="actions">
-            <button type="button" id="btnLoadNodes">Load Nodes</button>
+            <button type="button" id="btnGraphSearch">Search nodes</button>
           </div>
-          <label for="nodeSelect">Node list</label>
-          <select id="nodeSelect" size="12" title="Node list"></select>
+          <ul id="graphNodes" class="list"></ul>
         </div>
-
-        <div class="col">
-          <label>Neighborhood graph</label>
+        <div class="card">
+          <h3>Inspector</h3>
           <div class="graphWrap">
-            <div id="cy" class="cy"></div>
+            <div id="graphCy" class="cy" aria-label="Graph visualisation"></div>
             <div class="inspector">
-              <div class="inspectorTitle">Inspector</div>
-              <pre id="inspectorPre" class="inspectorPre">Select a node/edge to inspect.</pre>
+              <div class="inspectorTitle">Selected node / edge</div>
+              <pre id="graphInspector" class="inspectorPre"></pre>
             </div>
           </div>
-          <div class="hint">Select a node to view hop-1 neighborhood. Click nodes/edges to inspect.</div>
         </div>
       </div>
     </section>
 
     <section class="panel" id="panel-logs">
       <h2>Logs</h2>
-      <pre id="logBox" class="log"></pre>
+      <p class="hint">Live log tail for the UI runtime.</p>
+      <div class="card">
+        <div class="actions">
+          <button type="button" id="btnRefreshLogs">Refresh logs</button>
+        </div>
+        <pre id="logOut" class="log"></pre>
+      </div>
     </section>
   </main>
 

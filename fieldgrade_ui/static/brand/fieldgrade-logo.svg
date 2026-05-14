@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" role="img" aria-labelledby="title desc">
+  <title id="title">Fieldgrade logo</title>
+  <desc id="desc">Stylised Fieldgrade wordmark with an at-sign and sweeping line motif.</desc>
+  <g fill="none" stroke="currentColor" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M74 160h174c38 0 60-10 70-32"/>
+    <path d="M332 160h138c48 0 88-8 119-23 59-29 96-89 117-117"/>
+    <path d="M744 20c-32 24-53 57-63 97-4 17-6 35-6 53"/>
+  </g>
+  <text x="116" y="146" font-size="154" font-family="Avenir Next, Poppins, Inter, Arial, sans-serif" font-weight="500" fill="currentColor">@</text>
+  <text x="76" y="306" font-size="128" font-family="Avenir Next, Poppins, Inter, Arial, sans-serif" font-weight="400" fill="currentColor">Fieldgrade</text>
+</svg>
