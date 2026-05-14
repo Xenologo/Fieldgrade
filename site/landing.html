@@ -19,6 +19,7 @@
       --radius-lg: 28px;
       --radius-md: 20px;
       --radius-sm: 14px;
+      --logo-aspect: 960 / 380;
       --max: 1120px;
     }
 
@@ -52,7 +53,7 @@
       z-index: 10;
     }
     .brand { display: flex; align-items: center; gap: 16px; }
-    .brand img { width: min(320px, 56vw); height: auto; aspect-ratio: 960 / 380; display: block; }
+    .brand img { width: min(320px, 56vw); height: auto; aspect-ratio: var(--logo-aspect); display: block; }
     .brand span {
       font-size: 0.78rem;
       letter-spacing: 0.16em;
@@ -131,7 +132,7 @@
       background: linear-gradient(180deg, var(--surface-strong) 0%, #f5efe8 100%);
       border: 1px solid rgba(17, 17, 17, 0.08);
     }
-    .meta img { width: min(100%, 360px); height: auto; aspect-ratio: 960 / 380; }
+    .meta img { width: min(100%, 360px); height: auto; aspect-ratio: var(--logo-aspect); }
     .metaCard {
       padding: 18px;
       border-radius: 18px;

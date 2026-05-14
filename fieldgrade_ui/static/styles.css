@@ -19,6 +19,7 @@
   --tab-bg: rgba(255, 255, 255, 0.72);
   --card-bg: rgba(255, 255, 255, 0.92);
   --danger-border-soft: #b57979;
+  --logo-aspect: 960 / 380;
   --shadow: 0 26px 60px rgba(17, 17, 17, 0.09);
   --shadow-soft: 0 16px 40px rgba(17, 17, 17, 0.06);
   --s1: 4px;
@@ -206,11 +207,16 @@ hr {
   flex-wrap: wrap;
 }
 
+.brandHome {
+  display: block;
+  color: inherit;
+}
+
 .brandLogo {
   width: min(320px, 46vw);
   max-width: 100%;
   height: auto;
-  aspect-ratio: 960 / 380;
+  aspect-ratio: var(--logo-aspect);
   display: block;
   color: var(--text);
 }
