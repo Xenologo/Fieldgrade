@@ -1386,6 +1386,16 @@ def governance_crosswalk(request: Request, record_id: str) -> Dict[str, Any]:
     return {"ok": True, **crosswalk}
 
 
+@app.get("/api/governance/systems/{record_id}/advisory")
+def governance_system_advisory(request: Request, record_id: str) -> Dict[str, Any]:
+    ledger = _governance_ledger(request)
+    try:
+        advisory = ledger.system_advisory(record_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="governance_record_not_found")
+    return {"ok": True, **advisory}
+
+
 @app.post("/api/governance/systems/{record_id}/exports/generate")
 def governance_generate_exports(request: Request, record_id: str) -> Dict[str, Any]:
     ledger = _governance_ledger(request)
