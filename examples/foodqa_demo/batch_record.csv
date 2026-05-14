@@ -1,0 +1,2 @@
+batch_id,product,lot_code,shift,start_time,end_time,status
+B-240514-01,Tomato Soup,TS-514-A,Day,2026-05-14T07:10:00Z,2026-05-14T09:05:00Z,Released with review

@@ -1,0 +1,17 @@
+{
+  "bundle_id": "FG-BUNDLE-2026-05-14-001",
+  "label": "foodqa-demo-batch-review",
+  "created_at": "2026-05-14T10:15:00Z",
+  "inputs": [
+    "batch_record.csv",
+    "deviation_note.md",
+    "supplier_coa_summary.json",
+    "calibration_register.csv"
+  ],
+  "exports": [
+    "sample_audit_pack/index.md",
+    "sample_audit_pack/evidence_register.csv",
+    "sample_audit_pack/review_timeline.md"
+  ],
+  "policy_mode": "REVIEW_ONLY"
+}

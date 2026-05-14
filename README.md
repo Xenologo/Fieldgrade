@@ -1,10 +1,66 @@
-# Fieldgrade Governance & Evidence Ledger
+# Fieldgrade
 
-This repository now treats **Fieldgrade as the base class** for evidence-bearing governance products:
+**Fieldgrade is the missing evidence layer for modern operations.** Capture files, seal provenance, govern AI-assisted work, and export audit-ready proof packs without deploying a heavyweight ERP.
 
-- **Fieldgrade Core** — provenance, evidence, governance, audit, and export engine
-- **GovAI** — the first flagship variant for accountable AI, data, and algorithmic system records
-- Future sector packs such as SME-AI, Procurement, DataEthics, and FoodQA
+> **SAP runs the transaction layer; Fieldgrade proves the evidence layer.**
+
+Fieldgrade is an evidence-governance operating system for organisations that need SAP-grade provenance, auditability, review discipline, and AI accountability without SAP-scale cost or implementation burden.
+
+## Commercial product shape
+
+Fieldgrade is structured as a family of evidence-governance products:
+
+- **Fieldgrade Core** — evidence registry, provenance ledger, bundle sealing, replay verification, and audit export
+- **Fieldgrade ProofOps** — review workflow, evidence timelines, QA records, audit packs, and operator dashboards
+- **Fieldgrade GovAI** — AI-use register, prompt/output evidence, model/version recording, human review gates, and accountability reports
+- **Fieldgrade FoodQA** — batch records, deviations, CAPA, supplier evidence, calibration records, and audit-readiness packs
+- **Fieldgrade Enterprise Bridge** — SAP export adapters, CSV/XLSX ingest, REST API, webhooks, and external QMS/ERP connectors
+
+The first commercial wedge is **Fieldgrade ProofOps**:
+
+> **Evidence governance, AI accountability, and audit-ready provenance for technical teams.**
+
+ProofOps is designed for the messy operational edge that heavyweight ERP programs handle badly: spreadsheets, emailed PDFs, screenshots, supplier evidence, QA notes, SOP deviations, review trails, and AI-generated analysis with unclear provenance.
+
+## Why this repository is commercially credible
+
+This monorepo already implements the audit substrate behind that positioning:
+
+- file ingestion into **content-addressed storage**
+- **SQLite + FTS5** search
+- **hash-chained provenance** events
+- KG delta records
+- deterministic signed bundles
+- MEAP policy verification
+- replay verification
+- deterministic GNN/GAT-style analysis
+- memoized deterministic GA
+- local UI
+- local/OpenAI-compatible LLM runtime ownership
+- review modes: `AUTO_MERGE`, `REVIEW_ONLY`, `QUARANTINE`, `KILL`
+- strict deterministic mode
+
+## Buyer-facing materials in this repository
+
+- Positioning and market docs: `/docs`
+- Lightweight landing page: `/site/landing.html`
+- Demo inputs by use case: `/examples`
+- Sample deliverables: `/exports`
+
+## Initial offer
+
+**Fieldgrade ProofOps Setup** is the recommended first paid offer:
+
+- local installation
+- branded workspace
+- one demo dataset
+- one customer-specific evidence template
+- one audit-pack export template
+- one workflow pack such as FoodQA or GovAI
+- one hour of setup/training
+- optional monthly support
+
+## Monorepo spine
 
 The existing monorepo spine still matters:
 
@@ -12,7 +68,7 @@ The existing monorepo spine still matters:
 - `mite_ecology/` is the review/analysis kernel
 - `fieldgrade_ui/` is the application shell and governance workspace
 
-# mite_ecology_fullstack (Fieldpack-grade)
+# Technical overview
 
 This monorepo provides:
 

@@ -86,7 +86,7 @@ env.bak/
 venv.bak/
 
 # mkdocs documentation
-/site
+# /site is now used for buyer-facing source assets in this repo.
 
 # mypy
 .mypy_cache/

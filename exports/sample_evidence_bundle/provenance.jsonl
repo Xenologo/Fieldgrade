@@ -1,0 +1,3 @@
+{"event":"capture","ts":"2026-05-14T07:10:00Z","actor":"operator.a","ref":"batch_record.csv","prev_hash":"0000000000000000","hash":"1111111111111111"}
+{"event":"attach","ts":"2026-05-14T08:05:00Z","actor":"qa.tech","ref":"deviation_note.md","prev_hash":"1111111111111111","hash":"2222222222222222"}
+{"event":"review","ts":"2026-05-14T09:00:00Z","actor":"technical.manager","ref":"review_timeline.md","prev_hash":"2222222222222222","hash":"3333333333333333"}

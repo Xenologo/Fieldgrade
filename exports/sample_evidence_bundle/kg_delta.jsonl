@@ -1,0 +1,3 @@
+{"op":"upsert_node","type":"batch","id":"B-240514-01","attrs":{"status":"released_with_review"}}
+{"op":"upsert_node","type":"deviation","id":"DEV-019","attrs":{"status":"closed_with_action"}}
+{"op":"upsert_edge","src":"B-240514-01","dst":"DEV-019","rel":"HAS_DEVIATION"}

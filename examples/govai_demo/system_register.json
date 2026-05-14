@@ -1,0 +1,8 @@
+{
+  "system_id": "GOV-TRIAGE-01",
+  "title": "Complaint triage assistant",
+  "owner": "Service Quality Team",
+  "purpose": "Draft complaint categories for reviewer confirmation",
+  "deployment_status": "pilot",
+  "review_mode": "REVIEW_ONLY"
+}

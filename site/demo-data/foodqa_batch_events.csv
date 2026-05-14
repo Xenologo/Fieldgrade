@@ -1,0 +1,5 @@
+batch_id,event_type,event_time,actor,record_ref,notes
+B-240514-01,mix_start,2026-05-14T07:10:00Z,operator.a,line-001,Mixing started for tomato soup line
+B-240514-01,temperature_check,2026-05-14T07:40:00Z,qa.tech,line-004,Holding temperature verified at 82.4C
+B-240514-01,deviation_opened,2026-05-14T08:05:00Z,qa.tech,dev-019,Foreign matter complaint triggered retained sample review
+B-240514-01,release_review,2026-05-14T09:20:00Z,technical.manager,rev-002,Released with corrective action and supplier follow-up
