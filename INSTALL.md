@@ -45,7 +45,7 @@ Recommended for development, CLI usage, or test execution.
 ### Linux / WSL
 
 ```bash
-cd /home/runner/work/Fieldgrade/Fieldgrade
+cd /path/to/Fieldgrade
 bash scripts/bootstrap_dev.sh
 ./.venv/bin/python -m pytest -q
 ```
