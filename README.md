@@ -1,5 +1,10 @@
 # Fieldgrade
 
+[![CI](https://github.com/Xenologo/Fieldgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/Xenologo/Fieldgrade/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/Xenologo/Fieldgrade?display_name=tag)](https://github.com/Xenologo/Fieldgrade/releases)
+[![License](https://img.shields.io/github/license/Xenologo/Fieldgrade)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+
 **Evidence governance for audit-ready technical work.** Fieldgrade helps teams capture files, seal provenance, review decisions, govern AI-assisted work, and export proof packs without deploying a heavyweight ERP or QMS.
 
 > **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
@@ -28,6 +33,16 @@ Fieldgrade is structured as a family of evidence-governance products:
 - Security and responsible AI-use page: [`/site/security/index.html`](site/security/index.html)
 - Pricing and setup page: [`/site/pricing/index.html`](site/pricing/index.html)
 - Sample deliverables: [`/exports`](exports)
+
+## Release-hardening documents
+
+- [`LICENSE`](LICENSE)
+- [`SECURITY.md`](SECURITY.md)
+- [`INSTALL.md`](INSTALL.md)
+- [`CHANGELOG.md`](CHANGELOG.md)
+- [`DATA_HANDLING.md`](DATA_HANDLING.md)
+- [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+- [`RELEASE_NOTES_v0.9.0-alpha.md`](RELEASE_NOTES_v0.9.0-alpha.md)
 
 ## What buyers should see first
 
@@ -66,6 +81,14 @@ Fieldgrade publicly avoids over-claiming:
 - Evidence may be ingested automatically, but authority remains explicit.
 - Sensitive evidence should not need to leave your machine just to become organised.
 - AI output is never silently treated as truth.
+- Fieldgrade supports evidence governance and audit preparation; it does not itself certify compliance or replace qualified auditors, QA managers, regulators, or responsible persons.
+- Fieldgrade does not provide legal advice, and AI-assisted outputs require human review before operational or compliance decisions.
+
+## Pilot setup and contact path
+
+- Founder-led setup requests: open a pilot/setup request via [GitHub Issues](https://github.com/Xenologo/Fieldgrade/issues/new?title=Fieldgrade%20ProofOps%20setup%20request)
+- Starting commercial package: **Fieldgrade ProofOps Setup**
+- Suggested scope: local install, branded workspace, one workflow pack, one export template, one demo dataset, and one guided training session
 
 ## Repository architecture and advanced internals
 
@@ -279,8 +302,22 @@ This repo uses Docker Compose file stacking for dev vs production.
    - `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
 
 - Single-host production (Caddy TLS termination; do not expose `8787` directly):
-   - `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
-   - See `docs/DEPLOY_PROD_SINGLEHOST.md` and `docs/DEPLOY_CHECKLIST.md`.
+    - `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
+    - See `docs/DEPLOY_PROD_SINGLEHOST.md` and `docs/DEPLOY_CHECKLIST.md`.
+
+### Docker Compose smoke test
+
+For a local smoke test with the development overlay:
+
+```bash
+export FG_API_TOKEN=demo-local-token
+docker compose -f compose.yaml -f compose.dev.yaml up -d --build
+curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
+curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
+docker compose -f compose.yaml -f compose.dev.yaml down
+```
+
+Record the outcome in release notes before publishing a pilot build.
 
 For production proxy header trust, prefer trusting only the Docker network CIDR (instead of `*`):
 
