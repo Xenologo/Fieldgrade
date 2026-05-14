@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldgrade.local/schemas/fieldgrade_evidence_packet_v1.json",
+  "title": "Fieldgrade Evidence Packet v1",
+  "description": "Evidence-bound packet exported by Fieldgrade for downstream review. This packet is not canonical and remains review-bound.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "bundle_id",
+    "bundle_path",
+    "manifest_sha256",
+    "provenance_chain_head",
+    "evidence_state",
+    "review_state",
+    "review_required",
+    "canonical_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "fieldgrade.evidence_packet.v1"
+    },
+    "packet_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "provenance_chain_head": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_state": {
+      "enum": ["captured", "sealed", "verified", "quarantined", "exported"]
+    },
+    "review_state": {
+      "enum": ["staged", "approved", "quarantined"]
+    },
+    "review_required": {
+      "const": true
+    },
+    "canonical_status": {
+      "const": "not_canonical"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -8,6 +8,8 @@ from typing import Any, Callable, Optional
 
 import yaml
 
+from .contracts import build_pipeline_contracts
+
 
 def _safe_resolve(p: Path) -> Path:
     p = Path(p).expanduser()
@@ -291,10 +293,20 @@ def run_termite_to_ecology_pipeline_library(
     if not replay_json.get("kg_deltas_chain_ok") or not replay_json.get("ingested_chain_ok"):
         raise RuntimeError(f"mite_ecology replay-verify chain failed: {replay_json}")
 
+    contracts = build_pipeline_contracts(
+        repo_root=repo_root,
+        bundle_path=bundle_path,
+        verify_result=vr.__dict__,
+        replay_verify_result=replay_json,
+        run_id=rid,
+        export_root=e_cfg.exports_root,
+    )
+
     return {
         "ingest": asdict(ingest_res),
         "bundle_path": str(bundle_path),
         "verify": vr.__dict__,
         "replay_verify": replay_json,
         "run_id": rid,
+        "contracts": contracts,
     }

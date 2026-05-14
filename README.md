@@ -184,9 +184,26 @@ This monorepo provides:
 **Governance autonomy advisory surface**
 
 - GovAI records now expose a deterministic readiness and action-planning layer for operator triage:
-   - `GET /api/governance/systems/{record_id}/advisory`
-   - `GET /api/governance/dashboard`
+    - `GET /api/governance/systems/{record_id}/advisory`
+    - `GET /api/governance/dashboard`
 - The advisory surface summarizes readiness score, review urgency, export readiness, and prioritized next actions without auto-approving decisions.
+- The dashboard now also separates evidence state, review decision state, runtime handoff readiness, and export state into explicit architecture views.
+
+**Architecture and contract surface**
+
+- `GET /api/architecture/overview` returns the current layer ownership model, control-plane/data-plane split, status vocabulary, storage boundary, and readiness contract.
+- `GET /api/jobs/{job_id}/contracts` returns the explicit handoff contracts emitted by the termite→mite→Fieldgrade pipeline:
+   - evidence packet
+   - verification result
+   - review decision
+   - export package
+   - runtime hardening report
+   - review-bound CFX bridge and CAO candidate artifacts
+- Supporting schemas live under `schemas/`:
+   - `fieldgrade_evidence_packet_v1.json`
+   - `fieldgrade_runtime_hardening_report_v1.json`
+   - `cfx_fieldgrade_bridge_v1.json`
+   - `cfx_cao_candidate_v1.json`
 
 ## Canonical dev setup (recommended)
 
