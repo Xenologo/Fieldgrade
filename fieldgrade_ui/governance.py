@@ -18,6 +18,12 @@ from .execution_ledger import append_event, create_execution, ensure_db, iter_ev
 CORE_SCHEMA_NAME = "fieldgrade_core_objects_v1.json"
 GOVAI_SCHEMA_NAME = "fieldgrade_govai_system_record_v1.json"
 CROSSWALK_RESOURCE = "fieldgrade_govai_crosswalks_v1.json"
+EXPORT_KINDS = (
+    "internal_governance_record",
+    "atrs_draft",
+    "public_summary",
+    "evidence_gap_report",
+)
 
 
 class GovernanceLedger:
@@ -259,7 +265,7 @@ class GovernanceLedger:
         review = self._review_posture(record)
         gap_count = int(crosswalk.get("gap_count") or 0)
         export_status = record.get("export_status") if isinstance(record.get("export_status"), dict) else {}
-        export_total = max(len(export_status), 4)
+        export_total = max(len(export_status), len(EXPORT_KINDS))
         exports_ready = sum(1 for value in export_status.values() if value)
         all_exports_ready = export_total > 0 and exports_ready == export_total
         controls = record.get("controls") if isinstance(record.get("controls"), list) else []
@@ -271,7 +277,7 @@ class GovernanceLedger:
             if str(gate.get("status") or "").strip().lower() in {"approved", "complete", "completed"}
         )
         open_risks = sum(
-            1 for risk in risks if str(risk.get("review_status") or "Open").strip().lower() in {"open", "active", "pending"}
+            1 for risk in risks if str(risk.get("review_status") or "open").strip().lower() in {"open", "active", "pending"}
         )
 
         actions: List[Dict[str, Any]] = []
@@ -744,10 +750,10 @@ class GovernanceLedger:
             "gaps": crosswalk.get("gaps", []),
         }
         exports = [
-            self._write_export(record_id, "internal_governance_record", internal),
-            self._write_export(record_id, "atrs_draft", atrs),
-            self._write_export(record_id, "public_summary", public_summary),
-            self._write_export(record_id, "evidence_gap_report", gaps),
+            self._write_export(record_id, EXPORT_KINDS[0], internal),
+            self._write_export(record_id, EXPORT_KINDS[1], atrs),
+            self._write_export(record_id, EXPORT_KINDS[2], public_summary),
+            self._write_export(record_id, EXPORT_KINDS[3], gaps),
         ]
         record["export_status"] = {x["kind"]: True for x in exports}
         record["crosswalks"] = crosswalk.get("templates", [])
