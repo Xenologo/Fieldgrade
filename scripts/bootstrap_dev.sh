@@ -13,26 +13,9 @@ if [[ -z "$PY_BIN" ]]; then
   fi
 fi
 
-VENV_DIR="${VENV_DIR:-.venv}"
-
-if [[ ! -x "$VENV_DIR/bin/python" ]]; then
-  "$PY_BIN" -m venv "$VENV_DIR"
-fi
-
-# shellcheck disable=SC1090
-source "$VENV_DIR/bin/activate"
-
-python -m pip install -U pip
-
-# Install base + dev deps
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
-
-# Editable installs (ensures CLI entrypoints + imports work)
-python -m pip install -e termite_fieldpack
-python -m pip install -e mite_ecology
-python -m pip install -e fieldgrade_ui
+"$PY_BIN" -m pip install -U pip uv
+UV_PROJECT_ENVIRONMENT="${VENV_DIR:-$ROOT_DIR/.venv}" uv sync --frozen --group dev
 
 echo "[bootstrap_dev] OK"
-echo "- venv: $VENV_DIR"
-echo "- python: $(python -c 'import sys; print(sys.executable)')"
+echo "- venv: ${VENV_DIR:-.venv}"
+echo "- python: $("$ROOT_DIR/.venv/bin/python" -c 'import sys; print(sys.executable)')"

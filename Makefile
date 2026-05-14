@@ -2,19 +2,14 @@
 
 VENV ?= .venv
 PY := $(VENV)/bin/python
-PIP := $(PY) -m pip
 
 venv:
-	python -m venv $(VENV)
-	$(PIP) install -U pip
+	python -m pip install -U pip uv
+	UV_PROJECT_ENVIRONMENT=$(PWD)/$(VENV) uv sync --frozen
 
 install: venv
-	$(PIP) install -r requirements.txt
-	$(PIP) install -e termite_fieldpack
-	$(PIP) install -e mite_ecology
-	$(PIP) install -e fieldgrade_ui
 
 test: install
-	$(PIP) install -r requirements-dev.txt
+	python -m pip install -U uv
+	UV_PROJECT_ENVIRONMENT=$(PWD)/$(VENV) uv sync --frozen --group dev
 	$(PY) -m pytest -q
-

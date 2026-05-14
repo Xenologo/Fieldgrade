@@ -1,0 +1,100 @@
+name: Fieldgrade pilot request
+description: Request a founder-led private alpha pilot or ProofOps setup.
+title: "Fieldgrade pilot request: "
+labels:
+  - pilot
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request a founder-led Fieldgrade ProofOps, GovAI, or FoodQA pilot.
+  - type: input
+    id: organisation
+    attributes:
+      label: Organisation / project name
+      placeholder: Example Foods Ltd / Internal AI register pilot
+    validations:
+      required: true
+  - type: input
+    id: sector
+    attributes:
+      label: Sector
+      placeholder: Food production / AI consultancy / public-sector-adjacent
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_problem
+    attributes:
+      label: Primary evidence problem
+      placeholder: What evidence workflow or review problem are you trying to fix?
+    validations:
+      required: true
+  - type: dropdown
+    id: current_system
+    attributes:
+      label: Current system
+      options:
+        - Excel
+        - SharePoint
+        - QMS
+        - ERP
+        - Email
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: desired_workflow
+    attributes:
+      label: Desired workflow
+      options:
+        - ProofOps
+        - GovAI
+        - FoodQA
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_types
+    attributes:
+      label: Sample evidence types
+      placeholder: PDFs, screenshots, batch records, prompt/output logs, calibration certificates
+    validations:
+      required: true
+  - type: dropdown
+    id: data_sensitivity
+    attributes:
+      label: Data sensitivity
+      options:
+        - Low
+        - Moderate
+        - High
+        - Highly restricted
+    validations:
+      required: true
+  - type: dropdown
+    id: local_only
+    attributes:
+      label: Local-only requirement
+      options:
+        - Yes
+        - No
+        - Unsure
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment_preference
+    attributes:
+      label: Deployment preference
+      options:
+        - Local workstation
+        - Single host
+        - Internal VM
+        - Need advice
+    validations:
+      required: true
+  - type: textarea
+    id: proof_pack_output
+    attributes:
+      label: Desired proof-pack output
+      placeholder: Audit pack, investigation pack, AI accountability summary, supplier release pack
+    validations:
+      required: true

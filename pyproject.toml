@@ -1,0 +1,28 @@
+[project]
+name = "fieldgrade"
+version = "0.9.0a0"
+description = "Fieldgrade pilot workspace for evidence governance, proof-pack export, and founder-led private pilots."
+requires-python = ">=3.10"
+dependencies = [
+  "termite-fieldpack",
+  "mite-ecology",
+  "fieldgrade-ui",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0.0",
+  "httpx>=0.25.0",
+]
+
+[tool.uv.sources]
+termite-fieldpack = { workspace = true }
+mite-ecology = { workspace = true }
+fieldgrade-ui = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+  "termite_fieldpack",
+  "mite_ecology",
+  "fieldgrade_ui",
+]

@@ -8,13 +8,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Base deps first for better layer caching
-COPY requirements.txt ./
-COPY termite_fieldpack/requirements.txt termite_fieldpack/requirements.txt
-COPY mite_ecology/requirements.txt mite_ecology/requirements.txt
-COPY fieldgrade_ui/requirements.txt fieldgrade_ui/requirements.txt
+COPY requirements.lock ./
 
 RUN python -m pip install -U pip \
-  && python -m pip install -r requirements.txt
+  && python -m pip install -r requirements.lock
 
 # Install packages (editable so entrypoints + imports are consistent)
 COPY termite_fieldpack/ termite_fieldpack/
