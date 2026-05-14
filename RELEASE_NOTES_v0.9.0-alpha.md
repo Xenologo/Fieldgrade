@@ -46,12 +46,13 @@ Fieldgrade v0.9.0-alpha now ships as a founder-led pilot release packet with rep
 Validated on 2026-05-14 with the development overlay.
 
 - `/healthz` returned `200 OK` after the stack started
-- `/readyz` returned `200 OK` after initialising the first-run `mite_ecology` runtime DB using the documented `INSTALL.md` snippet
+- `/readyz` returned `200 OK` after running `python -m fieldgrade_ui init` in the web container
 - the stack was brought down cleanly after verification
 
 ## Operator notes
 
 - use `INSTALL.md` for pilot release install mode versus development mode
+- use `fieldgrade-ui init-runtime` or `python -m fieldgrade_ui init` for first-run runtime setup before checking `/readyz`
 - use `docs/PILOT_SECURITY_BRIEF.md`, `docs/PILOT_DATA_BOUNDARIES.md`, and `docs/AI_USE_DISCLAIMER.md` when briefing pilot users
 - use `releases/v0.9.0-alpha/RELEASE_BODY.md` as the GitHub Release page copy
 - use `releases/v0.9.0-alpha/SHA256SUMS.txt` and `releases/v0.9.0-alpha/RELEASE_MANIFEST.json` when attaching deliverables

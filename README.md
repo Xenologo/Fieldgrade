@@ -358,12 +358,14 @@ For a local smoke test with the development overlay:
 export FG_API_TOKEN=demo-local-token
 docker compose -f compose.yaml -f compose.dev.yaml up -d --build
 curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
-# For a first-run stack, initialize the readiness DB once as shown in INSTALL.md.
+# For a first-run stack, initialize the runtime DBs once.
+docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -m fieldgrade_ui init
 curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
 docker compose -f compose.yaml -f compose.dev.yaml down
 ```
 
 `/readyz` is intentionally conservative and stays unhealthy until the required runtime DBs exist.
+Use `fieldgrade-ui init-runtime` or `python -m fieldgrade_ui init` to create them without an inline Python snippet.
 Record the outcome in release notes before publishing a pilot build.
 
 For production proxy header trust, prefer trusting only the Docker network CIDR (instead of `*`):

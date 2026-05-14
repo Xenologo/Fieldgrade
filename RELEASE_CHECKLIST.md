@@ -25,13 +25,14 @@ Use this checklist before publishing a pilot or alpha release.
 - [x] `export FG_API_TOKEN=demo-local-token`
 - [x] `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
 - [x] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz`
-- [x] Initialize the first-run readiness DB as documented in `INSTALL.md` if `/readyz` is still `503`
+- [x] `docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -m fieldgrade_ui init` if `/readyz` is still `503`
 - [x] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz`
 - [x] `docker compose -f compose.yaml -f compose.dev.yaml down`
 
 ## Release packaging
 
 - [x] Draft GitHub Release copy prepared in `releases/v0.9.0-alpha/RELEASE_BODY.md`
+- [ ] Publish the GitHub Release object for `v0.9.0-alpha` and attach the release packet assets
 - [x] Source archive attached
 - [x] Demo/sample packs attached
 - [x] Checksums and release manifest attached

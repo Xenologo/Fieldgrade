@@ -6,12 +6,14 @@ import ipaddress
 from .config import api_tokens, forwarded_allow_ips, proxy_headers_enabled, ui_host, ui_log_level, ui_port, ui_reload, ui_workers
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="python -m fieldgrade_ui")
+    parser = argparse.ArgumentParser(prog="fieldgrade-ui")
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("serve", help="Run the Fieldgrade UI/API server (default).")
     sub.add_parser("worker", help="Run the background job worker (process).")
     sub.add_parser("doctor", help="Run environment checks and print JSON.")
+    sub.add_parser("init", help="Initialize the first-run runtime databases.")
+    sub.add_parser("init-runtime", help="Initialize the first-run runtime databases.")
 
     args = parser.parse_args()
     cmd = args.cmd or "serve"
@@ -24,6 +26,11 @@ def main() -> None:
     if cmd == "doctor":
         from .doctor import main as doctor_main
         doctor_main()
+        return
+
+    if cmd in {"init", "init-runtime"}:
+        from .runtime_init import main as runtime_init_main
+        runtime_init_main()
         return
 
     # default: serve

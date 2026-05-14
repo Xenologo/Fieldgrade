@@ -36,14 +36,7 @@ The Docker image installs pinned runtime dependencies from `requirements.lock`.
 
    ```bash
    curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
-   docker compose -f compose.yaml -f compose.dev.yaml exec -T web python - <<'PY'
-   from pathlib import Path
-   from mite_ecology.db import connect, init_db
-   db_path = Path("/app/mite_ecology/runtime/mite_ecology.sqlite")
-   db_path.parent.mkdir(parents=True, exist_ok=True)
-   con = connect(db_path)
-   init_db(con, Path("/app/mite_ecology/sql/schema.sql"))
-   PY
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -m fieldgrade_ui init
    curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
    ```
 
@@ -120,7 +113,7 @@ Recommended for founder-led pilot installs, not anonymous self-serve production.
 - **Port 8787 already in use:** stop the conflicting process or change the local bind in `compose.dev.yaml`
 - **401/403 responses:** verify that `FG_API_TOKEN` is set and that requests include `X-API-Key`
 - **Compose config fails:** confirm required environment variables are present before running `docker compose`
-- **`/readyz` returns `503`:** initialize the first-run runtime DB as shown in Option B, then retry
+- **`/readyz` returns `503`:** run `python -m fieldgrade_ui init` (or `fieldgrade-ui init-runtime`) inside the app environment, then retry
 - **Tests fail during bootstrap:** remove `.venv` and run the install step again
 
 ## Uninstall
