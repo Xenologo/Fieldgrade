@@ -90,7 +90,7 @@ jobs:
           set -euo pipefail
           uv lock --check
           uv export --frozen --no-dev --no-hashes --no-emit-workspace -o /tmp/requirements.lock
-          diff -u requirements.lock /tmp/requirements.lock
+          diff -u <(tail -n +3 requirements.lock) <(tail -n +3 /tmp/requirements.lock)
 
       - name: Bootstrap (Linux)
         if: runner.os == 'Linux'

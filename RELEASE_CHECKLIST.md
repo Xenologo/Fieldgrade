@@ -4,36 +4,41 @@ Use this checklist before publishing a pilot or alpha release.
 
 ## Repository and documentation
 
-- [ ] Update `CHANGELOG.md`
-- [ ] Update release notes for the target version
-- [ ] Confirm `LICENSE`, `SECURITY.md`, `INSTALL.md`, and `DATA_HANDLING.md` are still accurate
-- [ ] Confirm README badges and quick links still resolve correctly
+- [x] Update `CHANGELOG.md`
+- [x] Update release notes for the target version
+- [x] Confirm `LICENSE`, `SECURITY.md`, `INSTALL.md`, and `DATA_HANDLING.md` are still accurate
+- [x] Confirm README badges and quick links still resolve correctly
 
 ## Validation
 
-- [ ] `bash scripts/bootstrap_dev.sh`
-- [ ] `./.venv/bin/python -m pytest -q`
-- [ ] `FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config`
-- [ ] `FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml -f compose.dev.yaml config`
+- [x] `bash scripts/bootstrap_dev.sh`
+- [x] `./.venv/bin/python -m pytest -q`
+- [x] `FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config`
+- [x] `FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml -f compose.dev.yaml config`
+- [x] `FG_API_TOKEN=ci_dummy_token FIELDGRADE_DOMAIN=ci.example.invalid FG_FORWARDED_ALLOW_IPS=127.0.0.1 docker compose -f compose.yaml -f compose.production.yaml config`
+- [x] `uv lock --check`
+- [x] `uv export --frozen --no-dev --no-hashes --no-emit-workspace`
+- [x] `docker build -t fieldgrade:ci .`
 
 ## Docker smoke test
 
-- [ ] `export FG_API_TOKEN=demo-local-token`
-- [ ] `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
-- [ ] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz`
-- [ ] Initialize the first-run readiness DB as documented in `INSTALL.md` if `/readyz` is still `503`
-- [ ] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz`
-- [ ] `docker compose -f compose.yaml -f compose.dev.yaml down`
+- [x] `export FG_API_TOKEN=demo-local-token`
+- [x] `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
+- [x] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz`
+- [x] Initialize the first-run readiness DB as documented in `INSTALL.md` if `/readyz` is still `503`
+- [x] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz`
+- [x] `docker compose -f compose.yaml -f compose.dev.yaml down`
 
 ## Release packaging
 
-- [ ] Draft GitHub Release created
-- [ ] Source archive attached
-- [ ] Demo/sample packs attached if applicable
-- [ ] Checksums or manifest attached if applicable
+- [x] Draft GitHub Release copy prepared in `releases/v0.9.0-alpha/RELEASE_BODY.md`
+- [x] Source archive attached
+- [x] Demo/sample packs attached
+- [x] Checksums and release manifest attached
 
 ## Commercial packaging
 
-- [ ] Pricing/setup page reviewed
-- [ ] Contact / setup request CTA reviewed
-- [ ] Public disclaimers reviewed for regulated and AI-assisted use cases
+- [x] Pricing/setup page reviewed
+- [x] Contact / setup request CTA reviewed
+- [x] Public disclaimers reviewed for regulated and AI-assisted use cases
+- [x] Setup offer, pilot intake, and launch packet added
