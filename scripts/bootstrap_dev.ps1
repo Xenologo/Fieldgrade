@@ -17,7 +17,9 @@ $ROOT = (Resolve-Path (Join-Path $PSScriptRoot ".."))
 Set-Location $ROOT
 
 python -m pip install -U pip
+if ($LASTEXITCODE -ne 0) { throw "pip upgrade failed" }
 python -m pip install uv
+if ($LASTEXITCODE -ne 0) { throw "uv install failed" }
 
 $resolvedVenv = if ($env:VENV_DIR) { (Join-Path $ROOT $env:VENV_DIR) } else { (Join-Path $ROOT ".venv") }
 $env:UV_PROJECT_ENVIRONMENT = $resolvedVenv

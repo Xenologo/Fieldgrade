@@ -11,22 +11,22 @@
   "artifacts": [
     {
       "name": "fieldgrade-v0.9.0-alpha-source.zip",
-      "sha256": "11ce92dde12e87dff8c142c0d0924a9722f0f6878c4ba3318c95f362927f43d6",
-      "bytes": 733032
+      "sha256": "331b6e1e92decc667845a5a635da6d61e64bef34f7602382b699d9f4a4b63041",
+      "bytes": 733129
     },
     {
       "name": "fieldgrade-proofops-demo-pack.zip",
-      "sha256": "c235a12ed79e0d192c21ee89a4d4196350ec0a132616077a4aa7c987d7045b3c",
-      "bytes": 208517
+      "sha256": "7198a266d0d72cdcdafc231bb64feca89d7f14a748f9a34690066651d8cdc03f",
+      "bytes": 208516
     },
     {
       "name": "fieldgrade-foodqa-sample-pack.zip",
-      "sha256": "379d975b20e1b261d7b1167a252101f02b7ae79884a5e7144c748fa5800853ba",
+      "sha256": "441d32e2a2f72f1debef49fdd286028a18375575db6b84ad82c265e8285d75c3",
       "bytes": 33358
     },
     {
       "name": "fieldgrade-govai-sample-pack.zip",
-      "sha256": "eeb41b8cc208424caa9615e864bab997db8783e276bd07510f23951c58bc159b",
+      "sha256": "e3a3f854b534a492ad541c3996d43698b61edb70e7b6a341469df1d0836cde64",
       "bytes": 33055
     }
   ]

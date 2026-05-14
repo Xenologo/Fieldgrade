@@ -14,6 +14,7 @@ if [[ -z "$PY_BIN" ]]; then
 fi
 
 "$PY_BIN" -m pip install -U pip uv
+command -v uv >/dev/null 2>&1 || { echo "uv installation failed" >&2; exit 1; }
 UV_PROJECT_ENVIRONMENT="${VENV_DIR:-$ROOT_DIR/.venv}" uv sync --frozen --group dev
 VENV_PYTHON="${VENV_DIR:-$ROOT_DIR/.venv}/bin/python"
 
