@@ -42,7 +42,7 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
             "title": "Housing Arrears Prioritisation Tool",
             "status": "Under Review",
             "risk_tier": "High",
-            "next_review_due": "2026-06-30",
+            "next_review_due": "2099-06-30",
         },
     )
     assert r.status_code == 200, r.text
@@ -50,6 +50,13 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
     record_id = record["record_id"]
     assert record_id.startswith("FG-GOVAI-")
     assert record["audit"]["chain_ok"] is True
+
+    r = client.get(f"/api/governance/systems/{record_id}/advisory", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    advisory = r.json()
+    assert advisory["readiness_status"] == "attention_required"
+    assert advisory["crosswalk"]["gap_count"] > 0
+    assert any(action["action_id"] == "close-gap-atrs-ownership" for action in advisory["prioritized_actions"])
 
     r = client.put(
         f"/api/governance/systems/{record_id}",
@@ -110,6 +117,13 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
     crosswalk = r.json()
     assert crosswalk["gap_count"] == 0
 
+    r = client.get(f"/api/governance/systems/{record_id}/advisory", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    advisory = r.json()
+    assert advisory["readiness_status"] == "review_ready"
+    assert advisory["crosswalk"]["gap_count"] == 0
+    assert any(action["action_id"] == "generate-exports" for action in advisory["prioritized_actions"])
+
     r = client.post(f"/api/governance/systems/{record_id}/exports/generate", headers=_h("token_a"))
     assert r.status_code == 200, r.text
     body = r.json()
@@ -126,6 +140,9 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
     dash = r.json()
     assert dash["counts"]["organizations"] == 1
     assert dash["counts"]["systems"] == 1
+    assert dash["counts"]["by_readiness"]["export_ready"] == 1
+    assert dash["counts"]["by_review_state"]["scheduled"] == 1
+    assert dash["attention_queue"] == []
 
     r = client.get(f"/api/governance/systems/{record_id}", headers=_h("token_a"))
     assert r.status_code == 200, r.text
@@ -133,3 +150,39 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
     assert fetched["record"]["export_status"]["public_summary"] is True
     assert fetched["record"]["audit"]["chain_ok"] is True
     assert len(fetched["audit_events"]) >= 6
+
+
+def test_governance_dashboard_attention_queue_surfaces_overdue_work(client: TestClient) -> None:
+    r = client.post(
+        "/api/governance/organizations",
+        headers=_h("token_a"),
+        json={"name": "Example Food QA", "sector": "Food QA"},
+    )
+    assert r.status_code == 200, r.text
+    org_id = r.json()["organization"]["organization_id"]
+
+    r = client.post(
+        "/api/governance/systems",
+        headers=_h("token_a"),
+        json={
+            "organization_id": org_id,
+            "title": "Batch release classifier",
+            "status": "Under Review",
+            "risk_tier": "High",
+            "next_review_due": "2000-01-01",
+        },
+    )
+    assert r.status_code == 200, r.text
+    record_id = r.json()["record"]["record_id"]
+
+    r = client.get(f"/api/governance/systems/{record_id}/advisory", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    advisory = r.json()
+    assert advisory["review"]["state"] == "overdue"
+    assert any(action["action_id"] == "renew-review" for action in advisory["prioritized_actions"])
+
+    r = client.get("/api/governance/dashboard", headers=_h("token_a"))
+    assert r.status_code == 200, r.text
+    dash = r.json()
+    assert dash["counts"]["by_review_state"]["overdue"] == 1
+    assert dash["attention_queue"][0]["record_id"] == record_id

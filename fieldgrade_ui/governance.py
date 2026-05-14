@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from copy import deepcopy
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -17,6 +18,12 @@ from .execution_ledger import append_event, create_execution, ensure_db, iter_ev
 CORE_SCHEMA_NAME = "fieldgrade_core_objects_v1.json"
 GOVAI_SCHEMA_NAME = "fieldgrade_govai_system_record_v1.json"
 CROSSWALK_RESOURCE = "fieldgrade_govai_crosswalks_v1.json"
+EXPORT_KINDS = (
+    "internal_governance_record",
+    "atrs_draft",
+    "public_summary",
+    "evidence_gap_report",
+)
 
 
 class GovernanceLedger:
@@ -207,6 +214,193 @@ class GovernanceLedger:
             )
         return {"templates": evaluations, "gaps": gaps, "gap_count": len(gaps)}
 
+    @staticmethod
+    def _crosswalk_stats(crosswalk: Dict[str, Any]) -> Dict[str, int]:
+        total = 0
+        satisfied = 0
+        templates = crosswalk.get("templates") if isinstance(crosswalk, dict) else []
+        for template in templates if isinstance(templates, list) else []:
+            frameworks = template.get("frameworks") if isinstance(template, dict) else []
+            for framework in frameworks if isinstance(frameworks, list) else []:
+                obligations = framework.get("obligations") if isinstance(framework, dict) else []
+                for obligation in obligations if isinstance(obligations, list) else []:
+                    total += 1
+                    if obligation.get("status") == "satisfied":
+                        satisfied += 1
+        return {"total_obligations": total, "satisfied_obligations": satisfied}
+
+    @staticmethod
+    def _parse_due_date(value: Any) -> Optional[date]:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        try:
+            return date.fromisoformat(raw)
+        except ValueError:
+            return None
+
+    def _review_posture(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        due_date = self._parse_due_date(record.get("next_review_due"))
+        if due_date is None:
+            return {
+                "state": "unscheduled",
+                "days_until_due": None,
+                "due_date": str(record.get("next_review_due") or ""),
+            }
+        delta = (due_date - date.today()).days
+        if delta < 0:
+            state = "overdue"
+        elif delta <= 14:
+            state = "due_soon"
+        else:
+            state = "scheduled"
+        return {"state": state, "days_until_due": delta, "due_date": due_date.isoformat()}
+
+    @staticmethod
+    def _priority_rank(priority: str) -> int:
+        return {"high": 0, "medium": 1, "low": 2}.get(str(priority or "").lower(), 3)
+
+    def _advisory(self, record: Dict[str, Any], crosswalk: Dict[str, Any]) -> Dict[str, Any]:
+        stats = self._crosswalk_stats(crosswalk)
+        review = self._review_posture(record)
+        gap_count = int(crosswalk.get("gap_count") or 0)
+        export_status = record.get("export_status") if isinstance(record.get("export_status"), dict) else {}
+        export_total = len(EXPORT_KINDS)
+        exports_ready = sum(1 for value in export_status.values() if value)
+        all_exports_ready = export_total > 0 and exports_ready == export_total
+        controls = record.get("controls") if isinstance(record.get("controls"), list) else []
+        risks = record.get("risks") if isinstance(record.get("risks"), list) else []
+        review_gates = record.get("review_gates") if isinstance(record.get("review_gates"), list) else []
+        approved_gates = sum(
+            1
+            for gate in review_gates
+            if str(gate.get("status") or "").strip().lower() in {"approved", "complete", "completed"}
+        )
+        open_risks = sum(
+            1 for risk in risks if str(risk.get("review_status") or "open").strip().lower() in {"open", "active", "pending"}
+        )
+
+        actions: List[Dict[str, Any]] = []
+        for gap in crosswalk.get("gaps", []) if isinstance(crosswalk.get("gaps"), list) else []:
+            framework = str(gap.get("framework") or "").strip() or "FRAMEWORK"
+            obligation_id = str(gap.get("obligation_id") or framework).strip().lower().replace("_", "-")
+            priority = "high" if framework != "FIELDGRADE_INTERNAL_CONTROLS" else "medium"
+            actions.append(
+                {
+                    "action_id": f"close-gap-{obligation_id}",
+                    "priority": priority,
+                    "title": str(gap.get("title") or "Close governance evidence gap"),
+                    "reason": f"Missing record fields: {', '.join(gap.get('missing_paths') or []) or 'not recorded'}",
+                    "framework": framework,
+                    "missing_paths": list(gap.get("missing_paths") or []),
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}",
+                }
+            )
+
+        if review["state"] == "overdue":
+            actions.append(
+                {
+                    "action_id": "renew-review",
+                    "priority": "high",
+                    "title": "Renew the overdue governance review",
+                    "reason": f"Review date {review['due_date']} has passed.",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}/review_gates",
+                }
+            )
+        elif review["state"] == "due_soon":
+            actions.append(
+                {
+                    "action_id": "prepare-review",
+                    "priority": "medium",
+                    "title": "Prepare the upcoming governance review",
+                    "reason": f"Review is due in {review['days_until_due']} day(s).",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}/review_gates",
+                }
+            )
+        elif review["state"] == "unscheduled":
+            actions.append(
+                {
+                    "action_id": "schedule-review",
+                    "priority": "medium",
+                    "title": "Set a governance review date",
+                    "reason": "The system record does not yet define next_review_due.",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}",
+                }
+            )
+
+        if open_risks > 0 and not controls:
+            actions.append(
+                {
+                    "action_id": "stabilize-open-risks",
+                    "priority": "high",
+                    "title": "Add controls for open risks",
+                    "reason": f"{open_risks} open risk(s) are recorded without any control objects.",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}/controls",
+                }
+            )
+
+        if review_gates and approved_gates == 0:
+            actions.append(
+                {
+                    "action_id": "approve-review-gates",
+                    "priority": "medium",
+                    "title": "Complete at least one review gate approval",
+                    "reason": "Review gates exist, but none are marked approved or completed.",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}/review_gates",
+                }
+            )
+
+        if gap_count == 0 and not all_exports_ready:
+            actions.append(
+                {
+                    "action_id": "generate-exports",
+                    "priority": "medium",
+                    "title": "Generate the governance export pack",
+                    "reason": "The record is complete enough to produce its audit artifacts.",
+                    "recommended_endpoint": f"/api/governance/systems/{record['record_id']}/exports/generate",
+                }
+            )
+
+        actions.sort(key=lambda item: (self._priority_rank(str(item.get("priority") or "")), str(item.get("title") or "")))
+
+        completeness_score = 0.0
+        if stats["total_obligations"] > 0:
+            completeness_score = stats["satisfied_obligations"] / stats["total_obligations"]
+        review_score = {"scheduled": 1.0, "due_soon": 0.6, "overdue": 0.0, "unscheduled": 0.25}.get(
+            str(review.get("state") or ""),
+            0.0,
+        )
+        score = int(round((completeness_score * 70.0) + ((exports_ready / export_total) * 20.0) + (review_score * 10.0)))
+
+        readiness_status = "attention_required"
+        if gap_count == 0 and all_exports_ready and review["state"] in {"scheduled", "due_soon"}:
+            readiness_status = "export_ready"
+        elif gap_count == 0:
+            readiness_status = "review_ready"
+
+        return {
+            "readiness_score": max(0, min(score, 100)),
+            "readiness_status": readiness_status,
+            "review": review,
+            "crosswalk": {
+                "gap_count": gap_count,
+                "total_obligations": stats["total_obligations"],
+                "satisfied_obligations": stats["satisfied_obligations"],
+            },
+            "exports": {
+                "ready": exports_ready,
+                "total": export_total,
+                "all_ready": all_exports_ready,
+            },
+            "operations": {
+                "open_risks": open_risks,
+                "controls": len(controls),
+                "review_gates": len(review_gates),
+                "approved_review_gates": approved_gates,
+            },
+            "prioritized_actions": actions,
+        }
+
     def _atrs_draft(self, record: Dict[str, Any], crosswalk: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "type": "fieldgrade_export_pack/1.0",
@@ -298,6 +492,7 @@ class GovernanceLedger:
             data = self._load_json(path, default={})
             if not isinstance(data, dict):
                 continue
+            advisory = self._advisory(data, self._compute_crosswalks(data))
             items.append(
                 {
                     "record_id": data.get("record_id"),
@@ -308,6 +503,12 @@ class GovernanceLedger:
                     "next_review_due": data.get("next_review_due"),
                     "updated_at_ms": data.get("updated_at_ms"),
                     "export_status": data.get("export_status", {}),
+                    "advisory": {
+                        "readiness_score": advisory.get("readiness_score"),
+                        "readiness_status": advisory.get("readiness_status"),
+                        "review": advisory.get("review"),
+                        "prioritized_actions": advisory.get("prioritized_actions", [])[:3],
+                    },
                 }
             )
         return items
@@ -552,10 +753,10 @@ class GovernanceLedger:
             "gaps": crosswalk.get("gaps", []),
         }
         exports = [
-            self._write_export(record_id, "internal_governance_record", internal),
-            self._write_export(record_id, "atrs_draft", atrs),
-            self._write_export(record_id, "public_summary", public_summary),
-            self._write_export(record_id, "evidence_gap_report", gaps),
+            self._write_export(record_id, EXPORT_KINDS[0], internal),
+            self._write_export(record_id, EXPORT_KINDS[1], atrs),
+            self._write_export(record_id, EXPORT_KINDS[2], public_summary),
+            self._write_export(record_id, EXPORT_KINDS[3], gaps),
         ]
         record["export_status"] = {x["kind"]: True for x in exports}
         record["crosswalks"] = crosswalk.get("templates", [])
@@ -577,13 +778,45 @@ class GovernanceLedger:
         self._write_json(self._record_path(record_id), record)
         return {"record": record, "exports": exports, "crosswalk": crosswalk}
 
+    def system_advisory(self, record_id: str) -> Dict[str, Any]:
+        record = self.get_system(record_id)
+        crosswalk = self._compute_crosswalks(record)
+        return self._advisory(record, crosswalk)
+
     def dashboard(self) -> Dict[str, Any]:
         systems = self.list_systems()
         by_status: Dict[str, int] = {}
         by_risk: Dict[str, int] = {}
+        by_readiness: Dict[str, int] = {}
+        by_review: Dict[str, int] = {}
+        attention_queue: List[Dict[str, Any]] = []
         for item in systems:
             by_status[item.get("status") or "Unknown"] = by_status.get(item.get("status") or "Unknown", 0) + 1
             by_risk[item.get("risk_tier") or "Unknown"] = by_risk.get(item.get("risk_tier") or "Unknown", 0) + 1
+            advisory = item.get("advisory") if isinstance(item.get("advisory"), dict) else {}
+            readiness = str(advisory.get("readiness_status") or "attention_required")
+            review = advisory.get("review") if isinstance(advisory.get("review"), dict) else {}
+            review_state = str(review.get("state") or "unscheduled")
+            by_readiness[readiness] = by_readiness.get(readiness, 0) + 1
+            by_review[review_state] = by_review.get(review_state, 0) + 1
+            if readiness != "export_ready":
+                attention_queue.append(
+                    {
+                        "record_id": item.get("record_id"),
+                        "title": item.get("title"),
+                        "readiness_score": advisory.get("readiness_score"),
+                        "readiness_status": readiness,
+                        "review_state": review_state,
+                        "actions": advisory.get("prioritized_actions", [])[:2],
+                    }
+                )
+        attention_queue.sort(
+            key=lambda entry: (
+                self._priority_rank(str(((entry.get("actions") or [{}])[0]).get("priority") or "low")),
+                int(entry.get("readiness_score") or 0),
+                str(entry.get("title") or ""),
+            )
+        )
         return {
             "organizations": self.list_organizations(),
             "systems": systems,
@@ -592,7 +825,10 @@ class GovernanceLedger:
                 "systems": len(systems),
                 "by_status": by_status,
                 "by_risk_tier": by_risk,
+                "by_readiness": by_readiness,
+                "by_review_state": by_review,
             },
+            "attention_queue": attention_queue,
         }
 
     def audit_events(self, record_id: str) -> List[Dict[str, Any]]:

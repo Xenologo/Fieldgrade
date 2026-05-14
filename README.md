@@ -181,6 +181,13 @@ This monorepo provides:
    - `GET /api/graph/neighborhood?node_id=<id>&limit_edges=<n>`
 - There is intentionally no general-purpose `/api/kg/*` surface yet.
 
+**Governance autonomy advisory surface**
+
+- GovAI records now expose a deterministic readiness and action-planning layer for operator triage:
+   - `GET /api/governance/systems/{record_id}/advisory`
+   - `GET /api/governance/dashboard`
+- The advisory surface summarizes readiness score, review urgency, export readiness, and prioritized next actions without auto-approving decisions.
+
 ## Canonical dev setup (recommended)
 
 Use the bootstrap scripts to get to a known-good environment (runtime + dev deps + editable installs).
