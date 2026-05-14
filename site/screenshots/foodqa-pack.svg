@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#f6f8fc"/>
+  <rect x="70" y="60" width="1140" height="600" rx="24" fill="#ffffff" stroke="#d0d9ea"/>
+  <text x="120" y="130" fill="#27456f" font-family="Arial" font-size="30" font-weight="700">Fieldgrade FoodQA</text>
+  <text x="120" y="190" fill="#0d1321" font-family="Arial" font-size="50" font-weight="700">Audit pack preview</text>
+  <rect x="120" y="240" width="300" height="320" rx="20" fill="#eef3fb"/>
+  <rect x="460" y="240" width="300" height="320" rx="20" fill="#eef3fb"/>
+  <rect x="800" y="240" width="300" height="320" rx="20" fill="#eef3fb"/>
+  <text x="150" y="300" fill="#27456f" font-family="Arial" font-size="26" font-weight="700">Evidence</text>
+  <text x="150" y="340" fill="#476488" font-family="Arial" font-size="20">Batch record</text>
+  <text x="150" y="375" fill="#476488" font-family="Arial" font-size="20">Deviation note</text>
+  <text x="150" y="410" fill="#476488" font-family="Arial" font-size="20">Supplier COA</text>
+  <text x="490" y="300" fill="#27456f" font-family="Arial" font-size="26" font-weight="700">Review</text>
+  <text x="490" y="340" fill="#476488" font-family="Arial" font-size="20">Disposition</text>
+  <text x="490" y="375" fill="#476488" font-family="Arial" font-size="20">Approver</text>
+  <text x="490" y="410" fill="#476488" font-family="Arial" font-size="20">Timestamp</text>
+  <text x="830" y="300" fill="#27456f" font-family="Arial" font-size="26" font-weight="700">Exports</text>
+  <text x="830" y="340" fill="#476488" font-family="Arial" font-size="20">Audit pack</text>
+  <text x="830" y="375" fill="#476488" font-family="Arial" font-size="20">Evidence manifest</text>
+  <text x="830" y="410" fill="#476488" font-family="Arial" font-size="20">Bundle reference</text>
+  <text x="120" y="620" fill="#476488" font-family="Arial" font-size="26">Batch, deviation, supplier, calibration, and investigation evidence packaged for audit readiness.</text>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "system_id": "govai-demo-001",
+  "title": "Complaint triage assistant",
+  "owner": "Service Quality Team",
+  "use_case": "Draft internal complaint categorisation suggestions for reviewer approval.",
+  "model": {
+    "provider": "local-openai-compatible",
+    "model_name": "proofops-demo-13b",
+    "version": "2026-05-01"
+  },
+  "review_gate": {
+    "required": true,
+    "mode": "REVIEW_ONLY"
+  },
+  "evidence_refs": [
+    "prompt-template-01",
+    "output-sample-01",
+    "supplier-attestation-01"
+  ]
+}

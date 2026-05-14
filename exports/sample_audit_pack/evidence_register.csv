@@ -1,0 +1,5 @@
+evidence_id,source_type,captured_at,actor,reference,relevance
+EV-001,batch_record,2026-05-14T07:10:00Z,operator.a,batch_record.csv,Primary production record
+EV-002,deviation_note,2026-05-14T08:05:00Z,qa.tech,deviation_note.md,Deviation assessment and immediate actions
+EV-003,supplier_coa,2026-05-13T16:10:00Z,qa.admin,supplier_coa_summary.json,Supplier evidence linked to ingredient lot
+EV-004,review_decision,2026-05-14T09:20:00Z,technical.manager,review_timeline.md,Release decision and corrective action
