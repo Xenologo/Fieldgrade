@@ -8,52 +8,93 @@ Show that Fieldgrade converts everyday operational evidence into sealed, reviewa
 
 State the product clearly:
 
-> Fieldgrade is the missing evidence layer for modern operations. It captures files, seals provenance, governs AI-assisted work, and exports audit-ready proof packs without a heavyweight ERP rollout.
+> Fieldgrade helps teams capture files, seal provenance, review decisions, govern AI-assisted work, and export proof packs without deploying a heavyweight ERP or QMS.
+
+Use the public doctrine throughout the demo:
+
+> Show the proof layer. Occlude the complexity layer.
 
 ## Demo flow
 
-### 1. Show messy source inputs
+### 1. Upload a document
 
-Open example evidence such as:
+Open one concrete input such as:
 
-- a batch CSV
-- a supplier evidence record
-- a deviation note
-- an AI-assisted summary or review note
+- `Supplier_COA_Batch_118.pdf`
 
-Explain that these are the normal artefacts teams already have.
+Explain that this is the kind of operational evidence teams already have.
 
-### 2. Show evidence capture and provenance
+### 2. Fieldgrade registers it
 
-Walk through the relevant ingest path and explain:
+Show the visible record fields:
 
-- content-addressed storage
-- deterministic identifiers
-- provenance events
-- reviewability of imported evidence
+- object ID
+- file name
+- evidence type
+- source
+- uploader or operator
+- timestamp
+- SHA-256 fingerprint
+- review state
 
-### 3. Show review workflow
+Keep the language public-facing: evidence is registered, fingerprinted, and ready for review.
 
-Highlight the policy and review discipline:
+### 3. Add supporting evidence
 
-- `AUTO_MERGE`
-- `REVIEW_ONLY`
-- `QUARANTINE`
-- `KILL`
+Add a few supporting items such as:
 
-Explain that Fieldgrade is not just storage; it is governed evidence handling.
+- screenshot
+- spreadsheet
+- operator note
+- deviation comment
+- AI-assisted summary
 
-### 4. Show product-pack framing
+Explain that Fieldgrade collects the evidence needed to tell a defensible story.
 
-Position the same substrate in three ways:
+### 4. Seal the bundle
 
-- **ProofOps** for general operational proof
-- **GovAI** for AI accountability
-- **FoodQA** for production and quality evidence
+Show the bundle outputs:
 
-### 5. Show export outcomes
+- bundle ID
+- canonical hash
+- manifest
+- included files
+- provenance event chain
+
+### 5. Review
+
+Show public review states:
+
+- Raw
+- Witnessed
+- Pending Review
+- Approved
+- Rejected
+- Quarantined
+- Exported
+
+Avoid surfacing internal policy-mode names in the public demo.
+
+### 6. Export the proof pack
 
 Open the sample audit pack and evidence bundle examples. Emphasise that customers receive a ready-made proof package, not a promise of later documentation.
+
+Show the export outputs:
+
+- PDF audit report
+- ZIP evidence bundle
+- JSON manifest
+- provenance log
+- reviewer decision record
+
+## Product framing during the demo
+
+Position the product family in simple public language:
+
+- **Fieldgrade Core** — the evidence and provenance engine
+- **Fieldgrade ProofOps** — operational proof and review
+- **Fieldgrade GovAI** — accountable AI-use records
+- **Fieldgrade FoodQA** — food and production evidence control
 
 ## Closing offer
 

@@ -4,7 +4,11 @@
 
 **Fieldgrade ProofOps** is an evidence-governance workspace for technical and regulated teams that need to turn messy operational evidence into sealed, reviewable, replayable, exportable proof.
 
-> **SAP runs the transaction layer; Fieldgrade proves the evidence layer.**
+> **Show the proof layer. Occlude the complexity layer.**
+
+Public-facing positioning should lead with the usable workflow:
+
+> **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
 
 ## What buyers are really purchasing
 
@@ -12,19 +16,21 @@ Buyers are not purchasing another general ERP. They are purchasing a way to:
 
 - capture files, notes, screenshots, and supplier evidence
 - seal provenance from the first operational touchpoint
-- route evidence through review gates and policy modes
+- route evidence through controlled review stages
 - retain accountability for AI-assisted analysis
 - export an audit-ready pack without rebuilding the story by hand
 
 ## Product promise
 
-Fieldgrade ProofOps gives small and mid-sized regulated teams a lightweight alternative to SAP-scale governance for:
+Fieldgrade ProofOps gives small and mid-sized regulated teams a lightweight evidence-governance layer for:
 
 - evidence capture
 - provenance sealing
 - review workflow
 - AI accountability
 - audit-pack generation
+
+It should be described publicly as audit-supporting, compliance-supporting, provenance-focused, and human-reviewed.
 
 ## Best-fit use cases
 

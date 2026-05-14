@@ -3,313 +3,259 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fieldgrade ProofOps</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f3efe8;
-      --surface: rgba(255, 255, 255, 0.86);
-      --surface-strong: #ffffff;
-      --surface-soft: #ece6de;
-      --text: #111111;
-      --muted: #5e5a55;
-      --border: #d8d0c7;
-      --accent: #111111;
-      --shadow: 0 28px 70px rgba(17, 17, 17, 0.12);
-      --radius-lg: 28px;
-      --radius-md: 20px;
-      --radius-sm: 14px;
-      --logo-aspect: 960 / 380;
-      --max: 1120px;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 36%),
-        linear-gradient(180deg, #fbf9f6 0%, var(--bg) 52%, #ebe3da 100%);
-    }
-    a { color: inherit; }
-    main { max-width: var(--max); margin: 0 auto; padding: 24px 20px 80px; }
-    .topbar, .hero, .section, .footer {
-      background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.65);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      padding: 18px 22px;
-      border-radius: 999px;
-      margin-bottom: 22px;
-      position: sticky;
-      top: 16px;
-      z-index: 10;
-    }
-    .brand { display: flex; align-items: center; gap: 16px; }
-    .brand img { width: min(320px, 56vw); height: auto; aspect-ratio: var(--logo-aspect); display: block; }
-    .brand span {
-      font-size: 0.78rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-    }
-    .nav { display: flex; gap: 10px; flex-wrap: wrap; }
-    .nav a {
-      text-decoration: none;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(17, 17, 17, 0.04);
-      border: 1px solid rgba(17, 17, 17, 0.08);
-      font-size: 0.95rem;
-    }
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-      gap: 28px;
-      padding: 34px;
-      border-radius: var(--radius-lg);
-      margin-bottom: 22px;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: rgba(17, 17, 17, 0.06);
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    h1 {
-      font-size: clamp(2.7rem, 4.4vw, 5rem);
-      line-height: 0.96;
-      margin: 18px 0;
-      max-width: 10ch;
-    }
-    p { margin: 0; line-height: 1.7; color: var(--muted); font-size: 1rem; }
-    .quote {
-      margin-top: 18px;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 1.12rem;
-    }
-    .ctaRow, .grid, .meta {
-      display: grid;
-      gap: 14px;
-    }
-    .ctaRow {
-      grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
-      margin-top: 24px;
-    }
-    .ctaRow a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 18px;
-      border-radius: 999px;
-      text-decoration: none;
-      font-weight: 700;
-      border: 1px solid var(--text);
-      background: var(--surface-strong);
-    }
-    .ctaRow a.primary { background: var(--text); color: #ffffff; }
-    .meta {
-      align-content: start;
-      padding: 24px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, var(--surface-strong) 0%, #f5efe8 100%);
-      border: 1px solid rgba(17, 17, 17, 0.08);
-    }
-    .meta img { width: min(100%, 360px); height: auto; aspect-ratio: var(--logo-aspect); }
-    .metaCard {
-      padding: 18px;
-      border-radius: 18px;
-      background: rgba(17, 17, 17, 0.04);
-      border: 1px solid rgba(17, 17, 17, 0.08);
-    }
-    .metaCard strong { display: block; margin-bottom: 8px; font-size: 1rem; }
-    .section {
-      margin-top: 22px;
-      padding: 28px;
-      border-radius: var(--radius-lg);
-    }
-    .section h2 {
-      margin: 0 0 12px;
-      font-size: clamp(1.7rem, 2.2vw, 2.3rem);
-    }
-    .sectionHead {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: end;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .grid {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-    .card {
-      padding: 22px;
-      border-radius: var(--radius-md);
-      background: var(--surface-strong);
-      border: 1px solid var(--border);
-      display: grid;
-      gap: 10px;
-    }
-    .card h3, .card strong { margin: 0; font-size: 1.05rem; color: var(--text); }
-    .chipRow { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chip {
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      font-size: 0.92rem;
-      color: var(--muted);
-    }
-    .shots {
-      display: grid;
-      gap: 18px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    }
-    .shots img {
-      width: 100%;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: #ffffff;
-      box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
-    }
-    .footer {
-      margin-top: 22px;
-      padding: 22px 24px;
-      border-radius: 24px;
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      color: var(--muted);
-    }
-    .footerLinks { display: flex; gap: 12px; flex-wrap: wrap; }
-    .footerLinks a { text-decoration: none; color: var(--text); }
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .topbar { border-radius: 24px; }
-    }
-    @media (max-width: 640px) {
-      main { padding: 16px 14px 56px; }
-      .topbar, .hero, .section, .footer { padding-left: 18px; padding-right: 18px; }
-      h1 { max-width: none; }
-      .brand { flex-direction: column; align-items: flex-start; }
-      .brand img { width: min(280px, 100%); }
-    }
-  </style>
+  <title>Fieldgrade | Evidence governance for audit-ready technical work</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
     <header class="topbar">
       <div class="brand">
         <img src="brand/fieldgrade-logo.svg" alt="Fieldgrade logo" width="960" height="380">
-        <span>Evidence layer for modern operations</span>
+        <span>Evidence governance software</span>
       </div>
       <nav class="nav" aria-label="Fieldgrade links">
+        <a href="#features">Features</a>
         <a href="#products">Products</a>
-        <a href="#proof">Proof stack</a>
-        <a href="#screens">Screens</a>
-        <a href="#assets">Repository assets</a>
+        <a href="#demo">Demo</a>
+        <a href="#trust">Trust</a>
+        <a href="docs/index.html">Docs</a>
+        <a href="pricing/index.html">Pricing</a>
       </nav>
     </header>
 
     <section class="hero">
       <div>
-        <div class="eyebrow">Fieldgrade ProofOps</div>
-        <h1>Capture evidence. Seal provenance. Ship audit-ready proof.</h1>
-        <p>Fieldgrade gives technical and regulated teams a branded workspace for the operational evidence they already create: spreadsheets, PDFs, screenshots, supplier files, QA notes, and AI-assisted work. The result is sealed, reviewable, replayable proof without dragging a heavyweight ERP into the loop.</p>
-        <p class="quote">SAP runs the transaction layer; Fieldgrade proves the evidence layer.</p>
+        <div class="eyebrow">Fieldgrade public doctrine</div>
+        <h1>Evidence governance for audit-ready technical work.</h1>
+        <p class="lead">Fieldgrade helps teams capture files, seal provenance, review decisions, govern AI-assisted work, and export proof packs without deploying a heavyweight ERP or QMS.</p>
+        <p class="quote">Show the proof layer. Occlude the complexity layer.</p>
         <div class="ctaRow">
-          <a class="primary" href="https://github.com/Xenologo/Fieldgrade/blob/main/README.md">Read the Fieldgrade README</a>
-          <a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/FIELDGRADE_PROOFOPS_POSITIONING.md">See ProofOps positioning</a>
+          <a class="primary" href="demo/index.html">Download Demo</a>
+          <a href="pricing/index.html#custom-setup">Book Custom Setup</a>
         </div>
       </div>
       <aside class="meta">
         <img src="brand/fieldgrade-logo.svg" alt="" width="960" height="380" aria-hidden="true">
         <div class="metaCard">
-          <strong>First paid offer</strong>
-          <p>Fieldgrade ProofOps Setup packages a branded workspace, one customer workflow pack, one export template, one demo dataset, and guided rollout support.</p>
+          <strong>What buyers should see first</strong>
+          <p>Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.</p>
         </div>
         <div class="metaCard">
-          <strong>Built for the messy edge</strong>
-          <p>Review trails, supplier evidence, AI outputs, deviations, screenshots, and audit packs all stay tied to provenance and human review.</p>
+          <strong>Calm public surface</strong>
+          <p>Fieldgrade presents usable workflows, explicit review, accountable AI records, and local control before any internal implementation detail.</p>
+        </div>
+        <div class="metaCard">
+          <strong>Brand note</strong>
+          <p>The Fieldgrade mark combines a digital address, a trace line, and a field organism: evidence that moves carefully and leaves a verifiable trail.</p>
         </div>
       </aside>
+    </section>
+
+    <section class="section" id="features">
+      <div class="sectionHead">
+        <div>
+          <h2>What Fieldgrade does</h2>
+          <p>Public-facing features should feel immediately usable, practical, and audit-ready.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Evidence Capture</h3>
+          <p>Upload PDFs, images, spreadsheets, screenshots, certificates, notes, and operational records.</p>
+        </article>
+        <article class="card">
+          <h3>Provenance Sealing</h3>
+          <p>Create timestamped, hash-linked evidence histories that show what changed and when.</p>
+        </article>
+        <article class="card">
+          <h3>Review Workflow</h3>
+          <p>Stage, approve, reject, quarantine, or export records through a controlled review process.</p>
+        </article>
+        <article class="card">
+          <h3>Audit Pack Export</h3>
+          <p>Generate structured proof packs for QA, compliance, investigations, suppliers, or AI-use audits.</p>
+        </article>
+        <article class="card">
+          <h3>AI Accountability</h3>
+          <p>Record prompts, outputs, model context, reviewer decisions, and human approval status.</p>
+        </article>
+        <article class="card">
+          <h3>Local-First Governance</h3>
+          <p>Run locally, retain control, and avoid unnecessary SaaS exposure for sensitive evidence.</p>
+        </article>
+      </div>
     </section>
 
     <section class="section" id="products">
       <div class="sectionHead">
         <div>
-          <h2>Commercial product shape</h2>
-          <p>One evidence substrate, packaged into buyer-facing offers that can be deployed quickly.</p>
+          <h2>Product variants</h2>
+          <p>Each variant keeps the promise clear and keeps deep internal mechanics behind the public surface.</p>
         </div>
         <div class="chipRow">
+          <span class="chip">Core</span>
           <span class="chip">ProofOps</span>
           <span class="chip">GovAI</span>
           <span class="chip">FoodQA</span>
-          <span class="chip">Enterprise Bridge</span>
         </div>
       </div>
-      <div class="grid">
+      <div class="grid two">
         <article class="card">
-          <h3>ProofOps</h3>
-          <p>Evidence timelines, review workflow, operator dashboards, and audit packs for technical teams.</p>
+          <h3>Fieldgrade Core</h3>
+          <p>The evidence and provenance engine beneath the Fieldgrade product family.</p>
+          <a class="button" href="products/core.html">View Core</a>
         </article>
         <article class="card">
-          <h3>GovAI</h3>
-          <p>AI-use registers, prompt and output evidence, review gates, and accountability-ready exports.</p>
+          <h3>Fieldgrade ProofOps</h3>
+          <p>Turn messy operational evidence into reviewable, exportable proof.</p>
+          <a class="button" href="products/proofops.html">View ProofOps</a>
         </article>
         <article class="card">
-          <h3>FoodQA</h3>
-          <p>Batch records, deviations, calibration evidence, supplier artefacts, CAPA context, and audit readiness.</p>
+          <h3>Fieldgrade GovAI</h3>
+          <p>Govern AI-assisted work with evidence, review, and accountability.</p>
+          <a class="button" href="products/govai.html">View GovAI</a>
         </article>
         <article class="card">
-          <h3>Enterprise Bridge</h3>
-          <p>Adapters, APIs, and import/export rails so Fieldgrade can sit beside existing QMS and ERP estates.</p>
+          <h3>Fieldgrade FoodQA</h3>
+          <p>Audit-ready evidence control for food, beverage, QA, and production teams.</p>
+          <a class="button" href="products/foodqa.html">View FoodQA</a>
         </article>
       </div>
     </section>
 
-    <section class="section" id="proof">
+    <section class="section" id="demo">
       <div class="sectionHead">
         <div>
-          <h2>Why buyers look at Fieldgrade</h2>
-          <p>The repository already ships the technical substrate behind the commercial story.</p>
+          <h2>ProofOps demo journey</h2>
+          <p>One beautiful journey: from messy file to audit pack.</p>
+        </div>
+        <a class="button" href="demo/index.html">Open demo page</a>
+      </div>
+      <div class="steps">
+        <article class="step">
+          <strong>Upload a document</strong>
+          <p>Start with a file such as <samp>Supplier_COA_Batch_118.pdf</samp>.</p>
+        </article>
+        <article class="step">
+          <strong>Register the evidence</strong>
+          <p>Show object ID, file name, evidence type, source, uploader, timestamp, SHA-256 fingerprint, and review state.</p>
+        </article>
+        <article class="step">
+          <strong>Add supporting evidence</strong>
+          <p>Attach a screenshot, spreadsheet, operator note, deviation comment, or AI-assisted summary.</p>
+        </article>
+        <article class="step">
+          <strong>Seal the bundle</strong>
+          <p>Display the bundle ID, canonical hash, manifest, included files, and provenance event chain.</p>
+        </article>
+        <article class="step">
+          <strong>Review the record</strong>
+          <p>Use public states: Raw, Witnessed, Pending Review, Approved, Rejected, Quarantined, and Exported.</p>
+        </article>
+        <article class="step">
+          <strong>Export the proof pack</strong>
+          <p>Deliver a PDF audit report, ZIP evidence bundle, JSON manifest, provenance log, and reviewer decision record.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="trust">
+      <div class="sectionHead">
+        <div>
+          <h2>Trust by design</h2>
+          <p>Fieldgrade needs trust signals before it needs grand claims.</p>
         </div>
       </div>
       <div class="grid">
         <article class="card">
-          <strong>Messy evidence in many places</strong>
-          <p>Spreadsheets, emailed PDFs, screenshots, local folders, operator notes, and supplier evidence become attributable objects.</p>
+          <strong>How Fieldgrade handles evidence</strong>
+          <p>Files are captured, records are fingerprinted, events are chained, review status is explicit, and exports are reproducible.</p>
         </article>
         <article class="card">
-          <strong>Deterministic proof chain</strong>
-          <p>Content-addressed storage, hash-chained provenance, replay, verification, and signed bundles hold the line on evidence integrity.</p>
+          <strong>Human review by design</strong>
+          <p>Fieldgrade separates capture, analysis, review, and approval. Evidence may be ingested automatically, but authority remains explicit.</p>
         </article>
         <article class="card">
-          <strong>Governed review</strong>
-          <p>Policy-backed review modes preserve human decisions instead of burying them in disconnected documents.</p>
+          <strong>Local-first by default</strong>
+          <p>Sensitive evidence should not need to leave your machine just to become organised.</p>
         </article>
         <article class="card">
-          <strong>Export-ready outputs</strong>
-          <p>Audit packs, timelines, and sector-specific deliverables are ready from day one instead of rebuilt by hand at the end.</p>
+          <strong>Accountable AI use</strong>
+          <p>Fieldgrade does not ask you to trust AI. It gives you the record structure to govern AI.</p>
+        </article>
+      </div>
+      <div class="ctaRow">
+        <a href="security/index.html">Security &amp; responsible AI-use</a>
+        <a href="docs/index.html">Public docs</a>
+      </div>
+    </section>
+
+    <section class="section" id="ui">
+      <div class="sectionHead">
+        <div>
+          <h2>Public workspace language</h2>
+          <p>Use clear navigation and dashboard labels on the buyer-facing surface.</p>
+        </div>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <strong>Navigation</strong>
+          <div class="chipRow">
+            <span class="chip">Dashboard</span>
+            <span class="chip">Evidence</span>
+            <span class="chip">Reviews</span>
+            <span class="chip">Proof Packs</span>
+            <span class="chip">AI Register</span>
+            <span class="chip">Templates</span>
+            <span class="chip">Reports</span>
+            <span class="chip">Settings</span>
+          </div>
+        </article>
+        <article class="card">
+          <strong>Dashboard widgets</strong>
+          <div class="chipRow">
+            <span class="chip">Evidence Captured</span>
+            <span class="chip">Pending Reviews</span>
+            <span class="chip">Quarantined Items</span>
+            <span class="chip">Approved Proof Packs</span>
+            <span class="chip">AI-Assisted Records</span>
+            <span class="chip">Export Readiness</span>
+            <span class="chip">Recent Provenance Events</span>
+            <span class="chip">Audit Pack Health</span>
+            <span class="chip">Unsealed Evidence</span>
+            <span class="chip">Missing Reviewer Notes</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="packs">
+      <div class="sectionHead">
+        <div>
+          <h2>Proof pack examples and future occlusion modes</h2>
+          <p>Prove what happened. Protect what should not be exposed.</p>
+        </div>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <strong>Sample proof packs</strong>
+          <ul class="clean">
+            <li>FoodQA deviation proof pack</li>
+            <li>GovAI prompt/output review pack</li>
+            <li>Supplier evidence pack</li>
+            <li>Technical investigation pack</li>
+            <li>Procurement decision pack</li>
+          </ul>
+        </article>
+        <article class="card">
+          <strong>Later export modes</strong>
+          <ul class="clean">
+            <li>Full Evidence Pack</li>
+            <li>Internal Review Pack</li>
+            <li>External Audit Pack</li>
+            <li>Client-Safe Pack</li>
+            <li>Public Demonstration Pack</li>
+          </ul>
         </article>
       </div>
     </section>
@@ -317,37 +263,24 @@
     <section class="section" id="screens">
       <div class="sectionHead">
         <div>
-          <h2>Illustrative screenshots</h2>
-          <p>Current product visuals for the buyer-facing landing page.</p>
+          <h2>Screenshots</h2>
+          <p>Illustrative visuals for the buyer-facing product story.</p>
         </div>
       </div>
       <div class="shots">
         <img src="screenshots/proofops-overview.svg" alt="ProofOps overview illustration">
-        <img src="screenshots/foodqa-pack.svg" alt="FoodQA pack illustration">
-      </div>
-    </section>
-
-    <section class="section" id="assets">
-      <div class="sectionHead">
-        <div>
-          <h2>Repository assets</h2>
-          <p>Use the monorepo materials to support demos, positioning, and implementation.</p>
-        </div>
-      </div>
-      <div class="grid">
-        <article class="card"><strong>Positioning &amp; docs</strong><p><a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/FIELDGRADE_PROOFOPS_POSITIONING.md">ProofOps positioning</a> · <a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/FOODQA_PACK.md">FoodQA pack</a> · <a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/GOVAI_PACK.md">GovAI pack</a></p></article>
-        <article class="card"><strong>Sample workflows</strong><p><a href="https://github.com/Xenologo/Fieldgrade/blob/main/examples/foodqa_demo/README.md">FoodQA demo</a> · <a href="https://github.com/Xenologo/Fieldgrade/blob/main/examples/govai_demo/README.md">GovAI demo</a></p></article>
-        <article class="card"><strong>Export examples</strong><p><a href="https://github.com/Xenologo/Fieldgrade/blob/main/exports/sample_audit_pack/README.md">Sample audit pack</a> · <a href="https://github.com/Xenologo/Fieldgrade/blob/main/exports/sample_evidence_bundle/README.md">Sample evidence bundle</a></p></article>
-        <article class="card"><strong>Demo data</strong><p><a href="https://github.com/Xenologo/Fieldgrade/blob/main/site/demo-data/foodqa_batch_events.csv">FoodQA batch events</a> · <a href="https://github.com/Xenologo/Fieldgrade/blob/main/site/demo-data/govai_system_register.json">GovAI system register</a></p></article>
+        <img src="screenshots/foodqa-pack.svg" alt="FoodQA proof pack illustration">
       </div>
     </section>
 
     <footer class="footer">
-      <div>Fieldgrade is the missing evidence layer for modern operations.</div>
+      <div>Fieldgrade publicly appears as a calm, elegant, practical evidence-governance product.</div>
       <div class="footerLinks">
-        <a href="https://github.com/Xenologo/Fieldgrade/blob/main/README.md">README</a>
-        <a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/REPO_OVERVIEW.md">Repo overview</a>
-        <a href="https://github.com/Xenologo/Fieldgrade/blob/main/docs/DEPLOY_LOCAL.md">Deploy local</a>
+        <a href="products/core.html">Core</a>
+        <a href="demo/index.html">Demo</a>
+        <a href="docs/index.html">Docs</a>
+        <a href="security/index.html">Security</a>
+        <a href="pricing/index.html">Pricing</a>
       </div>
     </footer>
   </main>
