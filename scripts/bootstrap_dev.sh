@@ -15,7 +15,8 @@ fi
 
 "$PY_BIN" -m pip install -U pip uv
 UV_PROJECT_ENVIRONMENT="${VENV_DIR:-$ROOT_DIR/.venv}" uv sync --frozen --group dev
+VENV_PYTHON="${VENV_DIR:-$ROOT_DIR/.venv}/bin/python"
 
 echo "[bootstrap_dev] OK"
 echo "- venv: ${VENV_DIR:-.venv}"
-echo "- python: $("$ROOT_DIR/.venv/bin/python" -c 'import sys; print(sys.executable)')"
+echo "- python: $("${VENV_PYTHON}" -c 'import sys; print(sys.executable)')"

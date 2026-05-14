@@ -10,7 +10,7 @@ WORKDIR /app
 # Base deps first for better layer caching
 COPY requirements.lock ./
 
-RUN python -m pip install -U pip \
+RUN python -m pip install pip==26.1.1 \
   && python -m pip install -r requirements.lock
 
 # Install packages (editable so entrypoints + imports are consistent)

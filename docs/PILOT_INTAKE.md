@@ -43,10 +43,10 @@ A pilot is qualified when the buyer can point to one workflow that should end in
 
 ## First deliverable checklist
 
-- one installed workspace
-- one branded workspace context
-- one workflow pack
-- one export template
-- one demo dataset
-- one guided training session
-- one agreed proof-pack example
+- Installed workspace
+- Branded workspace context
+- Workflow pack
+- Export template
+- Demo dataset
+- Guided training session
+- Agreed proof-pack example
