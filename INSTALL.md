@@ -28,7 +28,14 @@ Recommended for pilot evaluation on a developer workstation or single host.
 
    ```bash
    curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
-   docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -c "from pathlib import Path; from mite_ecology.db import connect, init_db; db_path = Path('/app/mite_ecology/runtime/mite_ecology.sqlite'); db_path.parent.mkdir(parents=True, exist_ok=True); con = connect(db_path); init_db(con, Path('/app/mite_ecology/sql/schema.sql'))"
+   docker compose -f compose.yaml -f compose.dev.yaml exec -T web python - <<'PY'
+   from pathlib import Path
+   from mite_ecology.db import connect, init_db
+   db_path = Path("/app/mite_ecology/runtime/mite_ecology.sqlite")
+   db_path.parent.mkdir(parents=True, exist_ok=True)
+   con = connect(db_path)
+   init_db(con, Path("/app/mite_ecology/sql/schema.sql"))
+   PY
    curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
    ```
 

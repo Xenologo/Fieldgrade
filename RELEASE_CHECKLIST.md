@@ -21,7 +21,7 @@ Use this checklist before publishing a pilot or alpha release.
 - [ ] `export FG_API_TOKEN=demo-local-token`
 - [ ] `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
 - [ ] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz`
-- [ ] `docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -c "from pathlib import Path; from mite_ecology.db import connect, init_db; db_path = Path('/app/mite_ecology/runtime/mite_ecology.sqlite'); db_path.parent.mkdir(parents=True, exist_ok=True); con = connect(db_path); init_db(con, Path('/app/mite_ecology/sql/schema.sql'))"`
+- [ ] Initialize the first-run readiness DB as documented in `INSTALL.md` if `/readyz` is still `503`
 - [ ] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz`
 - [ ] `docker compose -f compose.yaml -f compose.dev.yaml down`
 
