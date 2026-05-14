@@ -265,7 +265,7 @@ class GovernanceLedger:
         review = self._review_posture(record)
         gap_count = int(crosswalk.get("gap_count") or 0)
         export_status = record.get("export_status") if isinstance(record.get("export_status"), dict) else {}
-        export_total = max(len(export_status), len(EXPORT_KINDS))
+        export_total = len(EXPORT_KINDS)
         exports_ready = sum(1 for value in export_status.values() if value)
         all_exports_ready = export_total > 0 and exports_ready == export_total
         controls = record.get("controls") if isinstance(record.get("controls"), list) else []
@@ -366,7 +366,10 @@ class GovernanceLedger:
         completeness_score = 0.0
         if stats["total_obligations"] > 0:
             completeness_score = stats["satisfied_obligations"] / stats["total_obligations"]
-        review_score = {"scheduled": 1.0, "due_soon": 0.6, "overdue": 0.0, "unscheduled": 0.25}[review["state"]]
+        review_score = {"scheduled": 1.0, "due_soon": 0.6, "overdue": 0.0, "unscheduled": 0.25}.get(
+            str(review.get("state") or ""),
+            0.0,
+        )
         score = int(round((completeness_score * 70.0) + ((exports_ready / export_total) * 20.0) + (review_score * 10.0)))
 
         readiness_status = "attention_required"
