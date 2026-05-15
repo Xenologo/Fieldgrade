@@ -27,7 +27,7 @@ Fieldgrade combines local-first evidence capture, claim-to-evidence linking, adm
 ## Target users
 
 - Founders and small teams preparing Innovate UK, UKRI, accelerator, or investor submissions.
-- R&amp;D consultants and grant writers packaging client evidence into coherent appendices.
+- R&D consultants and grant writers packaging client evidence into coherent appendices.
 - AI teams that need structured evidence for governance, audit, or compliance review.
 - Research and prototype teams that need provenance and reproducibility support without replacing existing tools.
 - University spinouts, SMEs, and partner consortia assembling defensible technical due-diligence material.

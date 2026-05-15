@@ -28,11 +28,11 @@ The repository already contains local-first evidence tooling, a FastAPI UI/API s
 
 Fieldgrade is best positioned as:
 
-- a proposal-readiness evidence layer for grant-funded innovators,
-- an evidence and audit layer for frontier-AI discovery or benchmark workflows,
-- a local-first provenance substrate for AI-governance review,
-- a reusable evidence layer for investor diligence and partner review, and
-- a controlled extension path for future research-lab and advanced-materials demonstrators.
+- proposal-readiness evidence layer for grant-funded innovators,
+- evidence and audit layer for frontier-AI discovery or benchmark workflows,
+- local-first provenance substrate for AI-governance review,
+- reusable evidence layer for investor diligence and partner review, and
+- controlled extension path for future research-lab and advanced-materials demonstrators.
 
 ## Responsible claim boundary
 

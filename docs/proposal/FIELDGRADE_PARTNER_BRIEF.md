@@ -7,7 +7,7 @@ Fieldgrade offers a local-first evidence and provenance demonstrator for teams t
 ## Best-fit partners
 
 - SMEs preparing funding bids, assurance packs, or investor diligence material.
-- Grant writers or R&amp;D consultants managing multi-document submissions.
+- Grant writers or R&D consultants managing multi-document submissions.
 - AI teams that need accountable evidence for governance or audit review.
 - Universities, spinouts, or RTOs coordinating multi-partner evidence packs.
 - Research and prototype teams needing provenance and reproducibility support.
