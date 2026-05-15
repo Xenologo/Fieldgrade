@@ -1,0 +1,1 @@
+{"record_id":"FG-RESOURCE-001","title":"Synthetic Fieldgrade demo resource","source_type":"synthetic_jsonl","provenance_note":"Small public synthetic resource used by run_demo.sh so the local demo has an ingestible second artifact.","created_at":"2026-05-15T00:00:00Z"}

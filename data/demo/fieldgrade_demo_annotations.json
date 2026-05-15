@@ -1,0 +1,32 @@
+[
+  {
+    "annotation_id": "FG-ANN-001",
+    "object_id": "FG-DEMO-001",
+    "author_type": "human",
+    "created_at": "2026-05-15T00:20:00Z",
+    "admissibility_tier": "controlled_extension",
+    "review_state": "annotated",
+    "content": "Object suitable for demonstrating provenance capture and benchmark trace review.",
+    "human_readable_explanation": "Reviewer confirms this is a synthetic benchmark-governance example, not a measured benchmark result."
+  },
+  {
+    "annotation_id": "FG-ANN-002",
+    "object_id": "FG-DEMO-002",
+    "author_type": "human",
+    "created_at": "2026-05-15T00:25:00Z",
+    "admissibility_tier": "audit_only",
+    "review_state": "annotated",
+    "content": "AI-generated claim must remain audit-only until external sources and methodology are reviewed.",
+    "human_readable_explanation": "Shows how Fieldgrade can separate AI assistance from approved evidence."
+  },
+  {
+    "annotation_id": "FG-ANN-003",
+    "object_id": "FG-DEMO-003",
+    "author_type": "human",
+    "created_at": "2026-05-15T00:30:00Z",
+    "admissibility_tier": "audit_only",
+    "review_state": "reviewed",
+    "content": "Useful as a proposal example only; not a real experimental result.",
+    "human_readable_explanation": "Keeps materials-demo language controlled and avoids unsupported scientific claims."
+  }
+]

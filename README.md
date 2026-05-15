@@ -538,3 +538,36 @@ http://127.0.0.1:8787/
 ## Android (Termux)
 
 See `TERMUX.md` for a Termux-native install and run flow (including scripts).
+
+## Local setup for the proposal-ready demonstrator
+
+Fieldgrade now includes a proposal-readiness pack for funder and RFP review. The pack is grounded in the existing local-first evidence runtime and adds synthetic frontier-AI, research-agent, and advanced-materials demo records.
+
+From the repository root, refresh and validate the proposal demo assets:
+
+```bash
+python scripts/generate_demo_manifest.py
+python scripts/check_proposal_readiness.py
+```
+
+Key proposal-readiness paths:
+
+- Proposal pack: `docs/proposal/`
+- Synthetic demo data: `data/demo/`
+- Proposal output landing area: `outputs/proposal_pack/`
+- Readiness validation: `scripts/check_proposal_readiness.py`
+
+For the full local CLI demonstration, use the existing run path:
+
+```bash
+./run_demo.sh
+```
+
+For the local UI/API path after installing the workspace, initialise and serve Fieldgrade:
+
+```bash
+python -m fieldgrade_ui init
+python -m fieldgrade_ui serve
+```
+
+The proposal demo data is synthetic. Treat Fieldgrade as a proposal-ready demonstrator unless a partner deployment, security review, and domain validation support stronger production claims.

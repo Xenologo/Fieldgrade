@@ -1,0 +1,47 @@
+[
+  {
+    "object_id": "FG-DEMO-001",
+    "title": "Synthetic frontier-AI benchmark task trace",
+    "source_type": "synthetic_json",
+    "domain": "frontier_ai_benchmarking",
+    "provenance_note": "Synthetic demo object created for Fieldgrade proposal-readiness testing; not a real benchmark result.",
+    "ingestion_timestamp": "2026-05-15T00:00:00Z",
+    "claim_status": "demonstrator",
+    "admissibility_tier": "controlled_extension",
+    "review_state": "ingested",
+    "evidence_status": "synthetic_demo",
+    "review_status": "awaiting_human_review",
+    "risk_flags": [],
+    "human_readable_explanation": "Shows how a benchmark task trace can carry provenance, review state, and admissibility metadata before export."
+  },
+  {
+    "object_id": "FG-DEMO-002",
+    "title": "Synthetic research-agent output review",
+    "source_type": "synthetic_agent_trace",
+    "domain": "frontier_ai_discovery",
+    "provenance_note": "Synthetic record for demonstrating human review of an AI-generated research claim; no live model output is used.",
+    "ingestion_timestamp": "2026-05-15T00:05:00Z",
+    "claim_status": "requires_review",
+    "admissibility_tier": "audit_only",
+    "review_state": "annotated",
+    "evidence_status": "synthetic_demo",
+    "review_status": "human_review_required",
+    "risk_flags": ["ai_generated_claim", "requires_source_validation"],
+    "human_readable_explanation": "Demonstrates that AI-assisted claims remain audit-only until a reviewer verifies sources and limitations."
+  },
+  {
+    "object_id": "FG-DEMO-003",
+    "title": "Synthetic advanced-materials batch record",
+    "source_type": "synthetic_lab_record",
+    "domain": "advanced_materials",
+    "provenance_note": "Synthetic record for demonstrating experiment-batch evidence tracking; not a real experimental result.",
+    "ingestion_timestamp": "2026-05-15T00:10:00Z",
+    "claim_status": "demonstrator",
+    "admissibility_tier": "audit_only",
+    "review_state": "reviewed",
+    "evidence_status": "synthetic_demo",
+    "review_status": "proposal_example_only",
+    "risk_flags": ["requires_real_lab_validation"],
+    "human_readable_explanation": "Illustrates batch-provenance fields that could later be connected to real lab records, microscopy, QA, or sensor data."
+  }
+]
