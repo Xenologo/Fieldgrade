@@ -20,7 +20,7 @@ Fieldgrade is a Python monorepo with existing documentation, deployment guides, 
 ## Existing entry points inspected
 
 - `README.md` documents bootstrap, test, CLI, UI, Docker Compose, and end-to-end demo paths.
-- `site/landing.html`, `site/setup/index.html`, `site/contact/index.html`, `site/pricing/index.html`, and `site/products/*.html` form the static buyer-facing conversion path for FoodQA-first ProofOps packaging.
+- `site/landing.html`, `site/setup/index.html`, `site/contact/index.html`, `site/pricing/index.html`, and `site/products/*.html` form the static buyer-facing conversion path for proposal-readiness and evidence-pack packaging.
 - `run_demo.sh` runs a local Termite plus mite_ecology demonstration in `.demo_runtime`.
 - `run_demo.ps1` provides the Windows demo route.
 - `fieldgrade_ui/__main__.py` exposes UI/API commands through `python -m fieldgrade_ui` and the installed console script.
@@ -37,6 +37,7 @@ Fieldgrade is a Python monorepo with existing documentation, deployment guides, 
 - Validation scripts under `scripts/`.
 - Root `AGENTS.md` with durable proposal-readiness instructions.
 - A small synthetic JSONL resource used by `run_demo.sh` as an ingestible demo artifact.
+- Refreshed public positioning pages that now lead with proposal-readiness, diligence, AI-governance, and research-traceability evidence packs.
 
 ## Readiness rubric
 
@@ -55,7 +56,7 @@ Scoring scale: 0 = absent, 1 = present but weak, 2 = usable, 3 = proposal-ready.
 
 ## Current readiness score
 
-22 out of 24. Fieldgrade is honestly describable as a proposal-ready demonstrator for evidence-governed frontier-AI research workflows.
+22 out of 24. Fieldgrade is honestly describable as a proposal-ready demonstrator for local-first evidence-pack workflows.
 
 ## Integrity check versus maturity rubric
 

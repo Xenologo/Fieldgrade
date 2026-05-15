@@ -1,6 +1,6 @@
 # Fieldgrade Proposal Pack
 
-This folder contains the funder-facing Fieldgrade proposal-readiness pack. It frames Fieldgrade as a proposal-ready demonstrator for evidence-governed frontier-AI research workflows, while keeping claims grounded in the repository's existing local-first evidence, provenance, review, and export capabilities.
+This folder contains the funder-facing Fieldgrade proposal-readiness pack. It frames Fieldgrade as a proposal-ready demonstrator for local-first evidence infrastructure, while keeping claims grounded in the repository's existing evidence, provenance, review, and export capabilities.
 
 ## Contents
 

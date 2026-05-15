@@ -1,70 +1,70 @@
 # Buyer personas
 
-## 1. QA or Technical Manager in food and beverage
+## 1. Proposal-ready deep-tech founder
 
 **Primary problem**
 
-Evidence for audits is spread across batch sheets, deviation notes, calibration certificates, supplier COAs, screenshots, and operator notebooks.
+Project evidence exists across screenshots, prototype videos, notes, datasets, GitHub commits, spreadsheets, and AI outputs, but there is no clean funder-ready structure.
 
 **What they need**
 
-- one place to gather audit evidence
-- clear review history
-- sealed provenance
-- fast export of an audit pack
+- a project evidence ledger
+- a claim-to-evidence matrix
+- milestone and risk registers
+- a local-first dossier they can show to funders or investors
 
 **Why Fieldgrade matters**
 
-Fieldgrade FoodQA turns batch and quality evidence into a timeline with review gates and export-ready proof.
+Fieldgrade turns project debris into a dated, claim-linked evidence dossier that is easier to defend in grant, investor, and partner conversations.
 
-## 2. Responsible AI or governance lead
+## 2. Grant writer or R&D consultant
 
 **Primary problem**
 
-AI system records, prompts, outputs, supplier claims, and review decisions are scattered across slides, spreadsheets, and email.
+Client evidence is scattered across folders, emails, diagrams, and rough notes. Every submission requires manual reconstruction.
 
 **What they need**
 
-- an AI-use register
-- prompt/output evidence capture
-- model and version recording
+- a repeatable proposal evidence pack workflow
+- clear provenance and review fields
+- exportable appendices and checklists
+- a serviceable setup that can be reused across clients
+
+**Why Fieldgrade matters**
+
+Fieldgrade gives consultants a structured way to package client evidence into coherent bid appendices, readiness packs, and audit-ready exports.
+
+## 3. Responsible AI or governance lead
+
+**Primary problem**
+
+AI system records, prompts, outputs, model changes, risk notes, and reviewer decisions are scattered across slides, spreadsheets, and chat logs.
+
+**What they need**
+
+- an AI evidence pack
+- prompt or workflow run capture
+- dataset and model provenance
 - human review sign-off
-- accountability exports
+- governance exports for audit or compliance review
 
 **Why Fieldgrade matters**
 
-Fieldgrade GovAI creates a reviewable evidence chain for AI-assisted work instead of relying on disconnected documents.
+Fieldgrade AI Governance creates a structured evidence chain for AI-assisted work without claiming automatic compliance or replacing human judgement.
 
-## 3. Operations or compliance lead in an SME
+## 4. Research or experimental team lead
 
 **Primary problem**
 
-Operational proof exists, but only in fragments. Every audit or customer request becomes a manual reconstruction exercise.
+Evidence for experiments, sources, annotations, and reviews is spread across folders, notebooks, instruments, and spreadsheets.
 
 **What they need**
 
-- lightweight governance without ERP-scale rollout
-- local-first deployment options
-- evidence templates
-- repeatable export packs
+- source and sample provenance
+- protocol and dataset lineage
+- reproducibility checklists
+- claim-to-evidence mapping for collaborators or funders
 
 **Why Fieldgrade matters**
 
-Fieldgrade ProofOps packages governance around existing working habits rather than forcing a full systems replacement.
-
-## 4. External consultant or implementation partner
-
-**Primary problem**
-
-Clients need a fast, credible governance layer with clear outputs and minimal implementation burden.
-
-**What they need**
-
-- a reusable setup offer
-- customer-specific templates
-- a domain pack they can demonstrate quickly
-- a tangible export the client can review
-
-**Why Fieldgrade matters**
-
-Fieldgrade ProofOps Setup can be sold as a short deployment with visible outputs from day one.
+Fieldgrade assembles a research witness pack beside existing tools instead of trying to replace the whole lab stack.

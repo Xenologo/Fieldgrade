@@ -2,37 +2,37 @@
 
 ## Short description
 
-Fieldgrade is a local-first evidence and provenance layer for frontier-AI research workflows. It helps teams convert research artifacts, benchmark slices, annotations, review decisions, AI-assisted outputs, and export manifests into auditable evidence bundles.
+Fieldgrade is a local-first evidence and provenance workbench for proposal readiness, audit readiness, AI governance support, research traceability, and technical due diligence. It helps teams convert scattered project artefacts into defensible evidence packs.
 
 ## Problem
 
-Frontier-AI research and autonomous discovery workflows produce many intermediate artifacts. Those artifacts are often hard to trace, review, reproduce, and reuse. Weak provenance reduces trust in benchmark datasets, slows proposal assembly, and makes audit or assurance evidence harder to defend.
+Founders, grant applicants, AI teams, and research groups produce many intermediate artefacts. Those artefacts are often hard to trace, review, reproduce, and reuse. Weak provenance reduces trust, slows proposal assembly, and makes audit or diligence evidence harder to defend.
 
 ## Solution
 
 Fieldgrade provides a structured evidence workflow:
 
-1. ingest source artifacts,
+1. ingest source artefacts,
 2. preserve provenance metadata,
 3. classify claim and admissibility status,
 4. record human and AI-use annotations,
 5. maintain review and audit trails,
-6. export reviewable evidence bundles, and
-7. support proposal, benchmark, and governance workflows.
+6. assemble registers and matrices, and
+7. export reviewable evidence bundles.
 
 ## Demonstrator status
 
-The repository already contains local-first evidence tooling, a FastAPI UI/API shell, provenance-oriented Termite Fieldpack workflows, review and analysis support in mite_ecology, schemas, deployment guides, and sample export materials. This proposal pack adds a synthetic frontier-AI and research-governance demo dataset plus validation scripts so the repo can be reviewed as a proposal-ready demonstrator.
+The repository already contains local-first evidence tooling, a FastAPI UI/API shell, provenance-oriented Termite Fieldpack workflows, review and analysis support in mite_ecology, schemas, deployment guides, and sample export materials. This proposal pack adds a synthetic evidence-pack demo dataset plus validation scripts so the repo can be reviewed as a proposal-ready demonstrator.
 
 ## Best funding framing
 
 Fieldgrade is best positioned as:
 
-- a FAIR benchmark governance layer for Frontier AI Benchmarking Datasets,
-- an evidence and audit layer for Frontier AI Discovery workflows,
-- a local-first provenance substrate for research-agent review,
-- a reusable evidence layer for future advanced-materials demonstrators, and
-- a partner-friendly infrastructure component for university, RTO, SME, and KTP routes.
+- a proposal-readiness evidence layer for grant-funded innovators,
+- an evidence and audit layer for frontier-AI discovery or benchmark workflows,
+- a local-first provenance substrate for AI-governance review,
+- a reusable evidence layer for investor diligence and partner review, and
+- a controlled extension path for future research-lab and advanced-materials demonstrators.
 
 ## Responsible claim boundary
 

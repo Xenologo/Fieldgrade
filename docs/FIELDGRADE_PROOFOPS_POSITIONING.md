@@ -2,68 +2,88 @@
 
 ## Core statement
 
-**Fieldgrade ProofOps** is an evidence-governance workspace for technical and regulated teams that need to turn messy operational evidence into sealed, reviewable, replayable, exportable proof.
+**Fieldgrade** is a local-first evidence infrastructure workspace for small R&D, AI, grant-funded, and regulated innovation teams that need to turn messy project artefacts into defensible evidence packs.
 
-> **Show the proof layer. Occlude the complexity layer.**
+> **Turn project chaos into funder-ready evidence.**
 
 Public-facing positioning should lead with the usable workflow:
 
-> **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
+> **Capture evidence. Witness provenance. Review claims. Export defensible dossiers.**
+
+## Commercial wedge
+
+Fieldgrade should not be positioned as broad “general provenance software.” Its strongest initial wedge is evidence-pack generation for teams that need to prove:
+
+- what happened
+- when it happened
+- who touched it
+- what files, data, or models were involved
+- why the resulting claim is credible
 
 ## What buyers are really purchasing
 
-Buyers are not purchasing another general ERP. They are purchasing a way to:
+Buyers are not purchasing provenance philosophically. They are purchasing:
 
-- capture files, notes, screenshots, and supplier evidence
-- seal provenance from the first operational touchpoint
-- route evidence through controlled review stages
-- retain accountability for AI-assisted analysis
-- export an audit-ready pack without rebuilding the story by hand
+- fundability
+- credibility
+- proposal readiness
+- audit preparedness
+- technical due-diligence order
+- less panic before submissions
+- a professional evidence trail
 
-## Product promise
+## Best beachhead
 
-Fieldgrade ProofOps gives small and mid-sized regulated teams a lightweight evidence-governance layer for:
+Start with grant-funded innovators and proposal-prep teams:
 
-- evidence capture
-- provenance sealing
-- review workflow
-- AI accountability
-- audit-pack generation
+- independent inventors or micro-R&D teams
+- Innovate UK or UKRI applicants
+- university spinouts
+- deep-tech pre-seed startups
+- R&D consultants and bid writers
 
-It should be described publicly as audit-supporting, compliance-supporting, provenance-focused, and human-reviewed.
+## Visible outputs
 
-## Best-fit use cases
+The first commercial offer should make the deliverable obvious:
 
-Fieldgrade ProofOps is strongest when teams currently depend on:
+- project evidence ledger
+- claim-to-evidence matrix
+- milestone register
+- risk and assumption register
+- data-management mini-plan
+- exportable PDF, DOCX, or ZIP dossier
 
-- spreadsheets
-- emailed PDFs
-- local folders
-- screenshots
-- instrument files
-- manual QA notes
-- supplier records
-- technical investigation packs
-- AI-assisted summaries that need human review
+## Product ladder
+
+- **Fieldgrade Lite** — local project vault, artefact capture, claim ledger, basic export
+- **Fieldgrade Proposal** — claim-to-evidence matrix, milestone register, risk register, proposal appendix generation
+- **Fieldgrade AI Governance** — prompt or workflow ledger, model and dataset registry, human review log, evaluation evidence bundle
+- **Fieldgrade Lab** — protocol registry, sample provenance, dataset lineage, reproducibility checklist
+- **Fieldgrade Diligence Room** — investor or funder evidence room, artefact index, red-team critique, audit-trail export
 
 ## Commercial packaging
 
-The first sellable offer should stay narrow:
+Lead with a productised service before pure SaaS:
 
-**Fieldgrade ProofOps Setup**
+**Fieldgrade Proposal Readiness Sprint**
 
-- local installation
-- branded workspace
-- one seeded dataset
-- one customer-specific evidence template
-- one audit-pack export template
-- one workflow pack
-- setup and training session
-- optional support retainer
+- suggested range £750–£2,500 depending on depth
+- input: messy project folder, notes, diagrams, screenshots, data, code, and links
+- output: evidence dossier, claim-to-evidence matrix, risk register, missing-evidence checklist, proposal appendix pack, and structured project vault
 
-## Product family fit
+Later software pricing can support:
 
-- **Fieldgrade Core** supplies the evidence, provenance, sealing, verification, and export substrate.
-- **Fieldgrade ProofOps** turns Core into the first commercial workspace for reviewable operational proof.
-- **Fieldgrade GovAI** applies the same substrate to AI registers, prompt/output evidence, and accountability reports.
-- **Fieldgrade FoodQA** applies the same substrate to batches, deviations, CAPA, supplier evidence, and audit readiness.
+- free local capture
+- founder solo tier (£19–£39/month suggested)
+- small team tier (£99–£199/month suggested)
+- diligence-room build or custom setup (£2,500–£10,000 suggested)
+
+## Secondary routes
+
+- **AI governance and audit evidence** for SMEs that need structured records without claiming legal compliance
+- **Research witness packs** for labs and experimental teams that need provenance and reproducibility support beside existing ELNs
+- **Sector packs** such as FoodQA or advanced-materials when a vertical template helps close a buyer quickly
+
+## Claim boundary
+
+Fieldgrade should be described publicly as proposal-ready, audit-ready, provenance-preserving, local-first, and human-reviewable. It should not be described as a full ERP, full enterprise GRC suite, automated compliance system, or legal certification layer.

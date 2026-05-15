@@ -5,30 +5,32 @@
 [![License](https://img.shields.io/github/license/Xenologo/Fieldgrade)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-**Turn messy operational evidence into audit-ready proof packs.** Fieldgrade is a local-first ProofOps workspace that helps small technical teams capture evidence, seal provenance, review decisions, and export proof they can defend without buying a heavyweight ERP or QMS.
+**Turn project chaos into funder-ready evidence.** Fieldgrade is a local-first evidence infrastructure workspace for founders, researchers, AI teams, and technical consultants who need to prove what happened, when it happened, who touched it, what files or models were involved, and why the resulting claim is credible.
 
-> **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
+> **Capture evidence. Witness provenance. Review claims. Export defensible dossiers.**
 
 ## Fieldgrade public doctrine
 
 > **Show the proof layer. Occlude the complexity layer.**
 
-Fieldgrade should publicly appear as a calm, practical proof compiler. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
+Fieldgrade should publicly appear as a calm, practical evidence workbench. Buyers should first see proposal readiness, audit readiness, research traceability, AI governance support, technical due diligence, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
 
-## Fieldgrade Phase 2 — Pilot Release and ProofOps Commercialisation
+## Fieldgrade Phase 2 — Proposal-readiness and evidence-pack commercialisation
 
-> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led ProofOps pilot product with release artifacts, reproducible installation, one flagship proof-pack demo, setup intake, and first paid packaging.
+> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led evidence-pack product with reproducible installation, a working local demo, a proposal-ready document set, and a service-led route to paid proof-pack delivery.
 
-This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a proof pack, and request a paid setup.
+This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a structured evidence pack, and request a proposal-readiness sprint.
 
 ## Public product family
 
-Fieldgrade is structured as a family of ProofOps products:
+Fieldgrade is structured as a family of evidence-pack products:
 
-- **Fieldgrade FoodQA** — the first flagship workflow for supplier records, batch evidence, deviations, and release proof packs
-- **Fieldgrade ProofOps** — turn messy operational evidence into reviewable, exportable proof
-- **Fieldgrade GovAI** — keep AI-assisted work in a human-reviewed evidence register
+- **Fieldgrade Proposal** — convert scattered project artefacts into claim-linked proposal evidence packs
+- **Fieldgrade AI Governance** — prepare structured evidence for AI governance, audit, and compliance review
+- **Fieldgrade Lab** — package experimental records, provenance, and reproducibility evidence without replacing an ELN
+- **Fieldgrade Diligence Room** — assemble investor, partner, and technical due-diligence dossiers
 - **Fieldgrade Core** — the evidence and provenance engine beneath the product family
+- **Fieldgrade Sector Packs** — domain packs such as FoodQA or advanced-materials evidence workflows when a buyer needs a vertical template
 
 ## Public-facing materials in this repository
 
@@ -41,6 +43,7 @@ Fieldgrade is structured as a family of ProofOps products:
 - Contact and pilot request page: [`/site/contact/index.html`](site/contact/index.html)
 - Pricing and setup page: [`/site/pricing/index.html`](site/pricing/index.html)
 - Sample deliverables: [`/exports`](exports)
+- Proposal pack: [`/docs/proposal`](docs/proposal)
 - Release packet: [`/releases/v0.9.0-alpha`](releases/v0.9.0-alpha)
 
 ## Release-hardening documents
@@ -58,33 +61,31 @@ Fieldgrade is structured as a family of ProofOps products:
 
 Fieldgrade publicly emphasizes:
 
-- evidence capture
-- provenance sealing
-- review workflow
-- proof-pack export
+- proposal readiness
+- audit readiness
+- claim-to-evidence traceability
+- exportable evidence dossiers
 - AI accountability
 - local-first governance
 
 Fieldgrade publicly avoids over-claiming:
 
-- it is **not** a full ERP
-- it is **not** a full QMS
+- it is **not** a generic notes app
+- it is **not** a full enterprise GRC platform
+- it is **not** just a document manager
+- it is **not** merely blockchain provenance
 - it does **not** ask buyers to trust AI automatically
 - it does **not** claim legally binding or regulator-approved decisions by default
 
-## Initial offer
+## Initial commercial ladder
 
-**Fieldgrade ProofOps Setup** is the recommended first paid offer:
+Fieldgrade should lead with a service-led evidence-pack offer, then add subscription tiers later:
 
-- **£750 starting package**
-- local installation
-- branded workspace
-- one real or demo workflow
-- one export template
-- one sample completed proof pack
-- one reviewer decision model
-- one guided training session
-- one short guide for repeating the proof workflow next time
+- **Free** — local capture, one project, basic export
+- **Solo** — suggested range £19–£39/month for founders or independent inventors
+- **Team** — suggested range £99–£199/month for small R&D teams
+- **Proposal Readiness Sprint** — suggested range £750–£2,500 for founder-led setup and dossier assembly
+- **Diligence Room Build** — suggested range £2,500–£10,000 for investor, funder, or compliance evidence-room delivery
 
 ## Public trust notes
 
@@ -100,8 +101,8 @@ Fieldgrade publicly avoids over-claiming:
 - Founder-led setup page: [`site/setup/index.html`](site/setup/index.html)
 - Contact and pilot request page: [`site/contact/index.html`](site/contact/index.html)
 - Structured intake form: [GitHub Issue template](https://github.com/Xenologo/Fieldgrade/issues/new?template=fieldgrade_pilot_request.yml)
-- Starting commercial package: **Fieldgrade ProofOps Setup — £750 starting package**
-- Suggested scope: local install, branded workspace, one workflow pack, one export template, one sample completed proof pack, one reviewer decision model, and one guided training session
+- Starting commercial package: **Fieldgrade Proposal Readiness Sprint — £750–£2,500 suggested range**
+- Suggested scope: local install, project evidence ledger, claim-to-evidence matrix, risk and assumption register, data-management mini-plan, export-ready evidence pack, and guided review walkthrough
 
 ## Release install mode vs development mode
 
@@ -238,343 +239,3 @@ A fieldable toolchain that can:
 - **Ingest** files into a **CAS** (content-addressed blobs) + **SQLite** + **FTS5** (when available)
 - Emit **hash-chained provenance** events (append-only)
 - Store KG delta ops (`kg_delta.jsonl`) describing observed nodes/edges
-- **Seal** deterministic, signed bundles (manifest + SBOM + provenance + kg_delta + blobs)
-- **Verify** bundles against **MEAP v1** policy + toolchain allowlist
-- **Replay** bundles conservatively (structural checks only; no tool re-exec)
-
-## 2) `mite_ecology/` (design-time)
-A minimal-but-real pipeline:
-
-- Import verified termite bundles and apply `kg_delta.jsonl` to the KG
-- Compute **deterministic GNN embeddings** via message passing (CPU / NumPy)
-- Compute **deterministic GAT-style attention** over edges for a chosen context node
-- Mine motifs from top-attention edges
-- Run a **memoized deterministic GA** to evolve motif-derived genomes
-- Export a minimal **neuroarch DSL** JSON + a tiny python skeleton
-
-## Termite-owned local LLM runtime (optional but recommended)
-
-Termite can **own the runtime identity** of your local OpenAI-compatible endpoint (llama.cpp server / vLLM / etc.).
-
-- Configure `termite_fieldpack/config/termite.yaml` → `llm.*`
-- Start / stop / ping via:
-
-```bash
-cd termite_fieldpack
-./bin/termite llm status --json
-./bin/termite llm ping
-./bin/termite llm start        # launches if llm.launch.enabled=true, otherwise "marks active" after ping
-./bin/termite llm stop
-```
-
-When `mite_ecology/configs/ecology.yaml` sets `llm.endpoint_source: termite`, the `mite-ecology llm-*` commands will query Termite for the active endpoint (base_url, model, endpoint_id, toolchain_id) and record this binding in the `llm_calls.request_json` audit record.
-
----
-
-## Fast start (Linux / Termux-like)
-
-```bash
-# One-time setup
-bash scripts/bootstrap_dev.sh
-
-# (or manual setup)
-# python -m venv .venv
-# . .venv/bin/activate
-# pip install -r termite_fieldpack/requirements.txt
-# pip install -r mite_ecology/requirements.txt
-# pip install -e termite_fieldpack
-# pip install -e mite_ecology
-
-# Termite runtime
-cd termite_fieldpack
-./bin/termite init
-./bin/termite ingest ../README.md
-./bin/termite search "field"
-BUNDLE=$(./bin/termite seal --label demo)
-
-./bin/termite verify "$BUNDLE"
-./bin/termite replay "$BUNDLE"
-
-# mite_ecology: import + embed + attention + motifs + GA + export
-cd ../mite_ecology
-./bin/mite-ecology init
-./bin/mite-ecology import-bundle "$BUNDLE"
-./bin/mite-ecology gnn
-./bin/mite-ecology gat
-./bin/mite-ecology motifs
-./bin/mite-ecology ga
-./bin/mite-ecology export
-```
-
-Outputs appear under:
-- termite bundles: `termite_fieldpack/artifacts/bundles_out/`
-- mite_ecology exports: `mite_ecology/artifacts/export/`
-
----
-
-## Fast start (Windows / PowerShell)
-
-```powershell
-# One-time setup
-.\scripts\bootstrap_dev.ps1
-
-# (or manual setup)
-# python -m venv .venv
-# .\.venv\Scripts\Activate.ps1
-# pip install -r termite_fieldpack\requirements.txt
-# pip install -r mite_ecology\requirements.txt
-# pip install -e termite_fieldpack
-# pip install -e mite_ecology
-
-# (Optional) confirm entrypoints
-Get-Command termite
-Get-Command mite-ecology
-
-# Termite runtime
-cd termite_fieldpack
-python -m termite.cli init
-python -m termite.cli ingest ..\README.md
-$BUNDLE = (python -m termite.cli seal --label demo).Trim()
-python -m termite.cli verify $BUNDLE
-python -m termite.cli replay $BUNDLE
-
-# mite_ecology: import + embed + attention + motifs + GA + export
-cd ..\mite_ecology
-python -m mite_ecology.cli init
-python -m mite_ecology.cli import-bundle $BUNDLE
-python -m mite_ecology.cli gnn
-python -m mite_ecology.cli gat
-python -m mite_ecology.cli motifs
-python -m mite_ecology.cli ga
-python -m mite_ecology.cli export
-```
-
-Or run everything in one command:
-
-```powershell
-.\run_demo.ps1
-```
-
-## Notes
-- No heavy ML deps (no torch); everything is CPU + deterministic NumPy.
-- The MEAP policy is in `termite_fieldpack/config/meap_v1.yaml`.
-- Signature keys are generated into `termite_fieldpack/runtime/keys/` on first `termite init`.
-
-## Platform guides
-
-- Android (Termux): see `TERMUX.md`
-- Windows laptop guide — see `WINDOWS.md` (WSL2 recommended)
-
-## Deployment (Docker Compose)
-
-This repo uses Docker Compose file stacking for dev vs production.
-
-- Local dev (exposes `http://127.0.0.1:8787` directly):
-   - `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
-
-- Single-host production (Caddy TLS termination; do not expose `8787` directly):
-    - `docker compose -f compose.yaml -f compose.production.yaml up -d --build`
-    - See `docs/DEPLOY_PROD_SINGLEHOST.md` and `docs/DEPLOY_CHECKLIST.md`.
-
-### Docker Compose smoke test
-
-For a local smoke test with the development overlay:
-
-```bash
-export FG_API_TOKEN=demo-local-token
-docker compose -f compose.yaml -f compose.dev.yaml up -d --build
-curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz
-# For a first-run stack, initialize the runtime DBs once.
-docker compose -f compose.yaml -f compose.dev.yaml exec -T web python -m fieldgrade_ui init
-curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/readyz
-docker compose -f compose.yaml -f compose.dev.yaml down
-```
-
-`/readyz` is intentionally conservative and stays unhealthy until the required runtime DBs exist.
-Use `fieldgrade-ui init-runtime` or `python -m fieldgrade_ui init` to create them without an inline Python snippet.
-Record the outcome in release notes before publishing a pilot build.
-
-For production proxy header trust, prefer trusting only the Docker network CIDR (instead of `*`):
-
-- Bring the stack up once so the network exists.
-- Get the subnet CIDR:
-   - `docker network inspect fg_next_default --format '{{(index .IPAM.Config 0).Subnet}}'`
-- Set:
-   - `FG_FORWARDED_ALLOW_IPS=<that CIDR>` (example: `172.18.0.0/16`)
-- If the network name differs, it’s usually `<project>_default`; discover via:
-   - `docker network ls | grep _default`
-
-
-
-## Strict deterministic mode
-
-This stack is designed so that **the same inputs produce the same on-disk artifacts** (hashes, deltas, reports),
-provided you run in the same environment and do not introduce new non-deterministic external signals.
-
-Determinism is enforced by:
-
-- Canonical JSON serialization (`sort_keys`, stable separators) everywhere hashes are computed.
-- Hash-chained logs (`termite.events`, `mite_ecology.kg_deltas`, `mite_ecology.ingested_bundles`, `termite.llm_calls`, `termite.tool_runs`).
-- Deterministic GNN embeddings and GAT attention scoring (no stochastic dropout/training steps in this repo).
-- Deterministic memo-GA RNG (`xorshift64*`) seeded from stable hashes (context node + cycle).
-- Conservative merge: `mite-ecology import-bundle` validates bundle policy/signature then validates each op against `schemas/kg_delta.json`.
-
-**Important:** LLM output is treated as *exogenous* unless cached.
-`mite-ecology llm-*` records prompt/context hashes and stores raw responses,
-but any *live* LLM call can vary across runs unless you only replay cached responses.
-
-## Quick start (monorepo)
-
-```sh
-python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt
-
-# init
-./termite_fieldpack/bin/termite init
-./mite_ecology/bin/mite-ecology init
-
-# ingest something (termite)
-./termite_fieldpack/bin/termite ingest ./termite_fieldpack/docs/field_ops.md
-
-# seal + verify (termite)
-./termite_fieldpack/bin/termite seal --label demo
-./termite_fieldpack/bin/termite verify ./artifacts/bundles_out/*.zip
-
-# import into mite_ecology + run deterministic extrusion
-./mite_ecology/bin/mite-ecology import-bundle ./artifacts/bundles_out/*.zip --notes "demo import"
-./mite_ecology/bin/mite-ecology auto-run --cycles 3
-```
-
-## Termite LLM runtime ownership
-
-Termite can manage an OpenAI-compatible local server and becomes the **runtime identity owner**:
-
-```sh
-./termite_fieldpack/bin/termite llm start
-./termite_fieldpack/bin/termite llm ping
-./termite_fieldpack/bin/termite llm status --json
-./termite_fieldpack/bin/termite llm chat --prompt "Emit a strict kg_delta.jsonl for ..."
-./termite_fieldpack/bin/termite llm stop
-```
-
-For Termux usage, configure `termite_fieldpack/config/termite.yaml` with either:
-- `provider: endpoint_only` (you launch the server), or
-- `provider: llama_cpp_server|vllm` with `launch.command` enabled (Termite launches it).
-
----
-
-## MEAP modes and review workflow (mite_ecology)
-
-`mite-ecology import-bundle` can override the policy mode per import.
-
-- `AUTO_MERGE` applies the KG delta immediately and records a hash-chained ingest event.
-- `REVIEW_ONLY` stages the KG delta as `PENDING` for human approval.
-- `QUARANTINE` stages the KG delta as `QUARANTINED` (explicitly separated from normal review).
-- `KILL` refuses ingestion.
-
-Commands:
-
-```bash
-# stage
-./mite_ecology/bin/mite-ecology import-bundle ./termite_fieldpack/artifacts/bundles_out/demo*.zip --mode REVIEW_ONLY --actor "alice" --notes "needs review"
-
-# inspect staged queue
-./mite_ecology/bin/mite-ecology review-list --status PENDING
-
-# approve / reject
-./mite_ecology/bin/mite-ecology review-approve 123 --actor "alice" --notes "ok"
-./mite_ecology/bin/mite-ecology review-reject  124 --actor "alice" --notes "no"
-
-# verify deterministic replay integrity
-./mite_ecology/bin/mite-ecology replay-verify
-```
-
-## End-to-end demo
-
-From the monorepo root:
-
-```bash
-./run_demo.sh
-```
-
-On Windows (PowerShell):
-
-```powershell
-.\run_demo.ps1
-```
-
-The demo:
-
-1. Initializes an isolated Termite runtime.
-2. Ingests a few resources and seals a deterministic, signed bundle.
-3. Verifies and replays the bundle (structural checks only).
-4. Imports the bundle into mite_ecology in three ways:
-   - `AUTO_MERGE`
-   - `REVIEW_ONLY` (approved)
-   - `QUARANTINE` (rejected)
-5. Runs the deterministic pipeline and replay verification on the merged cases.
-
----
-
-## Local UI (single page)
-
-This repo includes an optional local UI that wraps the CLI commands (upload/ingest, bundle ops, ecology pipeline, graph explorer, logs).
-
-On Windows (PowerShell):
-
-```powershell
-./run_ui.ps1
-```
-
-Then open:
-
-```text
-http://127.0.0.1:8787/
-```
-
-
-
-## Android (Termux)
-
-See `TERMUX.md` for a Termux-native install and run flow (including scripts).
-
-## Local setup for the proposal-ready demonstrator
-
-Fieldgrade now includes a proposal-readiness pack for funder and RFP review. The pack is grounded in the existing local-first evidence runtime and adds synthetic frontier-AI, research-agent, and advanced-materials demo records.
-
-For reviewers and partners, read the two readiness signals separately:
-
-- `python scripts/check_proposal_readiness.py` is the **submission-pack integrity check**. A `100/100` result means the required pack exists and is internally valid.
-- `docs/proposal/FIELDGRADE_READINESS_AUDIT.md` is the **maturity rubric**. The current `22/24` score means the runtime and README are usable but not yet at the highest polish level.
-
-In other words, Fieldgrade is reviewer-verifiable and submission-ready as partner-facing pilot material, while the runtime itself is still most accurately described as a proposal-ready demonstrator.
-
-From the repository root, refresh and validate the proposal demo assets:
-
-```bash
-python scripts/generate_demo_manifest.py
-python scripts/check_proposal_readiness.py
-```
-
-Key proposal-readiness paths:
-
-- Proposal pack: `docs/proposal/`
-- Synthetic demo data: `data/demo/`
-- Proposal output landing area: `outputs/proposal_pack/`
-- Readiness validation: `scripts/check_proposal_readiness.py`
-
-For the full local CLI demonstration, use the existing run path:
-
-```bash
-./run_demo.sh
-```
-
-For the local UI/API path after installing the workspace, initialise and serve Fieldgrade:
-
-```bash
-python -m fieldgrade_ui init
-python -m fieldgrade_ui serve
-```
-
-The proposal demo data is synthetic. Treat Fieldgrade as a proposal-ready demonstrator unless a partner deployment, security review, and domain validation support stronger production claims.

@@ -2,35 +2,35 @@
 
 ## Opening
 
-Fieldgrade helps teams turn messy operational evidence into sealed, human-reviewed, exportable proof packs.
+Fieldgrade helps founders and technical teams turn scattered project artefacts into sealed, human-reviewed, exportable evidence packs.
 
 ## Demo path
 
-1. Start with the FoodQA supplier COA discrepancy before batch release.
-2. Register the certificate, batch record, screenshot, and operator note as evidence with object IDs and fingerprints.
-3. Add an AI-assisted summary clearly marked as a review aid only.
-4. Seal provenance and show the manifest.
-5. Move the record through review with explicit reviewer notes.
-6. Export the proof pack PDF, full internal pack, and client-safe pack.
+1. Start with a messy project folder containing notes, screenshots, diagrams, code references, dataset extracts, and AI-assisted drafts.
+2. Register each item as evidence with object IDs, timestamps, provenance notes, and fingerprints.
+3. Add a claim record, link supporting artefacts, and mark confidence plus admissibility.
+4. Show milestone, risk, and reviewer fields without hiding uncertainty.
+5. Seal provenance and display the manifest.
+6. Export the proposal evidence pack, reviewer summary, and dossier bundle.
 
 ## Message discipline
 
 Use these words:
-- audit-supporting
-- evidence-governance
-- ProofOps
+- proposal-ready
+- audit-ready
+- evidence pack
 - local-first
-- proof-pack
 - human-reviewed
-- pilot-ready
+- provenance-preserving
+- defensible dossier
 
 Avoid these words:
-- SAP killer
-- full QMS
-- regulator approved
+- AGI
 - automated compliance
-- AI auditor
+- regulator approved
+- full enterprise GRC
+- guaranteed trust
 
 ## Close
 
-Offer **Fieldgrade ProofOps Setup — £750 starting package** as a first proof system and direct interested buyers to the pilot intake.
+Offer **Fieldgrade Proposal Readiness Sprint — £750–£2,500 suggested range** as the first service and direct interested buyers to the pilot intake.
