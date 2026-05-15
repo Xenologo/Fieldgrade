@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
-    return subprocess.call([sys.executable, str(ROOT / "scripts" / "check_proposal_readiness.py")], cwd=ROOT)
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "check_proposal_readiness.py")], cwd=ROOT, check=True)
+    return 0
 
 
 if __name__ == "__main__":
