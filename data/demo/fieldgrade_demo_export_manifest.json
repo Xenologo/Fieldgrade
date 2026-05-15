@@ -1,6 +1,6 @@
 {
   "manifest_id": "FG-DEMO-MANIFEST-2026-05-15",
-  "created_at": "2026-05-15T16:46:16Z",
+  "created_at": "2026-05-15T16:22:02Z",
   "created_by": "scripts/generate_demo_manifest.py",
   "bundle_title": "Fieldgrade proposal-readiness synthetic evidence bundle",
   "bundle_scope": "Proposal-ready demonstrator for evidence-governed frontier-AI research workflows.",

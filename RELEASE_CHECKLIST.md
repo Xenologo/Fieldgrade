@@ -11,6 +11,7 @@ Use this checklist before publishing a pilot or alpha release.
 
 ## Validation
 
+- [x] Review the dated command log in `docs/proposal/FIELDGRADE_SMOKE_TEST_EVIDENCE.md` for per-run validation evidence
 - [x] `bash scripts/bootstrap_dev.sh`
 - [x] `./.venv/bin/python -m pytest -q`
 - [x] `FG_API_TOKEN=ci_dummy_token docker compose -f compose.yaml config`
@@ -22,6 +23,7 @@ Use this checklist before publishing a pilot or alpha release.
 
 ## Docker smoke test
 
+- [x] See `docs/proposal/FIELDGRADE_SMOKE_TEST_EVIDENCE.md` for the dated 2026-05-15 smoke-test run; the checkboxes below are release-checklist state, not standalone dated evidence
 - [x] `export FG_API_TOKEN=demo-local-token`
 - [x] `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
 - [x] `curl -H "X-API-Key: ${FG_API_TOKEN}" http://127.0.0.1:8787/healthz`

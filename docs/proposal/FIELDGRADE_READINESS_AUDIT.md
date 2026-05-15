@@ -73,6 +73,11 @@ These results are therefore not inconsistent. The repository is submission-ready
 - `python scripts/generate_demo_manifest.py` — refresh synthetic export manifest.
 - `python scripts/check_proposal_readiness.py` — validate proposal pack.
 
+## Fresh smoke-test evidence
+
+See [`docs/proposal/FIELDGRADE_SMOKE_TEST_EVIDENCE.md`](FIELDGRADE_SMOKE_TEST_EVIDENCE.md) for the dated command log captured on 2026-05-15, including proposal-pack checks, unit-test attempts, Docker runtime verification, and sandbox limitations.
+That note is the per-run evidence source; the release checklist remains a release-management checklist rather than a PR-by-PR execution log.
+
 ## Known gaps
 
 - The proposal demo is synthetic and should be replaced or extended with partner-approved non-sensitive records for real submissions.
