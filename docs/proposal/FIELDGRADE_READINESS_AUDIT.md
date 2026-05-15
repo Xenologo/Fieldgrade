@@ -69,25 +69,32 @@ These results are therefore not inconsistent. The repository is submission-ready
 ## Commands identified
 
 - `bash scripts/bootstrap_dev.sh` — development setup.
-- `make test` — install workspace with `uv` and run pytest.
+- `make test` — install workspace with `uv`, sync dev dependencies, and run pytest.
 - `python -m pytest -q` — test suite after dependencies are available.
 - `site/*.html` — open directly in a browser for the static public-site and conversion-path review.
 - `./run_demo.sh` — local end-to-end CLI demo.
 - `python -m fieldgrade_ui init` — initialise UI runtime.
 - `python -m fieldgrade_ui serve` — serve local UI/API.
 - `python scripts/generate_demo_manifest.py` — refresh synthetic export manifest.
-- `python scripts/check_proposal_readiness.py` — validate proposal pack.
+- `python scripts/check_proposal_readiness.py` — validate the full post-tranche submission pack.
+- `python scripts/validate_fieldgrade_pack.py` — compatibility wrapper around the readiness checker.
 
 ## Fresh smoke-test evidence
 
 See [`docs/proposal/FIELDGRADE_SMOKE_TEST_EVIDENCE.md`](FIELDGRADE_SMOKE_TEST_EVIDENCE.md) for the dated command log captured on 2026-05-15, including proposal-pack checks, unit-test attempts, Docker runtime verification, and sandbox limitations.
 That note is the per-run evidence source; the release checklist remains a release-management checklist rather than a PR-by-PR execution log.
 
+## Validator coverage status
+
+`scripts/check_proposal_readiness.py` now enforces the reviewer and submission artifacts added in the latest tranche, including the submission checklist, reviewer walkthrough, screenshot capture plan, smoke evidence note, release publication plan, and pilot data replacement protocol.
+This closes the earlier validator-drift gap between `README_PROPOSAL_PACK.md` and the automated readiness check, while leaving screenshot capture and release publication themselves as separate operational tasks.
+
 ## Known gaps
 
 - The proposal demo is synthetic and should be replaced or extended with partner-approved non-sensitive records for real submissions, using the documented pilot data replacement protocol.
 - Submission-mode routing is now documented, but each mode still needs a real partner case before Fieldgrade should be framed as deployment-ready for that route.
 - Production hardening, access-control review, actual screenshot asset capture, and partner user testing remain future work.
+- GitHub release publication and screenshot capture are still incomplete even though the validator now checks the supporting documents for those workflows.
 - Advanced-materials use cases are controlled extensions only until real lab validation exists.
 - The proposal pack does not claim regulatory certification or production assurance.
 
