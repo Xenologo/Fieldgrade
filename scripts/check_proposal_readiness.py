@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +43,10 @@ REQUIRED_OBJECT_FIELDS = {
     "review_state",
 }
 PLACEHOLDER_RE = re.compile(r"\b(TODO|FIXME|TBD)\b|lorem ipsum|\[insert\]", re.IGNORECASE)
-LOCAL_SETUP_RE = re.compile(r"local\s+(setup|demo|run|ui)|setup", re.IGNORECASE)
+LOCAL_SETUP_RE = re.compile(
+    r"^###+\s+.*(?:local setup|local demo|local run|local ui|development mode|canonical dev setup|pilot release install mode)\b",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 @dataclass
@@ -54,17 +57,16 @@ class Result:
     placeholder_findings: list[str] = field(default_factory=list)
     readme_findings: list[str] = field(default_factory=list)
 
+    @classmethod
+    def categories(cls) -> tuple[str, ...]:
+        return tuple(item.name for item in fields(cls))
+
+    def findings(self) -> dict[str, list[str]]:
+        return {name: getattr(self, name) for name in self.categories()}
+
     @property
     def ok(self) -> bool:
-        return not any(
-            [
-                self.missing_files,
-                self.invalid_json_files,
-                self.missing_object_fields,
-                self.placeholder_findings,
-                self.readme_findings,
-            ]
-        )
+        return not any(self.findings().values())
 
 
 def load_json(path: Path, result: Result) -> Any | None:
@@ -141,17 +143,9 @@ def check_readme(result: Result) -> None:
 
 
 def readiness_score(result: Result) -> int:
-    total_checks = 5
-    passed = total_checks - sum(
-        bool(category)
-        for category in [
-            result.missing_files,
-            result.invalid_json_files,
-            result.missing_object_fields,
-            result.placeholder_findings,
-            result.readme_findings,
-        ]
-    )
+    findings = result.findings()
+    total_checks = len(findings)
+    passed = total_checks - sum(bool(category) for category in findings.values())
     return round((passed / total_checks) * 100)
 
 
