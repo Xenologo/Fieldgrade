@@ -87,3 +87,8 @@ Later software pricing can support:
 ## Claim boundary
 
 Fieldgrade should be described publicly as proposal-ready, audit-ready, provenance-preserving, local-first, and human-reviewable. It should not be described as a full ERP, full enterprise GRC suite, automated compliance system, or legal certification layer.
+
+
+## Naming note
+
+This document retains the historical `ProofOps` filename because it continues the repo's earlier commercial packaging thread. The content now uses `Fieldgrade` as the umbrella product name, with proposal evidence packs as the primary wedge and ProofOps language retained as legacy context for older materials.

@@ -68,3 +68,21 @@ Evidence for experiments, sources, annotations, and reviews is spread across fol
 **Why Fieldgrade matters**
 
 Fieldgrade assembles a research witness pack beside existing tools instead of trying to replace the whole lab stack.
+
+
+## 5. FoodQA or regulated sector lead
+
+**Primary problem**
+
+Supplier records, batch evidence, deviations, and release decisions are scattered across folders, PDFs, spreadsheets, and QA notes.
+
+**What they need**
+
+- a sector-specific evidence pack
+- explicit review history
+- sealed provenance
+- exportable audit-ready records
+
+**Why Fieldgrade matters**
+
+Fieldgrade FoodQA remains a sector-pack example: a concrete vertical workflow that shows how the same evidence-pack model applies in regulated operations.
