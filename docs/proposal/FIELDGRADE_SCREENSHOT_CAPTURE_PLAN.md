@@ -6,7 +6,7 @@ Capture a small, concrete screenshot set that helps a reviewer verify the submis
 
 ## Capture rules
 
-- Capture from a clean local working tree where possible.
+- Capture from a clean local working tree.
 - Prefer readable terminal width and visible file paths.
 - Keep any runtime screenshot local-first and non-sensitive.
 - Do not capture secrets, tokens, or unrelated local data.

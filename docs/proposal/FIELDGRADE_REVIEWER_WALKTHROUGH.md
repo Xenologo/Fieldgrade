@@ -7,7 +7,7 @@ This walkthrough lets a funder, partner, or technical reviewer inspect Fieldgrad
 ## What this demo proves
 
 - Fieldgrade can organise evidence-like records, annotations, audit events, and export metadata into a human-reviewable structure.
-- The repository exposes a clear local-first architecture across `termite_fieldpack/`, `mite_ecology/`, and `fieldgrade_ui/`.
+- The repository exposes a clear local-first architecture across the documented runtime directories `termite_fieldpack/`, `mite_ecology/`, and `fieldgrade_ui/`.
 - The proposal pack can be checked with simple local Python commands.
 
 ## What this demo does not prove

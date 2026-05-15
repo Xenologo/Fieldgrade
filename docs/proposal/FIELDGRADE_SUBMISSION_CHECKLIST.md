@@ -66,7 +66,7 @@ python -m pytest -q
 
 ## Next funded sprint handoff
 
-- [ ] Identify the intended submission mode or pilot lane.
+- [ ] Identify the intended submission mode or pilot engagement pathway.
 - [ ] Identify which partner-approved records would replace or extend the synthetic demo.
 - [ ] Identify screenshot assets to capture using `FIELDGRADE_SCREENSHOT_CAPTURE_PLAN.md`.
 - [ ] Identify runtime smoke, packaging, and user-testing work that remains outside this submission reviewer pack.
