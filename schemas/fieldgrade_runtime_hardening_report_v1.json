@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldgrade.local/schemas/fieldgrade_runtime_hardening_report_v1.json",
+  "title": "Fieldgrade Runtime Hardening Report v1",
+  "description": "Deterministic replay and provenance continuity report used before downstream runtime or canonisation handoff.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "run_id",
+    "bundle_id",
+    "verification_status",
+    "replay_status",
+    "determinism_ok",
+    "provenance_continuity_ok",
+    "invariant_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "fieldgrade.runtime_hardening_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verification_status": {
+      "enum": ["passed", "failed", "not_run"]
+    },
+    "replay_status": {
+      "enum": ["passed", "failed", "not_run"]
+    },
+    "determinism_ok": {
+      "type": "boolean"
+    },
+    "provenance_continuity_ok": {
+      "type": "boolean"
+    },
+    "invariant_status": {
+      "enum": ["ok", "attention_required"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

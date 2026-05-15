@@ -142,6 +142,10 @@ def test_governance_govai_register_flow(client: TestClient) -> None:
     assert dash["counts"]["systems"] == 1
     assert dash["counts"]["by_readiness"]["export_ready"] == 1
     assert dash["counts"]["by_review_state"]["scheduled"] == 1
+    assert dash["views"]["evidence"]["by_state"]["exported"] == 1
+    assert dash["views"]["review"]["by_state"]["approved"] == 1
+    assert dash["views"]["runtime_handoff"]["by_state"]["ready_for_bridge"] == 1
+    assert dash["views"]["export"]["by_state"]["exported"] == 1
     assert dash["attention_queue"] == []
 
     r = client.get(f"/api/governance/systems/{record_id}", headers=_h("token_a"))
@@ -179,10 +183,12 @@ def test_governance_dashboard_attention_queue_surfaces_overdue_work(client: Test
     assert r.status_code == 200, r.text
     advisory = r.json()
     assert advisory["review"]["state"] == "overdue"
+    assert advisory["architecture_views"]["runtime_handoff"] == "review_required"
     assert any(action["action_id"] == "renew-review" for action in advisory["prioritized_actions"])
 
     r = client.get("/api/governance/dashboard", headers=_h("token_a"))
     assert r.status_code == 200, r.text
     dash = r.json()
     assert dash["counts"]["by_review_state"]["overdue"] == 1
+    assert dash["views"]["review"]["by_state"]["unreviewed"] == 1
     assert dash["attention_queue"][0]["record_id"] == record_id

@@ -12,6 +12,12 @@ from referencing import Registry, Resource
 
 from mite_ecology.hashutil import canonical_json, sha256_str
 
+from .contracts import (
+    governance_state_views,
+    normalize_control_status,
+    normalize_review_gate_status,
+    normalize_risk_status,
+)
 from .execution_ledger import append_event, create_execution, ensure_db, iter_events, verify_chain
 
 
@@ -271,13 +277,9 @@ class GovernanceLedger:
         controls = record.get("controls") if isinstance(record.get("controls"), list) else []
         risks = record.get("risks") if isinstance(record.get("risks"), list) else []
         review_gates = record.get("review_gates") if isinstance(record.get("review_gates"), list) else []
-        approved_gates = sum(
-            1
-            for gate in review_gates
-            if str(gate.get("status") or "").strip().lower() in {"approved", "complete", "completed"}
-        )
+        approved_gates = sum(1 for gate in review_gates if normalize_review_gate_status(gate.get("status")) == "approved")
         open_risks = sum(
-            1 for risk in risks if str(risk.get("review_status") or "open").strip().lower() in {"open", "active", "pending"}
+            1 for risk in risks if normalize_risk_status(risk.get("review_status")) == "open"
         )
 
         actions: List[Dict[str, Any]] = []
@@ -493,6 +495,7 @@ class GovernanceLedger:
             if not isinstance(data, dict):
                 continue
             advisory = self._advisory(data, self._compute_crosswalks(data))
+            views = governance_state_views(data, advisory, self._compute_crosswalks(data))
             items.append(
                 {
                     "record_id": data.get("record_id"),
@@ -509,6 +512,7 @@ class GovernanceLedger:
                         "review": advisory.get("review"),
                         "prioritized_actions": advisory.get("prioritized_actions", [])[:3],
                     },
+                    "architecture_views": views,
                 }
             )
         return items
@@ -695,7 +699,7 @@ class GovernanceLedger:
                 "affected_groups": body.get("affected_groups") if isinstance(body.get("affected_groups"), list) else [],
                 "mitigations": body.get("mitigations") if isinstance(body.get("mitigations"), list) else [],
                 "residual_risk": str(body.get("residual_risk") or "").strip(),
-                "review_status": str(body.get("review_status") or "Open").strip(),
+                "review_status": normalize_risk_status(body.get("review_status")),
             }
         )
         return self.update_system(record_id, {"risks": risks}, actor_id=actor_id)
@@ -709,7 +713,7 @@ class GovernanceLedger:
                 "control_id": self._next_id("FG-CTRL-"),
                 "title": str(body.get("title") or "Untitled control").strip(),
                 "control_kind": str(body.get("control_kind") or "governance").strip(),
-                "status": str(body.get("status") or "Planned").strip(),
+                "status": normalize_control_status(body.get("status")),
                 "owner": str(body.get("owner") or "").strip(),
             }
         )
@@ -723,7 +727,7 @@ class GovernanceLedger:
                 "type": "fieldgrade_review_gate/1.0",
                 "review_gate_id": self._next_id("FG-GATE-"),
                 "stage": str(body.get("stage") or "proposed").strip(),
-                "status": str(body.get("status") or "pending").strip(),
+                "status": normalize_review_gate_status(body.get("status")),
                 "owner": str(body.get("owner") or "").strip(),
                 "due_date": str(body.get("due_date") or "").strip(),
             }
@@ -781,7 +785,9 @@ class GovernanceLedger:
     def system_advisory(self, record_id: str) -> Dict[str, Any]:
         record = self.get_system(record_id)
         crosswalk = self._compute_crosswalks(record)
-        return self._advisory(record, crosswalk)
+        advisory = self._advisory(record, crosswalk)
+        advisory["architecture_views"] = governance_state_views(record, advisory, crosswalk)
+        return advisory
 
     def dashboard(self) -> Dict[str, Any]:
         systems = self.list_systems()
@@ -789,6 +795,12 @@ class GovernanceLedger:
         by_risk: Dict[str, int] = {}
         by_readiness: Dict[str, int] = {}
         by_review: Dict[str, int] = {}
+        views = {
+            "evidence": {},
+            "review": {},
+            "runtime_handoff": {},
+            "export": {},
+        }
         attention_queue: List[Dict[str, Any]] = []
         for item in systems:
             by_status[item.get("status") or "Unknown"] = by_status.get(item.get("status") or "Unknown", 0) + 1
@@ -799,6 +811,11 @@ class GovernanceLedger:
             review_state = str(review.get("state") or "unscheduled")
             by_readiness[readiness] = by_readiness.get(readiness, 0) + 1
             by_review[review_state] = by_review.get(review_state, 0) + 1
+            item_views = item.get("architecture_views") if isinstance(item.get("architecture_views"), dict) else {}
+            for view_name in views:
+                state = str(item_views.get(view_name) or "unknown")
+                bucket = views[view_name]
+                bucket[state] = int(bucket.get(state) or 0) + 1
             if readiness != "export_ready":
                 attention_queue.append(
                     {
@@ -807,6 +824,7 @@ class GovernanceLedger:
                         "readiness_score": advisory.get("readiness_score"),
                         "readiness_status": readiness,
                         "review_state": review_state,
+                        "architecture_views": item_views,
                         "actions": advisory.get("prioritized_actions", [])[:2],
                     }
                 )
@@ -828,6 +846,7 @@ class GovernanceLedger:
                 "by_readiness": by_readiness,
                 "by_review_state": by_review,
             },
+            "views": {name: {"by_state": bucket} for name, bucket in views.items()},
             "attention_queue": attention_queue,
         }
 

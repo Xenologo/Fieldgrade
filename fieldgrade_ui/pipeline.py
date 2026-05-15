@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
+from .contracts import build_pipeline_contracts
 from .storage import publish_bundle_if_configured
 
 def run_cmd(
@@ -187,11 +188,22 @@ def run_termite_to_ecology_pipeline(
         raise RuntimeError(f"mite_ecology replay-verify failed rc={rc}: {err or out}")
     replay_json = json.loads(out) if out else {}
 
+    contracts = build_pipeline_contracts(
+        repo_root=repo_root,
+        bundle_path=bundle_path,
+        verify_result=verify_json,
+        replay_verify_result=replay_json,
+        run_id=rid,
+        export_root=ecology_dir / "artifacts" / "export",
+        bundle_store_info=bundle_store_info,
+    )
+
     return {
         "ingest": ingest_json,
         "bundle_path": str(bundle_path),
         "verify": verify_json,
         "replay_verify": replay_json,
         "run_id": rid,
+        "contracts": contracts,
         **bundle_store_info,
     }

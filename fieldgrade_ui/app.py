@@ -42,6 +42,7 @@ from .config import (
     jobs_db_path,
     uploads_dir,
 )
+from .contracts import build_architecture_overview
 from .governance import GovernanceLedger
 from .jobs import create_job, list_jobs as jobs_list, get_job as jobs_get, get_job_logs as jobs_logs, cancel_job as jobs_cancel, ensure_db as ensure_jobs_db
 from .runtime_init import mite_db_path
@@ -848,6 +849,21 @@ def api_worker_status() -> Dict[str, Any]:
     }
 
 
+@app.get("/api/architecture/overview")
+def api_architecture_overview() -> Dict[str, Any]:
+    return {
+        "ok": True,
+        **build_architecture_overview(
+            repo_root=REPO_ROOT,
+            jobs_db=jobs_db_path(),
+            mite_db=_path_mite_db(),
+            tenants_root=_tenants_root(),
+            ui_runtime_dir=_ui_runtime_dir(),
+            worker_status=api_worker_status(),
+        ),
+    }
+
+
 @app.get("/api/jobs")
 def api_jobs(request: Request, limit: int = 50, status: str | None = None):
     dbp = jobs_db_path()
@@ -861,6 +877,18 @@ def api_job(request: Request, job_id: int):
     if not j:
         return JSONResponse({"error": "not found"}, status_code=404)
     return {"job": j.__dict__}
+
+
+@app.get("/api/jobs/{job_id}/contracts")
+def api_job_contracts(request: Request, job_id: int):
+    dbp = jobs_db_path()
+    j = jobs_get(dbp, job_id, owner_token_hash=_owner_hash(request))
+    if not j:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    result = j.result if isinstance(j.result, dict) else {}
+    contracts = result.get("contracts") if isinstance(result.get("contracts"), dict) else {}
+    return {"ok": True, "job_id": job_id, "contracts": contracts}
+
 
 @app.get("/api/jobs/{job_id}/logs")
 def api_job_logs(request: Request, job_id: int, limit: int = 500):

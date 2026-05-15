@@ -168,3 +168,6 @@ def test_a5_inprocess_pipeline_runner_smoke(tmp_path: Path):
     assert res["verify"]["ok"] is True
     assert res["replay_verify"]["match"] is True
     assert Path(res["bundle_path"]).exists()
+    assert res["contracts"]["fieldgrade_bridge"]["review_required"] is True
+    assert res["contracts"]["runtime_hardening_report"]["invariant_status"] == "ok"
+    assert res["contracts"]["runtime_handoff"]["state"] == "ready_for_bridge"
