@@ -2,22 +2,22 @@
 
 ## What Fieldgrade offers partners
 
-Fieldgrade offers a local-first evidence and provenance demonstrator for teams that need to make research artifacts, benchmark data, AI-assisted outputs, and review decisions easier to audit and explain.
+Fieldgrade offers a local-first evidence and provenance demonstrator for teams that need to turn scattered project artifacts into clearer proposal packs, diligence rooms, AI-governance evidence bundles, or research witness dossiers.
 
 ## Best-fit partners
 
-- Universities coordinating frontier-AI evaluation or discovery workflows.
-- Research and technology organisations managing multi-partner evidence packs.
-- SMEs preparing funding bids, assurance packs, or RFP responses.
-- Advanced-materials teams needing batch, sensor, microscopy, QA, and reviewer provenance.
-- Organisations that need accountable AI-use records without handing sensitive data to a hosted system by default.
+- SMEs preparing funding bids, assurance packs, or investor diligence material.
+- Grant writers or R&D consultants managing multi-document submissions.
+- AI teams that need accountable evidence for governance or audit review.
+- Universities, spinouts, or RTOs coordinating multi-partner evidence packs.
+- Research and prototype teams needing provenance and reproducibility support.
 
 ## What a partner pilot would test
 
 1. Which evidence objects matter for the partner domain.
-2. How source provenance and licensing should be recorded.
+2. How source provenance, licensing, and AI-use should be recorded.
 3. Which review states and admissibility tiers are useful.
-4. Whether export manifests support proposal, audit, or dataset-review needs.
+4. Whether export manifests and registers support proposal, audit, or diligence needs.
 5. Which runtime path is easiest for partner users.
 
 ## Partner inputs needed
@@ -33,7 +33,7 @@ Fieldgrade offers a local-first evidence and provenance demonstrator for teams t
 
 - Partner-specific demo dataset.
 - Evidence workflow map.
-- Export manifest and sample evidence pack.
+- Claim-to-evidence matrix and sample evidence pack.
 - Risk and ethics addendum.
 - Screenshot walkthrough.
 - Pilot-readiness report.

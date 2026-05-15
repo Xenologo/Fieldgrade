@@ -5,30 +5,32 @@
 [![License](https://img.shields.io/github/license/Xenologo/Fieldgrade)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-**Turn messy operational evidence into audit-ready proof packs.** Fieldgrade is a local-first ProofOps workspace that helps small technical teams capture evidence, seal provenance, review decisions, and export proof they can defend without buying a heavyweight ERP or QMS.
+**Turn project chaos into funder-ready evidence.** Fieldgrade is a local-first evidence infrastructure workspace for founders, researchers, AI teams, and technical consultants who need to prove what happened, when it happened, who touched it, what files or models were involved, and why the resulting claim is credible.
 
-> **Capture evidence. Seal provenance. Review decisions. Export audit-ready proof.**
+> **Capture evidence. Witness provenance. Review claims. Export defensible dossiers.**
 
 ## Fieldgrade public doctrine
 
 > **Show the proof layer. Occlude the complexity layer.**
 
-Fieldgrade should publicly appear as a calm, practical proof compiler. Buyers should first see evidence capture, provenance, review, export, accountable AI-use, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
+Fieldgrade should publicly appear as a calm, practical evidence workbench. Buyers should first see proposal readiness, audit readiness, research traceability, AI governance support, technical due diligence, and local control. Internal kernels, graph analysis, and advanced architecture stay available, but they belong in advanced documentation rather than the first-touch product surface.
 
-## Fieldgrade Phase 2 — Pilot Release and ProofOps Commercialisation
+## Fieldgrade Phase 2 — Proposal-readiness and evidence-pack commercialisation
 
-> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led ProofOps pilot product with release artifacts, reproducible installation, one flagship proof-pack demo, setup intake, and first paid packaging.
+> Convert Fieldgrade from an alpha-grade evidence-governance repo into a founder-led evidence-pack product with reproducible installation, a working local demo, a proposal-ready document set, and a service-led route to paid proof-pack delivery.
 
-This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a proof pack, and request a paid setup.
+This phase is about making one person able to install Fieldgrade, understand the value, load a sample workflow, export a structured evidence pack, and request a proposal-readiness sprint.
 
 ## Public product family
 
-Fieldgrade is structured as a family of ProofOps products:
+Fieldgrade is structured as a family of evidence-pack products:
 
-- **Fieldgrade FoodQA** — the first flagship workflow for supplier records, batch evidence, deviations, and release proof packs
-- **Fieldgrade ProofOps** — turn messy operational evidence into reviewable, exportable proof
-- **Fieldgrade GovAI** — keep AI-assisted work in a human-reviewed evidence register
+- **Fieldgrade Proposal** — convert scattered project artifacts into claim-linked proposal evidence packs
+- **Fieldgrade AI Governance** — prepare structured evidence for AI governance, audit, and compliance review
+- **Fieldgrade Lab** — package experimental records, provenance, and reproducibility evidence without replacing an ELN
+- **Fieldgrade Diligence Room** — assemble investor, partner, and technical due-diligence dossiers
 - **Fieldgrade Core** — the evidence and provenance engine beneath the product family
+- **Fieldgrade Sector Packs** — domain packs such as FoodQA or advanced-materials evidence workflows when a buyer needs a vertical template
 
 ## Public-facing materials in this repository
 
@@ -41,6 +43,7 @@ Fieldgrade is structured as a family of ProofOps products:
 - Contact and pilot request page: [`/site/contact/index.html`](site/contact/index.html)
 - Pricing and setup page: [`/site/pricing/index.html`](site/pricing/index.html)
 - Sample deliverables: [`/exports`](exports)
+- Proposal pack: [`/docs/proposal`](docs/proposal)
 - Release packet: [`/releases/v0.9.0-alpha`](releases/v0.9.0-alpha)
 
 ## Release-hardening documents
@@ -58,33 +61,31 @@ Fieldgrade is structured as a family of ProofOps products:
 
 Fieldgrade publicly emphasizes:
 
-- evidence capture
-- provenance sealing
-- review workflow
-- proof-pack export
+- proposal readiness
+- audit readiness
+- claim-to-evidence traceability
+- exportable evidence dossiers
 - AI accountability
 - local-first governance
 
 Fieldgrade publicly avoids over-claiming:
 
-- it is **not** a full ERP
-- it is **not** a full QMS
+- it is **not** a generic notes app
+- it is **not** a full enterprise GRC platform
+- it is **not** just a document manager
+- it is **not** merely blockchain provenance
 - it does **not** ask buyers to trust AI automatically
 - it does **not** claim legally binding or regulator-approved decisions by default
 
-## Initial offer
+## Initial commercial ladder
 
-**Fieldgrade ProofOps Setup** is the recommended first paid offer:
+Fieldgrade should lead with a service-led evidence-pack offer, then add subscription tiers later:
 
-- **£750 starting package**
-- local installation
-- branded workspace
-- one real or demo workflow
-- one export template
-- one sample completed proof pack
-- one reviewer decision model
-- one guided training session
-- one short guide for repeating the proof workflow next time
+- **Free** — local capture, one project, basic export
+- **Solo** — suggested range £19–£39/month for founders or independent inventors
+- **Team** — suggested range £99–£199/month for small R&D teams
+- **Proposal Readiness Sprint** — suggested range £750–£2,500 for founder-led setup and dossier assembly
+- **Diligence Room Build** — suggested range £2,500–£10,000 for investor, funder, or compliance evidence-room delivery
 
 ## Public trust notes
 
@@ -100,8 +101,8 @@ Fieldgrade publicly avoids over-claiming:
 - Founder-led setup page: [`site/setup/index.html`](site/setup/index.html)
 - Contact and pilot request page: [`site/contact/index.html`](site/contact/index.html)
 - Structured intake form: [GitHub Issue template](https://github.com/Xenologo/Fieldgrade/issues/new?template=fieldgrade_pilot_request.yml)
-- Starting commercial package: **Fieldgrade ProofOps Setup — £750 starting package**
-- Suggested scope: local install, branded workspace, one workflow pack, one export template, one sample completed proof pack, one reviewer decision model, and one guided training session
+- Starting commercial package: **Fieldgrade Proposal Readiness Sprint — £750–£2,500 suggested range**
+- Suggested scope: local install, project evidence ledger, claim-to-evidence matrix, risk and assumption register, data-management mini-plan, export-ready evidence pack, and guided review walkthrough
 
 ## Release install mode vs development mode
 
