@@ -17,6 +17,7 @@ REQUIRED_PROPOSAL_FILES = [
     "docs/proposal/FIELDGRADE_TECHNICAL_ARCHITECTURE.md",
     "docs/proposal/FIELDGRADE_DEMO_SCRIPT.md",
     "docs/proposal/FIELDGRADE_FUNDING_FIT_MATRIX.md",
+    "docs/proposal/FIELDGRADE_SUBMISSION_MODES.md",
     "docs/proposal/FIELDGRADE_RISK_ETHICS_REGISTER.md",
     "docs/proposal/FIELDGRADE_DATA_GOVERNANCE.md",
     "docs/proposal/FIELDGRADE_12_WEEK_ROADMAP.md",

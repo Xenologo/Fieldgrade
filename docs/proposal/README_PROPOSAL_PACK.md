@@ -12,6 +12,7 @@ This folder contains the funder-facing Fieldgrade proposal-readiness pack. It fr
 - `FIELDGRADE_REVIEWER_WALKTHROUGH.md` — under-15-minute inspection path for a reviewer.
 - `FIELDGRADE_SCREENSHOT_CAPTURE_PLAN.md` — concrete screenshot list for submission packets.
 - `FIELDGRADE_FUNDING_FIT_MATRIX.md` — priority funding routes and evidence needed.
+- `FIELDGRADE_SUBMISSION_MODES.md` — detailed routing notes for funder and pilot modes.
 - `FIELDGRADE_RISK_ETHICS_REGISTER.md` — risks, controls, and mitigations.
 - `FIELDGRADE_DATA_GOVERNANCE.md` — provenance, privacy, licensing, and review practices.
 - `FIELDGRADE_12_WEEK_ROADMAP.md` — scoped delivery plan for a proposal sprint.
