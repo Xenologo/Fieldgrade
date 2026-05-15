@@ -25,7 +25,7 @@ This phase is about making one person able to install Fieldgrade, understand the
 
 Fieldgrade is structured as a family of evidence-pack products:
 
-- **Fieldgrade Proposal** — convert scattered project artefacts into claim-linked proposal evidence packs
+- **Fieldgrade Proposal** — convert scattered project artifacts into claim-linked proposal evidence packs
 - **Fieldgrade AI Governance** — prepare structured evidence for AI governance, audit, and compliance review
 - **Fieldgrade Lab** — package experimental records, provenance, and reproducibility evidence without replacing an ELN
 - **Fieldgrade Diligence Room** — assemble investor, partner, and technical due-diligence dossiers

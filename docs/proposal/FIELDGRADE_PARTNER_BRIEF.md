@@ -2,7 +2,7 @@
 
 ## What Fieldgrade offers partners
 
-Fieldgrade offers a local-first evidence and provenance demonstrator for teams that need to turn scattered project artefacts into clearer proposal packs, diligence rooms, AI-governance evidence bundles, or research witness dossiers.
+Fieldgrade offers a local-first evidence and provenance demonstrator for teams that need to turn scattered project artifacts into clearer proposal packs, diligence rooms, AI-governance evidence bundles, or research witness dossiers.
 
 ## Best-fit partners
 

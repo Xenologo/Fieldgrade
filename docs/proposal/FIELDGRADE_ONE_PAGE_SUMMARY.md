@@ -2,17 +2,17 @@
 
 ## Short description
 
-Fieldgrade is a local-first evidence and provenance workbench for proposal readiness, audit readiness, AI governance support, research traceability, and technical due diligence. It helps teams convert scattered project artefacts into defensible evidence packs.
+Fieldgrade is a local-first evidence and provenance workbench for proposal readiness, audit readiness, AI governance support, research traceability, and technical due diligence. It helps teams convert scattered project artifacts into defensible evidence packs.
 
 ## Problem
 
-Founders, grant applicants, AI teams, and research groups produce many intermediate artefacts. Those artefacts are often hard to trace, review, reproduce, and reuse. Weak provenance reduces trust, slows proposal assembly, and makes audit or diligence evidence harder to defend.
+Founders, grant applicants, AI teams, and research groups produce many intermediate artifacts. Those artifacts are often hard to trace, review, reproduce, and reuse. Weak provenance reduces trust, slows proposal assembly, and makes audit or diligence evidence harder to defend.
 
 ## Solution
 
 Fieldgrade provides a structured evidence workflow:
 
-1. ingest source artefacts,
+1. ingest source artifacts,
 2. preserve provenance metadata,
 3. classify claim and admissibility status,
 4. record human and AI-use annotations,

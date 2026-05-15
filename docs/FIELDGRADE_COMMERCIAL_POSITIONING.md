@@ -2,7 +2,7 @@
 
 ## Core statement
 
-**Fieldgrade** is a local-first evidence infrastructure workspace for small R&D, AI, grant-funded, and regulated innovation teams that need to turn messy project artefacts into defensible evidence packs.
+**Fieldgrade** is a local-first evidence infrastructure workspace for small R&D, AI, grant-funded, and regulated innovation teams that need to turn messy project artifacts into defensible evidence packs.
 
 > **Turn project chaos into funder-ready evidence.**
 

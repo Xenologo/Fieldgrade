@@ -27,7 +27,7 @@
 1. Pilot intake review
 2. Local install on a customer machine or single host
 3. Evidence-model setup for one project or bid
-4. Build one real or demo evidence pack from existing artefacts
+4. Build one real or demo evidence pack from existing artifacts
 5. Leave behind one completed dossier and export template
 6. Guided training session and missing-evidence checklist
 
