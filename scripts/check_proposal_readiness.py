@@ -44,7 +44,7 @@ REQUIRED_OBJECT_FIELDS = {
 }
 PLACEHOLDER_RE = re.compile(r"\b(TODO|FIXME|TBD)\b|lorem ipsum|\[insert\]", re.IGNORECASE)
 LOCAL_SETUP_RE = re.compile(
-    r"^###+\s+.*(?:local setup|local demo|local run|local ui|development mode|canonical dev setup|pilot release install mode)\b",
+    r"^#{2,}\s+.*(?:local setup|local demo|local run|local ui|development mode|canonical dev setup|pilot release install mode)\b",
     re.IGNORECASE | re.MULTILINE,
 )
 

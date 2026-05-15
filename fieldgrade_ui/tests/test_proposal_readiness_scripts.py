@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from dataclasses import fields
 from pathlib import Path
 
@@ -13,6 +14,7 @@ def _load_script_module(name: str, relative_path: str):
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
