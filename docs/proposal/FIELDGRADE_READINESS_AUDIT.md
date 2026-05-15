@@ -53,6 +53,15 @@ Scoring scale: 0 = absent, 1 = present but weak, 2 = usable, 3 = proposal-ready.
 
 22 out of 24. Fieldgrade is honestly describable as a proposal-ready demonstrator for evidence-governed frontier-AI research workflows.
 
+## Integrity check versus maturity rubric
+
+The `scripts/check_proposal_readiness.py` score and this audit score answer different reviewer questions.
+
+- **100/100 readiness script score** means the required submission pack exists, parses correctly, contains the expected demo-object fields, avoids placeholder text, and includes a recognizable README local setup path.
+- **22/24 audit score** means the repository maturity rubric still rates the runtime and README as **usable (2/3)** rather than **fully polished (3/3)**.
+
+These results are therefore not inconsistent. The repository is submission-ready and reviewer-verifiable as a partner-facing proposal and pilot pack, while the underlying runtime is still most accurately described as a proposal-ready demonstrator rather than a fully hardened production deployment.
+
 ## Commands identified
 
 - `bash scripts/bootstrap_dev.sh` — development setup.
@@ -74,3 +83,4 @@ Scoring scale: 0 = absent, 1 = present but weak, 2 = usable, 3 = proposal-ready.
 ## Stop condition status
 
 The required proposal documents, demo data, validation scripts, and audit materials are present. The readiness script checks files, JSON parsing, required object fields, placeholder text, and README local setup coverage.
+Read together with the rubric above, that means reviewers can verify pack integrity with the script while using this audit to understand the remaining runtime and README polish gap.

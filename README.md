@@ -543,6 +543,13 @@ See `TERMUX.md` for a Termux-native install and run flow (including scripts).
 
 Fieldgrade now includes a proposal-readiness pack for funder and RFP review. The pack is grounded in the existing local-first evidence runtime and adds synthetic frontier-AI, research-agent, and advanced-materials demo records.
 
+For reviewers and partners, read the two readiness signals separately:
+
+- `python scripts/check_proposal_readiness.py` is the **submission-pack integrity check**. A `100/100` result means the required pack exists and is internally valid.
+- `docs/proposal/FIELDGRADE_READINESS_AUDIT.md` is the **maturity rubric**. The current `22/24` score means the runtime and README are usable but not yet at the highest polish level.
+
+In other words, Fieldgrade is reviewer-verifiable and submission-ready as partner-facing pilot material, while the runtime itself is still most accurately described as a proposal-ready demonstrator.
+
 From the repository root, refresh and validate the proposal demo assets:
 
 ```bash
