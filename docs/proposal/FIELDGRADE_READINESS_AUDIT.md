@@ -20,6 +20,7 @@ Fieldgrade is a Python monorepo with existing documentation, deployment guides, 
 ## Existing entry points inspected
 
 - `README.md` documents bootstrap, test, CLI, UI, Docker Compose, and end-to-end demo paths.
+- `site/landing.html`, `site/setup/index.html`, `site/contact/index.html`, `site/pricing/index.html`, and `site/products/*.html` form the static buyer-facing conversion path for FoodQA-first ProofOps packaging.
 - `run_demo.sh` runs a local Termite plus mite_ecology demonstration in `.demo_runtime`.
 - `run_demo.ps1` provides the Windows demo route.
 - `fieldgrade_ui/__main__.py` exposes UI/API commands through `python -m fieldgrade_ui` and the installed console script.
@@ -70,6 +71,7 @@ These results are therefore not inconsistent. The repository is submission-ready
 - `bash scripts/bootstrap_dev.sh` — development setup.
 - `make test` — install workspace with `uv` and run pytest.
 - `python -m pytest -q` — test suite after dependencies are available.
+- `site/*.html` — open directly in a browser for the static public-site and conversion-path review.
 - `./run_demo.sh` — local end-to-end CLI demo.
 - `python -m fieldgrade_ui init` — initialise UI runtime.
 - `python -m fieldgrade_ui serve` — serve local UI/API.
