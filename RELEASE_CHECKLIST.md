@@ -35,9 +35,9 @@ Use this checklist before publishing a pilot or alpha release.
 
 - [x] Draft GitHub Release copy prepared in `releases/v0.9.0-alpha/RELEASE_BODY.md`
 - [ ] Publish the GitHub Release object for `v0.9.0-alpha` and attach the release packet assets
-- [x] Source archive attached
-- [x] Demo/sample packs attached
-- [x] Checksums and release manifest attached
+- [ ] Source archive attached
+- [ ] Demo/sample packs attached
+- [ ] Checksums and release manifest attached
 
 ## Commercial packaging
 
