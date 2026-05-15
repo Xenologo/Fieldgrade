@@ -29,7 +29,9 @@ Fieldgrade is a Python monorepo with existing documentation, deployment guides, 
 
 - Proposal pack under `docs/proposal/`.
 - Funding-mode routing notes under `docs/proposal/FIELDGRADE_SUBMISSION_MODES.md`.
+- Pilot data replacement controls under `docs/proposal/FIELDGRADE_PILOT_DATA_REPLACEMENT_PROTOCOL.md`.
 - Synthetic demo evidence records under `data/demo/`.
+- Controlled public pilot-sample staging under `data/pilot_samples/`.
 - Proposal output landing file under `outputs/proposal_pack/`.
 - Validation scripts under `scripts/`.
 - Root `AGENTS.md` with durable proposal-readiness instructions.
@@ -81,9 +83,9 @@ That note is the per-run evidence source; the release checklist remains a releas
 
 ## Known gaps
 
-- The proposal demo is synthetic and should be replaced or extended with partner-approved non-sensitive records for real submissions.
+- The proposal demo is synthetic and should be replaced or extended with partner-approved non-sensitive records for real submissions, using the documented pilot data replacement protocol.
 - Submission-mode routing is now documented, but each mode still needs a real partner case before Fieldgrade should be framed as deployment-ready for that route.
-- Production hardening, access-control review, screenshot capture, and partner user testing remain future work.
+- Production hardening, access-control review, actual screenshot asset capture, and partner user testing remain future work.
 - Advanced-materials use cases are controlled extensions only until real lab validation exists.
 - The proposal pack does not claim regulatory certification or production assurance.
 

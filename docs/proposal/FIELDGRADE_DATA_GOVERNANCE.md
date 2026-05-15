@@ -23,6 +23,7 @@ AI-assisted outputs and speculative extensions should remain in `audit_only`, `c
 ## Privacy and sensitivity
 
 The proposal demo uses synthetic data only. Real deployments should define data-classification rules before ingestion, keep sensitive data local where possible, avoid unnecessary external transfer, and document retention and deletion rules.
+Any partner-approved public pilot sample should follow `docs/proposal/FIELDGRADE_PILOT_DATA_REPLACEMENT_PROTOCOL.md` before it is committed.
 
 ## Licensing and dataset reuse
 
