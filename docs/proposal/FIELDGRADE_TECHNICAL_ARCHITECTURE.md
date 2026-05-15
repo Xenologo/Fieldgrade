@@ -51,4 +51,4 @@ Each demo object carries:
 
 ## Current technical limitation
 
-This proposal pack is documentation, synthetic data, and validation tooling layered on top of the existing repo. It does not turn Fieldgrade into a production-certified platform. Partner-specific data schemas, access controls, screenshot capture, packaging polish, and user acceptance testing remain next-step work.
+This proposal pack is documentation, synthetic data, validation tooling, and controlled pilot-data protocol documentation layered on top of the existing repo. It does not turn Fieldgrade into a production-certified platform. Partner-specific data schemas, access controls, actual screenshot asset capture, packaging polish, and user acceptance testing remain next-step work.

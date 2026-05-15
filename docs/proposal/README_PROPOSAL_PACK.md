@@ -13,6 +13,7 @@ This folder contains the funder-facing Fieldgrade proposal-readiness pack. It fr
 - `FIELDGRADE_SCREENSHOT_CAPTURE_PLAN.md` — concrete screenshot list for submission packets.
 - `FIELDGRADE_FUNDING_FIT_MATRIX.md` — priority funding routes and evidence needed.
 - `FIELDGRADE_SUBMISSION_MODES.md` — detailed routing notes for funder and pilot modes.
+- `FIELDGRADE_PILOT_DATA_REPLACEMENT_PROTOCOL.md` — controls for replacing synthetic demo data with partner-approved public pilot samples.
 - `FIELDGRADE_RISK_ETHICS_REGISTER.md` — risks, controls, and mitigations.
 - `FIELDGRADE_DATA_GOVERNANCE.md` — provenance, privacy, licensing, and review practices.
 - `FIELDGRADE_12_WEEK_ROADMAP.md` — scoped delivery plan for a proposal sprint.
@@ -21,7 +22,7 @@ This folder contains the funder-facing Fieldgrade proposal-readiness pack. It fr
 
 ## Demo and validation assets
 
-Synthetic demo data lives under `data/demo/`. The output-pack landing file is `outputs/proposal_pack/README.md`.
+Synthetic demo data lives under `data/demo/`. The controlled public staging area for partner-approved pilot samples is `data/pilot_samples/`. The output-pack landing file is `outputs/proposal_pack/README.md`.
 
 ## Reviewer pack sequence
 

@@ -105,7 +105,7 @@ Open:
 Confirm:
 
 - the pack does not overclaim production readiness
-- the next funded sprint includes partner-approved evidence replacement, runtime hardening, and reviewer capture work
+- the next funded sprint includes partner-approved evidence replacement, runtime hardening, and release-closure work
 - the expected partner contribution is explicit
 
 ## Recommended files to inspect first
@@ -118,4 +118,4 @@ Confirm:
 
 ## Next funded sprint deliverables
 
-The next funded sprint should replace or extend the synthetic demo with partner-approved non-sensitive records, add fresh smoke-test evidence, tighten submission-mode routing, and close release-publication tasks. Those follow-on items are outside the claims made by this reviewer pack.
+The next funded sprint should replace or extend the synthetic demo with partner-approved non-sensitive records using `docs/proposal/FIELDGRADE_PILOT_DATA_REPLACEMENT_PROTOCOL.md`, capture actual reviewer-facing screenshots using the existing capture plan, and close release-publication tasks for `v0.9.0-alpha`. Those follow-on items are outside the claims made by this reviewer pack.
