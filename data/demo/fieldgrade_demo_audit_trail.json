@@ -1,0 +1,35 @@
+[
+  {
+    "event_id": "FG-AUD-001",
+    "object_id": "FG-DEMO-001",
+    "event_type": "ingested",
+    "actor": "proposal_demo_operator",
+    "timestamp": "2026-05-15T00:00:00Z",
+    "review_state": "ingested",
+    "admissibility_tier": "controlled_extension",
+    "decision": "accepted_for_demo",
+    "human_readable_explanation": "Synthetic benchmark trace added to demonstrate dataset curation provenance."
+  },
+  {
+    "event_id": "FG-AUD-002",
+    "object_id": "FG-DEMO-002",
+    "event_type": "annotation_added",
+    "actor": "proposal_demo_reviewer",
+    "timestamp": "2026-05-15T00:25:00Z",
+    "review_state": "annotated",
+    "admissibility_tier": "audit_only",
+    "decision": "requires_source_review",
+    "human_readable_explanation": "Reviewer marks the synthetic research-agent output as requiring independent validation."
+  },
+  {
+    "event_id": "FG-AUD-003",
+    "object_id": "FG-DEMO-003",
+    "event_type": "review_decision",
+    "actor": "proposal_demo_reviewer",
+    "timestamp": "2026-05-15T00:35:00Z",
+    "review_state": "reviewed",
+    "admissibility_tier": "audit_only",
+    "decision": "proposal_example_only",
+    "human_readable_explanation": "Materials batch record may be used for walkthroughs but not as empirical evidence."
+  }
+]
